@@ -29,7 +29,7 @@ const Sidebar = ({ isOpen }) => {
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center p-1">
                         <img
-                            src="public/logo.png"
+                            src="/logo.png"
                             alt="Logo"
                             className="w-full h-full rounded-full object-cover"
                         />

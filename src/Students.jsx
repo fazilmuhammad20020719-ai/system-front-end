@@ -203,7 +203,7 @@ const Students = () => {
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 text-right">
-                                                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <div className="flex items-center justify-end gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
 
                                                         <button
                                                             onClick={() => navigate(`/view-student/${student.id}`)} // Update this line

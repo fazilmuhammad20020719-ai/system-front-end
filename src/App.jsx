@@ -5,7 +5,8 @@ import Calendar from './Calendar';
 import Students from './Students';
 import AddStudent from './AddStudent';
 import EditStudent from './EditStudent';
-import ViewStudent from './ViewStudent'; // Import the new page
+import ViewStudent from './ViewStudent';
+import Teachers from './Teachers';
 
 function App() {
   return (
@@ -20,6 +21,9 @@ function App() {
         <Route path="/add-student" element={<AddStudent />} />
         <Route path="/edit-student/:id" element={<EditStudent />} />
         <Route path="/view-student/:id" element={<ViewStudent />} /> {/* Add this line */}
+
+        {/* Add Teachers Route */}
+        <Route path="/teachers" element={<Teachers />} />
       </Routes>
     </BrowserRouter>
   );

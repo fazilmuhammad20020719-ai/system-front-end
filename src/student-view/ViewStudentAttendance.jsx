@@ -1,34 +1,198 @@
-import { CheckCircle, XCircle, Clock } from 'lucide-react';
+import { useState } from 'react';
+import {
+    CheckCircle,
+    XCircle,
+    Clock,
+    ChevronLeft,
+    ChevronRight,
+    Calendar as CalendarIcon
+} from 'lucide-react';
 
 const ViewStudentAttendance = ({ stats }) => {
+    // State for the Calendar
+    const [currentDate, setCurrentDate] = useState(new Date());
+
+    // Mock Attendance Data (In a real app, this comes from your API)
+    // Format: 'YYYY-MM-DD': 'Status'
+    const attendanceData = {
+        '2025-01-01': 'Present',
+        '2025-01-02': 'Present',
+        '2025-01-03': 'Absent',
+        '2025-01-05': 'Late',
+        '2025-01-06': 'Present',
+        '2025-01-07': 'Present',
+        '2025-01-08': 'Present',
+        '2025-01-09': 'Absent',
+        '2025-01-10': 'Present',
+        '2025-01-12': 'Present',
+        '2025-01-13': 'Present',
+        '2025-01-14': 'Holiday',
+        '2025-01-15': 'Present',
+        // ... more data
+    };
+
+    // Calendar Helper Functions
+    const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+    const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
+
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const daysInMonth = getDaysInMonth(year, month);
+    const firstDay = getFirstDayOfMonth(year, month);
+
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+    const handlePrevMonth = () => {
+        setCurrentDate(new Date(year, month - 1, 1));
+    };
+
+    const handleNextMonth = () => {
+        setCurrentDate(new Date(year, month + 1, 1));
+    };
+
+    // Generate Calendar Grid
+    const renderCalendarDays = () => {
+        const days = [];
+
+        // Empty slots for days before the 1st of the month
+        for (let i = 0; i < firstDay; i++) {
+            days.push(<div key={`empty-${i}`} className="h-10 md:h-14"></div>);
+        }
+
+        // Actual Days
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const status = attendanceData[dateString];
+
+            let statusColor = "bg-gray-50 text-gray-400 border-gray-100"; // Default / Weekend
+            let tooltip = "No Data";
+
+            if (status === 'Present') {
+                statusColor = "bg-green-100 text-green-700 border-green-200 font-bold";
+                tooltip = "Present";
+            } else if (status === 'Absent') {
+                statusColor = "bg-red-100 text-red-700 border-red-200 font-bold";
+                tooltip = "Absent";
+            } else if (status === 'Late') {
+                statusColor = "bg-orange-100 text-orange-700 border-orange-200 font-bold";
+                tooltip = "Late";
+            } else if (status === 'Holiday') {
+                statusColor = "bg-blue-50 text-blue-600 border-blue-100 font-medium";
+                tooltip = "Holiday";
+            }
+
+            days.push(
+                <div
+                    key={day}
+                    className={`
+                        h-10 md:h-14 rounded-lg border flex flex-col items-center justify-center text-xs sm:text-sm cursor-default relative group transition-all
+                        ${statusColor}
+                    `}
+                >
+                    <span>{day}</span>
+
+                    {/* Tooltip on Hover */}
+                    <div className="absolute bottom-full mb-2 hidden group-hover:block z-10">
+                        <div className="bg-gray-800 text-white text-[10px] px-2 py-1 rounded shadow-lg whitespace-nowrap">
+                            {tooltip}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        return days;
+    };
+
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            {/* LEFT SIDE: Stats Cards */}
             <div className="lg:col-span-1 space-y-4">
                 <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm text-center">
-                    <p className="text-gray-500 text-sm font-medium">Attendance Rate</p>
+                    <p className="text-gray-500 text-sm font-medium">Overall Attendance</p>
                     <h2 className="text-4xl font-bold text-[#EB8A33] mt-2">
                         {Math.round((stats.present / stats.total) * 100)}%
                     </h2>
-                    <p className="text-xs text-gray-400 mt-1">Total Days: {stats.total}</p>
+                    <p className="text-xs text-gray-400 mt-1">Total School Days: {stats.total}</p>
                 </div>
+
                 <div className="bg-green-50 p-4 rounded-xl border border-green-100 flex justify-between items-center">
-                    <span className="text-green-700 font-medium flex items-center gap-2"><CheckCircle size={16} /> Present</span>
-                    <span className="font-bold text-green-800 text-lg">{stats.present}</span>
+                    <span className="text-green-700 font-medium flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-green-600 shadow-sm">
+                            <CheckCircle size={16} />
+                        </div>
+                        Present
+                    </span>
+                    <span className="font-bold text-green-800 text-lg">{stats.present} Days</span>
                 </div>
+
                 <div className="bg-red-50 p-4 rounded-xl border border-red-100 flex justify-between items-center">
-                    <span className="text-red-700 font-medium flex items-center gap-2"><XCircle size={16} /> Absent</span>
-                    <span className="font-bold text-red-800 text-lg">{stats.absent}</span>
+                    <span className="text-red-700 font-medium flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-red-600 shadow-sm">
+                            <XCircle size={16} />
+                        </div>
+                        Absent
+                    </span>
+                    <span className="font-bold text-red-800 text-lg">{stats.absent} Days</span>
+                </div>
+
+                <div className="bg-orange-50 p-4 rounded-xl border border-orange-100 flex justify-between items-center">
+                    <span className="text-orange-700 font-medium flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-orange-600 shadow-sm">
+                            <Clock size={16} />
+                        </div>
+                        Late
+                    </span>
+                    <span className="font-bold text-orange-800 text-lg">{stats.late || 0} Days</span>
                 </div>
             </div>
 
+            {/* RIGHT SIDE: Interactive Calendar */}
             <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <div className="flex items-center gap-2 mb-4">
-                    <Clock className="text-[#EB8A33]" size={20} />
-                    <h3 className="font-bold text-gray-800">Attendance Log</h3>
+
+                {/* Calendar Header */}
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-2">
+                        <CalendarIcon className="text-[#EB8A33]" size={20} />
+                        <h3 className="font-bold text-gray-800">Attendance Log</h3>
+                    </div>
+
+                    {/* Month Navigator */}
+                    <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-1 border border-gray-200">
+                        <button onClick={handlePrevMonth} className="p-1 hover:bg-white hover:shadow-sm rounded-md transition-all text-gray-500">
+                            <ChevronLeft size={18} />
+                        </button>
+                        <span className="text-sm font-bold text-gray-700 w-32 text-center select-none">
+                            {monthNames[month]} {year}
+                        </span>
+                        <button onClick={handleNextMonth} className="p-1 hover:bg-white hover:shadow-sm rounded-md transition-all text-gray-500">
+                            <ChevronRight size={18} />
+                        </button>
+                    </div>
                 </div>
-                <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg border border-dashed border-gray-200 text-gray-400">
-                    Detailed Calendar View Component Goes Here
+
+                {/* Days of Week Header */}
+                <div className="grid grid-cols-7 gap-2 mb-2 text-center">
+                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                        <div key={day} className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                            {day}
+                        </div>
+                    ))}
                 </div>
+
+                {/* Calendar Grid */}
+                <div className="grid grid-cols-7 gap-2">
+                    {renderCalendarDays()}
+                </div>
+
+                {/* Legend */}
+                <div className="flex flex-wrap gap-4 mt-6 pt-4 border-t border-gray-100 text-xs text-gray-500 justify-center">
+                    <div className="flex items-center gap-1.5"><span className="w-3 h-3 bg-green-100 border border-green-200 rounded"></span> Present</div>
+                    <div className="flex items-center gap-1.5"><span className="w-3 h-3 bg-red-100 border border-red-200 rounded"></span> Absent</div>
+                    <div className="flex items-center gap-1.5"><span className="w-3 h-3 bg-orange-100 border border-orange-200 rounded"></span> Late</div>
+                    <div className="flex items-center gap-1.5"><span className="w-3 h-3 bg-blue-50 border border-blue-100 rounded"></span> Holiday</div>
+                </div>
+
             </div>
         </div>
     );

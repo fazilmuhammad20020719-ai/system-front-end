@@ -1,7 +1,11 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Login from './login';
 import Dashboard from './Dashboard';
-import Calendar from './Calendar'; // Import the new Calendar
+import Calendar from './Calendar';
+import Students from './Students';
+import AddStudent from './AddStudent';
+import EditStudent from './EditStudent';
+import ViewStudent from './ViewStudent'; // Import the new page
 
 function App() {
   return (
@@ -9,9 +13,13 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
-
-        {/* Add the Calendar Route */}
         <Route path="/calendar" element={<Calendar />} />
+
+        {/* Student Routes */}
+        <Route path="/students" element={<Students />} />
+        <Route path="/add-student" element={<AddStudent />} />
+        <Route path="/edit-student/:id" element={<EditStudent />} />
+        <Route path="/view-student/:id" element={<ViewStudent />} /> {/* Add this line */}
       </Routes>
     </BrowserRouter>
   );

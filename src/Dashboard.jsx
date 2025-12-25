@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Calendar,
     GraduationCap,
@@ -15,6 +16,7 @@ import Sidebar from './Sidebar';
 
 const Dashboard = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const navigate = useNavigate(); // Hook for navigation
 
     return (
         <div className="min-h-screen bg-[#F3F4F6] font-sans flex">
@@ -46,6 +48,7 @@ const Dashboard = () => {
                             icon={GraduationCap}
                             iconColor="text-indigo-600"
                             iconBg="bg-indigo-100"
+                            onClick={() => navigate('/students')}
                         />
                         <StatCard
                             title="Programs"
@@ -54,6 +57,7 @@ const Dashboard = () => {
                             icon={BookOpen}
                             iconColor="text-orange-600"
                             iconBg="bg-orange-100"
+                            onClick={() => navigate('/programs')}
                         />
                         <StatCard
                             title="Attendance Today"
@@ -62,6 +66,7 @@ const Dashboard = () => {
                             icon={CalendarCheck}
                             iconColor="text-green-600"
                             iconBg="bg-green-100"
+                            onClick={() => navigate('/attendance')}
                         />
                         <StatCard
                             title="Documents"
@@ -70,6 +75,7 @@ const Dashboard = () => {
                             icon={Folder}
                             iconColor="text-purple-600"
                             iconBg="bg-purple-100"
+                            onClick={() => navigate('/documents')}
                         />
                     </div>
 
@@ -79,7 +85,10 @@ const Dashboard = () => {
                             <h3 className="text-lg font-bold text-gray-800">Quick Actions</h3>
                             <p className="text-gray-500 text-sm mt-1">Manage students and admissions efficiently.</p>
                         </div>
-                        <button className="bg-[#E88931] hover:bg-[#d67b28] text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2">
+                        <button
+                            onClick={() => navigate('/AddStudent')}
+                            className="bg-[#E88931] hover:bg-[#d67b28] text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2"
+                        >
                             <UserPlus size={18} />
                             Add Student Box
                         </button>
@@ -143,15 +152,18 @@ const Dashboard = () => {
 };
 
 // Component: Individual Stat Card
-const StatCard = ({ title, value, subText, icon: Icon, iconColor, iconBg }) => (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-start gap-5 hover:shadow-md transition-all">
-        <div className={`w-14 h-14 rounded-xl ${iconBg} flex items-center justify-center shrink-0`}>
+const StatCard = ({ title, value, subText, icon: Icon, iconColor, iconBg, onClick }) => (
+    <div
+        onClick={onClick}
+        className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-start gap-5 hover:shadow-md transition-all cursor-pointer group"
+    >
+        <div className={`w-14 h-14 rounded-xl ${iconBg}qk flex items-center justify-center shrink-0`}>
             <Icon className={iconColor} size={28} />
         </div>
         <div className="flex-1">
             <h3 className="text-3xl font-bold text-gray-800 mb-1">{value}</h3>
             <p className="text-gray-600 text-sm font-medium mb-2">{title}</p>
-            <div className="flex items-center gap-1 text-gray-400 text-xs font-medium cursor-pointer hover:text-gray-600 transition-colors group">
+            <div className="flex items-center gap-1 text-gray-400 text-xs font-medium group-hover:text-gray-600 transition-colors">
                 {subText}
                 <ArrowRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
             </div>

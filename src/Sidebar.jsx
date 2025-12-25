@@ -28,10 +28,12 @@ const Sidebar = ({ isOpen }) => {
             <div className="h-20 flex items-center px-6 border-b border-orange-400/30">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center p-1">
+                        {/* Ensure you have a logo.png in your public folder or change this source */}
                         <img
                             src="/logo.png"
                             alt="Logo"
                             className="w-full h-full rounded-full object-cover"
+                            onError={(e) => { e.target.src = 'https://via.placeholder.com/40'; }}
                         />
                     </div>
                     {isOpen && (
@@ -52,8 +54,8 @@ const Sidebar = ({ isOpen }) => {
                         <SidebarItem
                             icon={LayoutDashboard}
                             text="Dashboard"
-                            to="/"
-                            active={isActive('/')}
+                            to="/dashboard"
+                            active={isActive('/dashboard')}
                             isOpen={isOpen}
                         />
                         <SidebarItem
@@ -70,9 +72,27 @@ const Sidebar = ({ isOpen }) => {
                 <div>
                     {isOpen && <p className="text-xs font-semibold text-orange-100/70 mb-3 px-2 uppercase tracking-wider mt-2">Directory</p>}
                     <div className="space-y-1">
-                        <SidebarItem icon={GraduationCap} text="Students" to="/students" isOpen={isOpen} />
-                        <SidebarItem icon={Users} text="Teachers" to="/teachers" isOpen={isOpen} />
-                        <SidebarItem icon={Users} text="Staff" to="/staff" isOpen={isOpen} />
+                        <SidebarItem
+                            icon={GraduationCap}
+                            text="Students"
+                            to="/students"
+                            active={isActive('/students') || isActive('/add-student')}
+                            isOpen={isOpen}
+                        />
+                        <SidebarItem
+                            icon={Users}
+                            text="Teachers"
+                            to="/teachers"
+                            active={isActive('/teachers')}
+                            isOpen={isOpen}
+                        />
+                        <SidebarItem
+                            icon={Users}
+                            text="Staff"
+                            to="/staff"
+                            active={isActive('/staff')}
+                            isOpen={isOpen}
+                        />
                     </div>
                 </div>
 
@@ -80,8 +100,20 @@ const Sidebar = ({ isOpen }) => {
                 <div>
                     {isOpen && <p className="text-xs font-semibold text-orange-100/70 mb-3 px-2 uppercase tracking-wider mt-2">Academic</p>}
                     <div className="space-y-1">
-                        <SidebarItem icon={Layers} text="Programs" to="/programs" isOpen={isOpen} />
-                        <SidebarItem icon={CalendarCheck} text="Attendance" to="/attendance" isOpen={isOpen} />
+                        <SidebarItem
+                            icon={Layers}
+                            text="Programs"
+                            to="/programs"
+                            active={isActive('/programs')}
+                            isOpen={isOpen}
+                        />
+                        <SidebarItem
+                            icon={CalendarCheck}
+                            text="Attendance"
+                            to="/attendance"
+                            active={isActive('/attendance')}
+                            isOpen={isOpen}
+                        />
                     </div>
                 </div>
 
@@ -89,7 +121,13 @@ const Sidebar = ({ isOpen }) => {
                 <div>
                     {isOpen && <p className="text-xs font-semibold text-orange-100/70 mb-3 px-2 uppercase tracking-wider mt-2">Office</p>}
                     <div className="space-y-1">
-                        <SidebarItem icon={FolderOpen} text="Documents" to="/documents" isOpen={isOpen} />
+                        <SidebarItem
+                            icon={FolderOpen}
+                            text="Documents"
+                            to="/documents"
+                            active={isActive('/documents')}
+                            isOpen={isOpen}
+                        />
                     </div>
                 </div>
             </nav>
@@ -109,9 +147,9 @@ const Sidebar = ({ isOpen }) => {
                     )}
 
                     {isOpen && (
-                        <button className="text-orange-200 hover:text-white transition-colors">
+                        <Link to="/" className="text-orange-200 hover:text-white transition-colors">
                             <LogOut size={20} />
-                        </button>
+                        </Link>
                     )}
                 </div>
             </div>

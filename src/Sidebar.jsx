@@ -29,7 +29,7 @@ const Sidebar = ({ isOpen }) => {
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center p-1">
                         <img
-                            src="https://via.placeholder.com/40"
+                            src="public/logo.png"
                             alt="Logo"
                             className="w-full h-full rounded-full object-cover"
                         />
@@ -136,5 +136,6 @@ const SidebarItem = ({ icon: Icon, text, active, isOpen, to }) => (
         {isOpen && <span className="whitespace-nowrap">{text}</span>}
     </Link>
 );
+
 
 export default Sidebar;

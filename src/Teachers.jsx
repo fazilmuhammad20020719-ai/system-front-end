@@ -74,14 +74,14 @@ const Teachers = () => {
                 {/* HEADER */}
                 <header className="h-20 bg-white border-b border-gray-200 px-8 flex items-center justify-between sticky top-0 z-10">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-800">Staff Management</h1>
-                        <p className="text-sm text-gray-500">Manage all teaching and non-teaching staff</p>
+                        <h1 className="text-2xl font-bold text-gray-800">Teachers Management</h1>
+                        <p className="text-sm text-gray-500">Manage all teaching staff</p>
                     </div>
 
                     <Link to="/add-teacher">
                         <button className="bg-[#EB8A33] hover:bg-[#d67b2b] text-white px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 shadow-lg shadow-orange-100 transition-all active:scale-95">
                             <Plus size={20} />
-                            Add New Staff
+                            Add Teacher
                         </button>
                     </Link>
                 </header>
@@ -96,7 +96,7 @@ const Teachers = () => {
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                             <input
                                 type="text"
-                                placeholder="Search staff by name or ID..."
+                                placeholder="Search teacher by name or ID..."
                                 className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:border-[#EB8A33] focus:ring-1 focus:ring-[#EB8A33] transition-all"
                             />
                         </div>
@@ -184,7 +184,7 @@ const Teachers = () => {
 
                                         {/* Actions Column */}
                                         <td className="p-5 text-right">
-                                            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                                            <div className="flex items-center justify-end gap-2 opacity-80 group-hover:opacity-100 transition-all duration-200">
                                                 <Link to={`/view-teacher/${teacher.id}`}>
                                                     <button className="p-2 hover:bg-gray-50 text-gray-600 rounded-lg transition-colors border border-transparent hover:border-gray-100" title="View Details">
                                                         <Eye size={16} />
@@ -195,7 +195,7 @@ const Teachers = () => {
                                                         <Pencil size={16} />
                                                     </button>
                                                 </Link>
-                                                <button className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors border border-transparent hover:border-red-100" title="Delete Staff">
+                                                <button className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors border border-transparent hover:border-red-100" title="Delete Teacher">
                                                     <Trash2 size={16} />
                                                 </button>
                                             </div>

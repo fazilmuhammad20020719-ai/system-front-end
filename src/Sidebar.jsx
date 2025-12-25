@@ -7,7 +7,8 @@ import {
     Layers,
     CalendarCheck,
     FolderOpen,
-    LogOut
+    LogOut,
+    Briefcase
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen }) => {
@@ -87,10 +88,10 @@ const Sidebar = ({ isOpen }) => {
                             isOpen={isOpen}
                         />
                         <SidebarItem
-                            icon={Users}
-                            text="Staff"
-                            to="/staff"
-                            active={isActive('/staff')}
+                            icon={Briefcase}
+                            text="Management Team"
+                            to="/Management Team"
+                            active={isActive('/Management Team')}
                             isOpen={isOpen}
                         />
                     </div>

@@ -1,169 +1,302 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
-    ChevronLeft,
     ChevronRight,
+    ChevronLeft,
     Plus,
-    Search,
-    Bell,
-    Menu,
-    Clock,
-    MapPin
+    Filter,
+    Paperclip,
+    X,
+    Calendar as CalendarIcon,
+    ChevronDown
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 
 const Calendar = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-    const [currentDate, setCurrentDate] = useState(new Date());
+    const [currentDate, setCurrentDate] = useState(new Date(2025, 11, 25)); // Dec 25, 2025
 
-    // Simple helper to get days in month
-    const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
-    const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
+    // --- STATE FOR MODAL & EVENTS ---
+    const [events, setEvents] = useState([
+        { id: 1, day: 22, title: "we need collabo..", type: "urgent", fullText: "We need collaboration on the main project." },
+        { id: 2, day: 24, title: "pary", type: "warning", fullText: "pary" },
+        { id: 3, day: 31, title: "last day photo ..", type: "success", hasAttachment: true, fullText: "Submit last day photos." },
+        { id: 4, day: 31, title: "asdfasfasf..", type: "warning", fullText: "asdfasfasf.." },
+    ]);
 
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false); // New state for custom dropdown
+    const [selectedDay, setSelectedDay] = useState(null);
+    const [newNote, setNewNote] = useState({ priority: 'Normal', text: '', file: null });
+
+    // --- CALENDAR LOGIC ---
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
-
+    const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+    const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
     const daysInMonth = getDaysInMonth(year, month);
     const firstDay = getFirstDayOfMonth(year, month);
 
-    // Create array of empty slots for previous month days
-    const blanks = Array(firstDay).fill(null);
-
-    // Create array of days
+    const blanks = Array.from({ length: firstDay }, (_, i) => i);
     const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
-    // Month names
-    const monthNames = ["January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
-    ];
+    const totalSlots = firstDay + daysInMonth;
+    const remainingSlots = 7 - (totalSlots % 7);
+    const nextMonthBlanks = remainingSlots < 7 ? Array.from({ length: remainingSlots }, (_, i) => i) : [];
 
-    const changeMonth = (offset) => {
-        setCurrentDate(new Date(year, month + offset, 1));
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+    // --- HANDLERS ---
+    const handleDayClick = (day) => {
+        setSelectedDay(day);
+        setNewNote({ priority: 'Normal', text: '', file: null });
+        setIsModalOpen(true);
+        setIsDropdownOpen(false); // Reset dropdown
     };
 
-    // Mock Events Data
-    const events = [
-        { day: 5, title: "Staff Meeting", time: "10:00 AM", type: "meeting" },
-        { day: 12, title: "Semester Exams", time: "09:00 AM", type: "exam" },
-        { day: 15, title: "Application Deadline", time: "11:59 PM", type: "deadline" },
-        { day: 24, title: "Sports Day", time: "08:00 AM", type: "event" },
+    const handleSaveEvent = () => {
+        if (!newNote.text) return;
+
+        // Map the custom labels back to internal types
+        const typeMap = {
+            'High (Urgent)': 'urgent',
+            'Medium': 'warning',
+            'Normal': 'success'
+        };
+
+        const newEvent = {
+            id: Date.now(),
+            day: selectedDay,
+            title: newNote.text,
+            fullText: newNote.text,
+            type: typeMap[newNote.priority] || 'success',
+            hasAttachment: !!newNote.file
+        };
+
+        setEvents([...events, newEvent]);
+        setIsModalOpen(false);
+    };
+
+    const getEventsForDay = (day) => events.filter(e => e.day === day);
+
+    // --- DROPDOWN OPTIONS CONFIG ---
+    const priorityOptions = [
+        { label: 'Normal', color: 'bg-emerald-400' },
+        { label: 'Medium', color: 'bg-orange-500' },
+        { label: 'High (Urgent)', color: 'bg-red-500' }
     ];
 
-    const getEventForDay = (day) => events.find(e => e.day === day);
+    const getPriorityColor = (label) => {
+        const option = priorityOptions.find(opt => opt.label === label);
+        return option ? option.color : 'bg-gray-400';
+    };
 
     return (
-        <div className="flex h-screen bg-gray-50 font-sans">
-
-            {/* SIDEBAR */}
+        <div className="flex h-screen bg-[#F4F5F7] font-sans overflow-hidden relative">
             <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
 
             {/* MAIN CONTENT */}
-            <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "ml-64" : "ml-20"}`}>
+            <div className={`flex-1 flex flex-col h-full transition-all duration-300 ${isSidebarOpen ? "ml-64" : "ml-20"}`}>
 
-                {/* HEADER (Same as Dashboard) */}
-                <header className="h-20 bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-10 px-8 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-gray-100 rounded-lg text-gray-600">
-                            <Menu size={24} />
-                        </button>
-                        <h2 className="text-xl font-bold text-gray-800">College Calendar</h2>
+                {/* HEADER */}
+                <header className="px-8 py-6 bg-[#F4F5F7] flex-shrink-0">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-2xl font-bold text-gray-800">Executive Calendar</h2>
+                        <div className="bg-white px-4 py-2 rounded-lg shadow-sm text-gray-600 font-medium border border-gray-200">
+                            {monthNames[month]} {year}
+                        </div>
                     </div>
 
-                    <div className="flex items-center gap-6">
-                        <div className="relative hidden md:block">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                            <input type="text" placeholder="Search events..." className="pl-10 pr-4 py-2 bg-gray-100 focus:bg-white border border-transparent focus:border-[#EB8A33] rounded-lg text-sm w-64 transition-all outline-none" />
+                    {/* Stats */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
+                            <div>
+                                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Total Notes</h4>
+                                <span className="text-xs text-gray-400">This Month</span>
+                            </div>
+                            <span className="text-3xl font-bold text-gray-800">{events.length}</span>
                         </div>
-                        <button className="relative p-2.5 bg-gray-100 hover:bg-orange-50 text-gray-600 hover:text-[#EB8A33] rounded-full transition-colors">
-                            <Bell size={20} />
+                        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
+                            <div>
+                                <h4 className="text-xs font-bold text-red-500 uppercase tracking-wider mb-1">High Priority</h4>
+                                <span className="text-xs text-gray-400">Action Required</span>
+                            </div>
+                            <span className="text-3xl font-bold text-red-600">
+                                {events.filter(e => e.type === 'urgent').length}
+                            </span>
+                        </div>
+                        <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
+                            <div>
+                                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Current Date</h4>
+                                <span className="text-xs text-gray-400">Today</span>
+                            </div>
+                            <span className="text-2xl font-bold text-blue-600">25 Dec</span>
+                        </div>
+                    </div>
+
+                    {/* Filter Bar */}
+                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-wrap items-end gap-4">
+                        <div className="flex-1 min-w-[200px]">
+                            <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1.5 ml-1">Month Selection</label>
+                            <input type="date" defaultValue="2025-12-25" className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-500" />
+                        </div>
+                        <div className="flex-[2] min-w-[200px]">
+                            <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1.5 ml-1">Search Notes</label>
+                            <input type="text" placeholder="Keyword..." className="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-500" />
+                        </div>
+                        <button className="px-6 py-2.5 bg-[#1E293B] hover:bg-slate-800 text-white text-sm font-medium rounded-lg flex items-center gap-2">
+                            <Filter size={16} /> Apply
                         </button>
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#EB8A33] to-orange-400 p-0.5 shadow-md">
-                            <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-[#EB8A33] font-bold">A</div>
-                        </div>
                     </div>
                 </header>
 
-                {/* CALENDAR CONTENT */}
-                <main className="p-8 flex-1 overflow-y-auto">
-
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-full md:h-auto min-h-[600px]">
-
-                        {/* Calendar Toolbar */}
-                        <div className="p-6 border-b border-gray-100 flex flex-col md:flex-row items-center justify-between gap-4">
-                            <div className="flex items-center gap-4">
-                                <h2 className="text-2xl font-bold text-gray-800">
-                                    {monthNames[month]} <span className="text-gray-400 font-medium">{year}</span>
-                                </h2>
-                                <div className="flex items-center bg-gray-100 rounded-lg p-1">
-                                    <button onClick={() => changeMonth(-1)} className="p-1 hover:bg-white hover:shadow-sm rounded-md transition-all text-gray-600">
-                                        <ChevronLeft size={20} />
-                                    </button>
-                                    <button onClick={() => changeMonth(1)} className="p-1 hover:bg-white hover:shadow-sm rounded-md transition-all text-gray-600">
-                                        <ChevronRight size={20} />
-                                    </button>
-                                </div>
-                            </div>
-
-                            <button className="flex items-center gap-2 bg-[#EB8A33] hover:bg-[#d67b2b] text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg shadow-orange-200 transition-all active:scale-95">
-                                <Plus size={20} />
-                                Add Event
-                            </button>
-                        </div>
-
-                        {/* Days Header */}
-                        <div className="grid grid-cols-7 border-b border-gray-100 bg-gray-50/50">
-                            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                                <div key={day} className="py-3 text-center text-sm font-semibold text-gray-500 uppercase tracking-wider">
-                                    {day}
-                                </div>
+                {/* CALENDAR GRID */}
+                <main className="flex-1 px-8 pb-8 overflow-y-auto">
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col min-h-[600px]">
+                        <div className="grid grid-cols-7 border-b border-gray-100">
+                            {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(day => (
+                                <div key={day} className="py-4 text-center text-xs font-bold text-gray-400 uppercase tracking-wider">{day}</div>
                             ))}
                         </div>
 
-                        {/* Calendar Grid */}
-                        <div className="grid grid-cols-7 flex-1 auto-rows-fr">
+                        <div className="grid grid-cols-7 auto-rows-fr">
+                            {blanks.map((_, i) => <div key={`blank-prev-${i}`} className="min-h-[140px] border-b border-r border-gray-100 bg-gray-50/20"></div>)}
 
-                            {/* Empty slots for previous month */}
-                            {blanks.map((_, i) => (
-                                <div key={`blank-${i}`} className="min-h-[120px] bg-gray-50/30 border-b border-r border-gray-100 p-3"></div>
-                            ))}
-
-                            {/* Days */}
                             {days.map(day => {
-                                const event = getEventForDay(day);
-                                const isToday = day === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear();
-
+                                const dayEvents = getEventsForDay(day);
+                                const isSelected = day === 25;
                                 return (
-                                    <div key={day} className={`
-                    min-h-[120px] border-b border-r border-gray-100 p-3 transition-colors hover:bg-orange-50/10 relative group
-                    ${isToday ? "bg-orange-50/30" : "bg-white"}
-                  `}>
-                                        <span className={`
-                      w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium
-                      ${isToday ? "bg-[#EB8A33] text-white shadow-md" : "text-gray-700 group-hover:text-[#EB8A33]"}
-                    `}>
-                                            {day}
-                                        </span>
-
-                                        {event && (
-                                            <div className={`mt-2 p-2 rounded-lg border text-xs cursor-pointer hover:opacity-90 transition-opacity
-                        ${event.type === 'meeting' ? 'bg-blue-50 border-blue-100 text-blue-700' :
-                                                    event.type === 'exam' ? 'bg-red-50 border-red-100 text-red-700' :
-                                                        event.type === 'deadline' ? 'bg-amber-50 border-amber-100 text-amber-700' :
-                                                            'bg-green-50 border-green-100 text-green-700'}
-                      `}>
-                                                <p className="font-semibold truncate">{event.title}</p>
-                                                <div className="flex items-center gap-1 mt-1 opacity-80">
-                                                    <Clock size={10} />
-                                                    <span>{event.time}</span>
+                                    <div key={day} onClick={() => handleDayClick(day)}
+                                        className={`min-h-[140px] p-3 border-b border-r border-gray-100 relative group cursor-pointer transition-all hover:bg-gray-50 ${isSelected ? "border-2 border-orange-400 z-10 rounded-lg bg-white" : "bg-white"}`}>
+                                        <div className="flex justify-between items-start mb-2">
+                                            <span className={`text-base font-bold ${isSelected ? 'text-gray-900' : 'text-gray-700'}`}>{day}</span>
+                                            <button className="text-gray-300 hover:text-orange-500"><Plus size={16} /></button>
+                                        </div>
+                                        <div className="flex flex-col gap-1.5">
+                                            {dayEvents.map((event, idx) => (
+                                                <div key={idx} className={`text-[11px] px-2 py-1.5 rounded-md font-medium flex items-center justify-between border-l-2 ${event.type === 'urgent' ? 'bg-red-50 text-red-800 border-red-500' :
+                                                        event.type === 'warning' ? 'bg-amber-50 text-amber-800 border-amber-400' :
+                                                            'bg-emerald-50 text-emerald-800 border-emerald-500'
+                                                    }`}>
+                                                    <span className="truncate">{event.title}</span>
+                                                    {event.hasAttachment && <Paperclip size={10} className="ml-1 opacity-70" />}
                                                 </div>
-                                            </div>
-                                        )}
+                                            ))}
+                                        </div>
                                     </div>
                                 );
                             })}
+                            {nextMonthBlanks.map((_, i) => <div key={`blank-next-${i}`} className="min-h-[140px] border-b border-r border-gray-100 bg-gray-50/20"></div>)}
                         </div>
                     </div>
                 </main>
             </div>
+
+            {/* === MODAL POPUP === */}
+            {isModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white rounded-xl shadow-2xl w-[500px] transform transition-all">
+
+                        {/* Modal Header */}
+                        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                            <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                                <CalendarIcon size={20} className="text-blue-500" />
+                                Manage Events
+                            </h3>
+                            <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        {/* Modal Content */}
+                        <div className="p-6 space-y-6">
+
+                            {/* Existing Notes Section */}
+                            {getEventsForDay(selectedDay).length > 0 && (
+                                <div className="space-y-3">
+                                    {getEventsForDay(selectedDay).map((event) => (
+                                        <div key={event.id} className="border border-gray-200 rounded-lg p-3 bg-gray-50/30">
+                                            <p className={`text-[10px] font-bold uppercase mb-1 ${event.type === 'urgent' ? 'text-orange-500' :
+                                                    event.type === 'warning' ? 'text-orange-500' : 'text-emerald-500'
+                                                }`}>
+                                                {event.type === 'warning' ? 'MEDIUM PRIORITY' : event.type === 'urgent' ? 'HIGH PRIORITY' : 'NORMAL PRIORITY'}
+                                            </p>
+                                            <p className="text-sm text-gray-700">{event.fullText}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Add New Note Section */}
+                            <div className="space-y-4">
+                                <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">ADD NEW NOTE</p>
+
+                                {/* CUSTOM DROPDOWN IMPLEMENTATION */}
+                                <div className="relative">
+                                    {/* Dropdown Trigger */}
+                                    <div
+                                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                        className="w-full pl-4 pr-4 py-3 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 cursor-pointer flex items-center justify-between hover:border-gray-400 transition-colors"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <span className={`w-3 h-3 rounded-full ${getPriorityColor(newNote.priority)} shadow-sm`}></span>
+                                            <span>{newNote.priority}</span>
+                                        </div>
+                                        <ChevronDown size={16} className={`text-gray-500 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                                    </div>
+
+                                    {/* Dropdown Menu */}
+                                    {isDropdownOpen && (
+                                        <div className="absolute top-full left-0 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-xl z-50 overflow-hidden py-1 animate-in fade-in zoom-in duration-100">
+                                            {priorityOptions.map((opt) => (
+                                                <div
+                                                    key={opt.label}
+                                                    onClick={() => {
+                                                        setNewNote({ ...newNote, priority: opt.label });
+                                                        setIsDropdownOpen(false);
+                                                    }}
+                                                    className="px-4 py-2.5 text-sm flex items-center gap-2 cursor-pointer transition-colors hover:bg-blue-600 hover:text-white group"
+                                                >
+                                                    {/* Dot changes border color on hover for visibility if needed, or stays same */}
+                                                    <span className={`w-3 h-3 rounded-full ${opt.color} ring-1 ring-white/20 group-hover:ring-white`}></span>
+                                                    <span>{opt.label}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Text Area */}
+                                <textarea
+                                    placeholder="Type event details..."
+                                    value={newNote.text}
+                                    onChange={(e) => setNewNote({ ...newNote, text: e.target.value })}
+                                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200 min-h-[100px] resize-none"
+                                ></textarea>
+
+                                {/* File Attachment Input */}
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                    <span className="font-bold text-gray-500 text-xs">Attach File (Drive)</span>
+                                    <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 border border-gray-300 px-3 py-1 rounded text-xs transition-colors text-gray-700 font-medium">
+                                        Choose File
+                                        <input type="file" className="hidden" onChange={(e) => setNewNote({ ...newNote, file: e.target.files[0] })} />
+                                    </label>
+                                    <span className="text-xs text-gray-400">
+                                        {newNote.file ? newNote.file.name : 'No file chosen'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Save Button */}
+                            <button
+                                onClick={handleSaveEvent}
+                                className="w-full py-3 bg-[#F97316] hover:bg-[#ea660c] text-white font-bold rounded-lg shadow-md transition-all active:scale-95 flex justify-center items-center gap-2"
+                            >
+                                Save Event
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

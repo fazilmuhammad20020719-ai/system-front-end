@@ -10,7 +10,8 @@ import {
     Trash2,
     BookOpen,
     User,
-    Eye
+    Eye,
+    Menu
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 
@@ -69,13 +70,21 @@ const Teachers = () => {
         <div className="flex min-h-screen bg-gray-50 font-sans">
             <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
 
-            <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "ml-64" : "ml-20"}`}>
+            <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "md:ml-64" : "md:ml-20"} ml-0`}>
 
                 {/* HEADER */}
                 <header className="h-20 bg-white border-b border-gray-200 px-8 flex items-center justify-between sticky top-0 z-10">
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-800">Teachers Management</h1>
-                        <p className="text-sm text-gray-500">Manage all teaching staff</p>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                            className="p-2 bg-white rounded-lg shadow-sm border border-gray-200 text-gray-600 md:hidden"
+                        >
+                            <Menu size={20} />
+                        </button>
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-800">Teachers Management</h1>
+                            <p className="text-sm text-gray-500">Manage all teaching staff</p>
+                        </div>
                     </div>
 
                     <Link to="/add-teacher">
@@ -184,7 +193,7 @@ const Teachers = () => {
 
                                         {/* Actions Column */}
                                         <td className="p-5 text-right">
-                                            <div className="flex items-center justify-end gap-2 opacity-80 group-hover:opacity-100 transition-all duration-200">
+                                            <div className="flex items-center justify-end gap-2 opacity-50 group-hover:opacity-100 transition-all duration-200">
                                                 <Link to={`/view-teacher/${teacher.id}`}>
                                                     <button className="p-2 hover:bg-gray-50 text-gray-600 rounded-lg transition-colors border border-transparent hover:border-gray-100" title="View Details">
                                                         <Eye size={16} />

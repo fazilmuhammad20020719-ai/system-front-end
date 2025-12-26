@@ -9,7 +9,8 @@ import {
     ChevronLeft,
     ChevronRight,
     Download,
-    X
+    X,
+    Menu
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
@@ -70,14 +71,22 @@ const Students = () => {
             <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
 
             {/* MAIN CONTENT */}
-            <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "ml-64" : "ml-20"}`}>
+            <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "md:ml-64" : "md:ml-20"} ml-0`}>
 
                 <main className="p-8">
                     {/* PAGE HEADER */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                        <div>
-                            <h2 className="text-2xl font-bold text-gray-800">Students Directory</h2>
-                            <p className="text-sm text-gray-500 mt-1">Manage and view all registered students.</p>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                                className="p-2 bg-white rounded-lg shadow-sm border border-gray-200 text-gray-600 md:hidden"
+                            >
+                                <Menu size={20} />
+                            </button>
+                            <div>
+                                <h2 className="text-2xl font-bold text-gray-800">Students Directory</h2>
+                                <p className="text-sm text-gray-500 mt-1">Manage and view all registered students.</p>
+                            </div>
                         </div>
                         <div className="flex gap-3">
                             <button className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center gap-2 shadow-sm">

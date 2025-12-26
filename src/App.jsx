@@ -7,6 +7,7 @@ import AddStudent from './AddStudent';
 import EditStudent from './EditStudent';
 import ViewStudent from './ViewStudent';
 import Teachers from './Teachers';
+import Attendance from './Attendance'; // Import Attendance page
 
 function App() {
   return (
@@ -24,6 +25,9 @@ function App() {
 
         {/* Add Teachers Route */}
         <Route path="/teachers" element={<Teachers />} />
+
+        {/* Add Attendance Route */}
+        <Route path="/attendance" element={<Attendance />} />
       </Routes>
     </BrowserRouter>
   );

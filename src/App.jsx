@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './login';
 import Dashboard from './Dashboard';
 import Calendar from './Calendar';
@@ -9,11 +9,16 @@ import ViewStudent from './ViewStudent';
 import Teachers from './Teachers';
 import AddTeacher from './AddTeacher';
 import EditTeacher from './EditTeacher';
-import ViewTeacher from './ViewTeacher';
-import Programs from './Programs'; // Import Programs page
-import Attendance from './Attendance'; // Import Attendance page
+import Programs from './Programs';
+import Attendance from './Attendance';
 import Documents from './Documents';
 import ManagementTeam from './ManagementTeam';
+
+import TeacherLayout from './teacher-view/TeacherLayout';
+import TeacherOverview from './teacher-view/TeacherOverview';
+import TeacherSchedule from './teacher-view/TeacherSchedule';
+import TeacherPayroll from './teacher-view/TeacherPayroll';
+import TeacherDocuments from './teacher-view/TeacherDocuments';
 
 function App() {
   return (
@@ -27,12 +32,22 @@ function App() {
         <Route path="/students" element={<Students />} />
         <Route path="/add-student" element={<AddStudent />} />
         <Route path="/edit-student/:id" element={<EditStudent />} />
-        <Route path="/view-student/:id" element={<ViewStudent />} /> {/* Add this line */}
+        <Route path="/view-student/:id" element={<ViewStudent />} />
 
         {/* Add Teachers Route */}
         <Route path="/teachers" element={<Teachers />} />
         <Route path="/add-teacher" element={<AddTeacher />} />
-        <Route path="/view-teacher/:id" element={<ViewTeacher />} />
+
+
+        {/* Refactored Teacher View with Nested Routes */}
+        <Route path="/view-teacher/:id" element={<TeacherLayout />}>
+          <Route index element={<Navigate to="overview" replace />} />
+          <Route path="overview" element={<TeacherOverview />} />
+          <Route path="schedule" element={<TeacherSchedule />} />
+          <Route path="payroll" element={<TeacherPayroll />} />
+          <Route path="documents" element={<TeacherDocuments />} />
+        </Route>
+
         <Route path="/edit-teacher/:id" element={<EditTeacher />} />
 
         {/* Add Management Team Route */}

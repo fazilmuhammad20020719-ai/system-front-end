@@ -1,9 +1,6 @@
-import { useOutletContext } from 'react-router-dom';
 import { CreditCard } from 'lucide-react';
 
-const TeacherPayroll = () => {
-    const { teacher } = useOutletContext();
-
+const TeacherPayroll = ({ teacher }) => {
     return (
         <div className="space-y-6">
             <div className="bg-gradient-to-r from-gray-800 to-gray-700 p-6 rounded-xl text-white shadow-lg flex justify-between items-center">
@@ -14,8 +11,8 @@ const TeacherPayroll = () => {
                 <div className="bg-white/10 p-3 rounded-full"><CreditCard size={32} /></div>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200 font-bold text-gray-700">Salary History</div>
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-100 font-bold text-gray-700">Salary History</div>
                 <table className="w-full text-left">
                     <thead className="bg-gray-50 text-xs uppercase text-gray-500 font-bold">
                         <tr>

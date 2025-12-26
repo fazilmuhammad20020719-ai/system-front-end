@@ -1,9 +1,6 @@
-import { useOutletContext } from 'react-router-dom';
 import { User, Mail, Phone, MapPin, Calendar, Briefcase, GraduationCap, Layout } from 'lucide-react';
 
-const TeacherOverview = () => {
-    const { teacher } = useOutletContext();
-
+const TeacherOverview = ({ teacher }) => {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left Col: Contact Info */}
@@ -14,14 +11,14 @@ const TeacherOverview = () => {
                         <InfoRow icon={Mail} label="Email" value={teacher.email} />
                         <InfoRow icon={Phone} label="Phone" value={teacher.phone} />
                         <InfoRow icon={MapPin} label="Address" value={teacher.address} />
-                        <InfoRow icon={Calendar} label="Join Date" value={teacher.joinDate} />
+                        <InfoRow icon={Calendar} label="Join Date" value={teacher.joiningDate} />
                     </div>
                 </div>
 
                 <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                     <h3 className="text-sm font-bold text-gray-400 uppercase mb-4 flex items-center gap-2"><Briefcase size={16} /> Work Info</h3>
                     <div className="space-y-4">
-                        <InfoRow icon={Briefcase} label="Department" value={teacher.dept} />
+                        <InfoRow icon={Briefcase} label="Department" value={teacher.department} />
                         <InfoRow icon={GraduationCap} label="Role" value={teacher.role} />
                         <div className="flex items-center justify-between pt-2">
                             <span className="text-xs font-bold text-gray-500">Status</span>

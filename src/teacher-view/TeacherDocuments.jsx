@@ -1,11 +1,25 @@
-import { FileText, Download } from 'lucide-react';
+import { useState } from 'react';
+import { FileText, Download, Printer, Eye, FilePenLine } from 'lucide-react';
 
 const TeacherDocuments = ({ documents }) => {
+    // Local state to allow rename for demo purposes
+    const [docs, setDocs] = useState(documents);
+
+    const handleRename = (index) => {
+        const currentName = docs[index].name;
+        const newName = window.prompt("Rename file:", currentName);
+        if (newName && newName !== currentName) {
+            const updatedDocs = [...docs];
+            updatedDocs[index] = { ...updatedDocs[index], name: newName };
+            setDocs(updatedDocs);
+        }
+    };
+
     return (
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
             <h3 className="font-bold text-gray-800 mb-4">Uploaded Documents</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {documents.map((doc, i) => (
+                {docs.map((doc, i) => (
                     <div key={i} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-orange-300 transition-colors">
                         <div className="flex items-center gap-3">
                             <div className="bg-orange-50 text-[#EB8A33] p-2 rounded"><FileText size={20} /></div>
@@ -14,7 +28,12 @@ const TeacherDocuments = ({ documents }) => {
                                 <p className="text-xs text-gray-400">{doc.size} • {doc.date}</p>
                             </div>
                         </div>
-                        <button className="p-2 text-gray-400 hover:text-blue-600"><Download size={18} /></button>
+                        <div className="flex items-center gap-1">
+                            <button className="p-1.5 text-gray-400 hover:text-orange-600" title="View"><Eye size={18} /></button>
+                            <button className="p-1.5 text-gray-400 hover:text-blue-600" title="Print"><Printer size={18} /></button>
+                            <button className="p-1.5 text-gray-400 hover:text-green-600" title="Download"><Download size={18} /></button>
+                            <button onClick={() => handleRename(i)} className="p-1.5 text-gray-400 hover:text-gray-800" title="Rename"><FilePenLine size={18} /></button>
+                        </div>
                     </div>
                 ))}
 

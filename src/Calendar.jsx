@@ -174,8 +174,8 @@ const Calendar = () => {
                                         <div className="flex flex-col gap-1.5">
                                             {dayEvents.map((event, idx) => (
                                                 <div key={idx} className={`text-[11px] px-2 py-1.5 rounded-md font-medium flex items-center justify-between border-l-2 ${event.type === 'urgent' ? 'bg-red-50 text-red-800 border-red-500' :
-                                                        event.type === 'warning' ? 'bg-amber-50 text-amber-800 border-amber-400' :
-                                                            'bg-emerald-50 text-emerald-800 border-emerald-500'
+                                                    event.type === 'warning' ? 'bg-amber-50 text-amber-800 border-amber-400' :
+                                                        'bg-emerald-50 text-emerald-800 border-emerald-500'
                                                     }`}>
                                                     <span className="truncate">{event.title}</span>
                                                     {event.hasAttachment && <Paperclip size={10} className="ml-1 opacity-70" />}
@@ -216,7 +216,7 @@ const Calendar = () => {
                                     {getEventsForDay(selectedDay).map((event) => (
                                         <div key={event.id} className="border border-gray-200 rounded-lg p-3 bg-gray-50/30">
                                             <p className={`text-[10px] font-bold uppercase mb-1 ${event.type === 'urgent' ? 'text-orange-500' :
-                                                    event.type === 'warning' ? 'text-orange-500' : 'text-emerald-500'
+                                                event.type === 'warning' ? 'text-orange-500' : 'text-emerald-500'
                                                 }`}>
                                                 {event.type === 'warning' ? 'MEDIUM PRIORITY' : event.type === 'urgent' ? 'HIGH PRIORITY' : 'NORMAL PRIORITY'}
                                             </p>
@@ -300,5 +300,6 @@ const Calendar = () => {
         </div>
     );
 };
+
 
 export default Calendar;

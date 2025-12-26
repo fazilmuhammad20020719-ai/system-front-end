@@ -10,13 +10,15 @@ import {
     UploadCloud,
     Save,
     X,
-    ChevronRight
+    ChevronRight,
+    Menu
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 
 const AddStudent = () => {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    // FIX: Default sidebar closed on mobile (width < 768px), open on PC
+    const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
     const navigate = useNavigate();
 
     // Form State
@@ -43,10 +45,9 @@ const AddStudent = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // Handle form submission logic here (e.g., API call)
         console.log("Student Data Submitted:", formData);
         alert("Student record created successfully!");
-        navigate('/students'); // Redirect to students list after save
+        navigate('/students');
     };
 
     return (
@@ -55,22 +56,33 @@ const AddStudent = () => {
             <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
 
             {/* MAIN CONTENT */}
-            <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "ml-64" : "ml-20"}`}>
+            <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "md:ml-64" : "md:ml-20"} ml-0`}>
 
-                <main className="p-8">
+                {/* FIX: p-4 for mobile, p-8 for desktop */}
+                <main className="p-4 md:p-8">
+
                     {/* PAGE HEADER */}
-                    <div className="flex items-center justify-between mb-8">
-                        <div>
-                            <h2 className="text-2xl font-bold text-gray-800">New Admission</h2>
-                            <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
-                                <span>Dashboard</span>
-                                <ChevronRight size={14} />
-                                <span>Students</span>
-                                <ChevronRight size={14} />
-                                <span className="text-[#EB8A33] font-medium">Add Student</span>
+                    <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                                className="p-2 bg-white rounded-lg shadow-sm border border-gray-200 text-gray-600 md:hidden"
+                            >
+                                <Menu size={20} />
+                            </button>
+                            <div>
+                                <h2 className="text-2xl font-bold text-gray-800">New Admission</h2>
+                                <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
+                                    <span className="hidden sm:inline">Dashboard</span>
+                                    <ChevronRight size={14} className="hidden sm:block" />
+                                    <span>Students</span>
+                                    <ChevronRight size={14} />
+                                    <span className="text-[#EB8A33] font-medium">Add Student</span>
+                                </div>
                             </div>
                         </div>
-                        <div className="flex gap-3">
+
+                        <div className="flex gap-3 self-end md:self-auto">
                             <button
                                 onClick={() => navigate(-1)}
                                 className="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 font-medium hover:bg-gray-50 transition-colors flex items-center gap-2"
@@ -81,12 +93,12 @@ const AddStudent = () => {
                                 onClick={handleSubmit}
                                 className="px-6 py-2 bg-[#EB8A33] hover:bg-[#d67b28] text-white rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2"
                             >
-                                <Save size={18} />Qs Save Record
+                                <Save size={18} /> Save Record
                             </button>
                         </div>
                     </div>
 
-                    {/* FORM CONTAINER */}
+                    {/* FORM CONTAINER - Stacks on mobile (grid-cols-1) and 3 cols on Large screens */}
                     <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
                         {/* LEFT COLUMN - Personal & Guardian Info */}
@@ -161,7 +173,7 @@ const AddStudent = () => {
                                         </select>
                                     </div>
                                     <InputField label="Guardian Phone" name="guardianPhone" placeholder="Emergency Contact" icon={Phone} value={formData.guardianPhone} onChange={handleChange} />
-                                    <InputField label="Guardian Email (Optional)" name="email" Tc placeholder="example@email.com" icon={Mail} value={formData.email} onChange={handleChange} />
+                                    <InputField label="Guardian Email (Optional)" name="email" placeholder="example@email.com" icon={Mail} value={formData.email} onChange={handleChange} />
                                 </div>
                             </div>
 

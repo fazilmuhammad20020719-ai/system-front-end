@@ -13,13 +13,14 @@ import {
     X,
     ChevronRight,
     DollarSign,
-    BadgeCheck
+    BadgeCheck,
+    Menu
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 
 const AddTeacher = () => {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
     const navigate = useNavigate();
 
     // Form State
@@ -61,20 +62,28 @@ const AddTeacher = () => {
             {/* MAIN CONTENT */}
             <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "md:ml-64" : "md:ml-20"} ml-0`}>
 
-                <main className="p-8">
+                <main className="p-4 md:p-8">
                     {/* PAGE HEADER */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                        <div>
-                            <h2 className="text-2xl font-bold text-gray-800">Add New Teacher</h2>
-                            <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
-                                <span>Dashboard</span>
-                                <ChevronRight size={14} />
-                                <span>Teachers</span>
-                                <ChevronRight size={14} />
-                                <span className="text-[#EB8A33] font-medium">Add Teacher</span>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                                className="p-2 bg-white rounded-lg shadow-sm border border-gray-200 text-gray-600 md:hidden"
+                            >
+                                <Menu size={20} />
+                            </button>
+                            <div>
+                                <h2 className="text-2xl font-bold text-gray-800">Add New Teacher</h2>
+                                <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
+                                    <span className="hidden sm:inline">Dashboard</span>
+                                    <ChevronRight size={14} className="hidden sm:block" />
+                                    <span>Teachers</span>
+                                    <ChevronRight size={14} />
+                                    <span className="text-[#EB8A33] font-medium">Add Teacher</span>
+                                </div>
                             </div>
                         </div>
-                        <div className="flex gap-3">
+                        <div className="flex gap-3 self-end md:self-auto">
                             <button
                                 onClick={() => navigate(-1)}
                                 className="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 font-medium hover:bg-gray-50 transition-colors flex items-center gap-2"

@@ -11,12 +11,13 @@ import {
     Edit,
     Trash2,
     X,
-    Filter
+    Filter,
+    Menu
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 
 const Programs = () => {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState("All"); // All, Active, Inactive
 
@@ -111,9 +112,17 @@ const Programs = () => {
 
                 {/* --- HEADER --- */}
                 <header className="px-6 py-5 bg-white border-b border-gray-200 flex flex-col md:flex-row md:items-center justify-between gap-4 sticky top-0 z-10 shadow-sm">
-                    <div>
-                        <h1 className="text-2xl font-bold text-gray-800 tracking-tight">Academic Programs</h1>
-                        <p className="text-sm text-gray-500 mt-1">Manage courses, departments, and curriculum details.</p>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                            className="p-2 bg-white rounded-lg shadow-sm border border-gray-200 text-gray-600 md:hidden"
+                        >
+                            <Menu size={20} />
+                        </button>
+                        <div>
+                            <h1 className="text-xl md:text-2xl font-bold text-gray-800 tracking-tight">Academic Programs</h1>
+                            <p className="text-xs md:text-sm text-gray-500 mt-1">Manage courses, departments, and curriculum details.</p>
+                        </div>
                     </div>
 
                     <div className="flex gap-3">
@@ -126,7 +135,7 @@ const Programs = () => {
                     </div>
                 </header>
 
-                <main className="p-6 md:p-8">
+                <main className="p-4 md:p-6 lg:p-8">
 
                     {/* --- FILTERS --- */}
                     <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-col md:flex-row gap-4 justify-between items-center">
@@ -146,7 +155,7 @@ const Programs = () => {
                             <select
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value)}
-                                className="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg px-3 py-2.5 focus:outline-none focus:border-[#ea8933]"
+                                className="w-full md:w-auto bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg px-3 py-2.5 focus:outline-none focus:border-[#ea8933]"
                             >
                                 <option value="All">All Status</option>
                                 <option value="Active">Active</option>

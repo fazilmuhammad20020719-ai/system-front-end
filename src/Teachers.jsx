@@ -8,7 +8,7 @@ import {
     Phone,
     Pencil,
     Trash2,
-    BookOpen,
+    Briefcase,
     User,
     Eye,
     Menu,
@@ -16,14 +16,18 @@ import {
     X,
     ChevronLeft,
     ChevronRight,
-    Briefcase,
-    Users
+    Users,
+    LayoutGrid,
+    List
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 
 const Teachers = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const navigate = useNavigate();
+
+    // -- VIEW MODE STATE (Default: Grid) --
+    const [viewMode, setViewMode] = useState('grid');
 
     // -- FILTERS STATE --
     const [searchTerm, setSearchTerm] = useState("");
@@ -39,17 +43,14 @@ const Teachers = () => {
         { id: 5, name: "Sheikh Abdullah", empid: "EMP-005", dept: "Hifz", role: "Head of Hifz", email: "abdullah@college.edu", phone: "+94 77 222 3333", status: "Active" },
     ]);
 
-    // -- DROPDOWN OPTIONS --
     const departments = ["Islamic Studies", "Arabic Language", "English Unit", "Information Tech", "Hifz"];
 
-    // -- FILTER LOGIC --
     const filteredTeachers = useMemo(() => {
         return teachers.filter(teacher => {
             const matchesSearch = teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 teacher.empid.toLowerCase().includes(searchTerm.toLowerCase());
             const matchesDept = selectedDept === "All" || teacher.dept === selectedDept;
             const matchesStatus = selectedStatus === "All" || teacher.status === selectedStatus;
-
             return matchesSearch && matchesDept && matchesStatus;
         });
     }, [teachers, searchTerm, selectedDept, selectedStatus]);
@@ -90,7 +91,7 @@ const Teachers = () => {
 
                 <main className="p-8">
 
-                    {/* STATS ROW (New Feature) */}
+                    {/* STATS ROW */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                         <StatCard icon={Users} label="Total Teachers" value={teachers.length} color="bg-blue-50 text-blue-600" />
                         <StatCard icon={Briefcase} label="Active Staff" value={teachers.filter(t => t.status === 'Active').length} color="bg-green-50 text-green-600" />
@@ -99,146 +100,175 @@ const Teachers = () => {
 
                     {/* FILTERS TOOLBAR */}
                     <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6">
-                        <div className="flex flex-col md:flex-row gap-4 items-center">
-
-                            {/* Search */}
-                            <div className="relative flex-1 w-full">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                                <input
-                                    type="text"
-                                    placeholder="Search by Name or Employee ID..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#EB8A33] transition-all"
-                                />
+                        <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+                            <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto flex-1">
+                                <div className="relative flex-1 w-full">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                    <input
+                                        type="text"
+                                        placeholder="Search by Name or Employee ID..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#EB8A33] transition-all"
+                                    />
+                                </div>
+                                <div className="flex gap-3 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
+                                    <div className="relative min-w-[160px]">
+                                        <select
+                                            value={selectedDept}
+                                            onChange={(e) => setSelectedDept(e.target.value)}
+                                            className="w-full pl-4 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm appearance-none focus:outline-none focus:border-[#EB8A33] cursor-pointer text-gray-700"
+                                        >
+                                            <option value="All">All Departments</option>
+                                            {departments.map(dept => <option key={dept} value={dept}>{dept}</option>)}
+                                        </select>
+                                        <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
+                                    </div>
+                                    <div className="relative min-w-[140px]">
+                                        <select
+                                            value={selectedStatus}
+                                            onChange={(e) => setSelectedStatus(e.target.value)}
+                                            className="w-full pl-4 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm appearance-none focus:outline-none focus:border-[#EB8A33] cursor-pointer text-gray-700"
+                                        >
+                                            <option value="All">All Status</option>
+                                            <option value="Active">Active</option>
+                                            <option value="On Leave">On Leave</option>
+                                            <option value="Resigned">Resigned</option>
+                                        </select>
+                                        <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
+                                    </div>
+                                    {(searchTerm || selectedDept !== "All" || selectedStatus !== "All") && (
+                                        <button onClick={clearFilters} className="px-3 py-2.5 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors" title="Clear Filters">
+                                            <X size={18} />
+                                        </button>
+                                    )}
+                                </div>
                             </div>
-
-                            {/* Filters */}
-                            <div className="flex gap-3 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
-                                <div className="relative min-w-[160px]">
-                                    <select
-                                        value={selectedDept}
-                                        onChange={(e) => setSelectedDept(e.target.value)}
-                                        className="w-full pl-4 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm appearance-none focus:outline-none focus:border-[#EB8A33] cursor-pointer text-gray-700"
-                                    >
-                                        <option value="All">All Departments</option>
-                                        {departments.map(dept => <option key={dept} value={dept}>{dept}</option>)}
-                                    </select>
-                                    <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
-                                </div>
-
-                                <div className="relative min-w-[140px]">
-                                    <select
-                                        value={selectedStatus}
-                                        onChange={(e) => setSelectedStatus(e.target.value)}
-                                        className="w-full pl-4 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm appearance-none focus:outline-none focus:border-[#EB8A33] cursor-pointer text-gray-700"
-                                    >
-                                        <option value="All">All Status</option>
-                                        <option value="Active">Active</option>
-                                        <option value="On Leave">On Leave</option>
-                                        <option value="Resigned">Resigned</option>
-                                    </select>
-                                    <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
-                                </div>
-
-                                {(searchTerm || selectedDept !== "All" || selectedStatus !== "All") && (
-                                    <button onClick={clearFilters} className="px-3 py-2.5 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors" title="Clear Filters">
-                                        <X size={18} />
-                                    </button>
-                                )}
+                            <div className="flex items-center bg-gray-100 rounded-lg p-1 border border-gray-200 self-end md:self-auto ml-4">
+                                <button onClick={() => setViewMode('list')} className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-white shadow text-[#EB8A33]' : 'text-gray-500 hover:text-gray-700'}`} title="List View"><List size={18} /></button>
+                                <button onClick={() => setViewMode('grid')} className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white shadow text-[#EB8A33]' : 'text-gray-500 hover:text-gray-700'}`} title="Grid View"><LayoutGrid size={18} /></button>
                             </div>
                         </div>
                     </div>
 
-                    {/* TABLE */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <table className="w-full text-left border-collapse">
-                            <thead className="bg-gray-50/50 border-b border-gray-200">
-                                <tr>
-                                    <th className="p-5 text-xs font-bold text-gray-500 uppercase tracking-wider">Teacher Profile</th>
-                                    <th className="p-5 text-xs font-bold text-gray-500 uppercase tracking-wider">Department & Role</th>
-                                    <th className="p-5 text-xs font-bold text-gray-500 uppercase tracking-wider hidden md:table-cell">Contact Info</th>
-                                    <th className="p-5 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Status</th>
-                                    <th className="p-5 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-50">
-                                {filteredTeachers.length > 0 ? filteredTeachers.map((teacher) => (
-                                    <tr key={teacher.id} className="hover:bg-orange-50/30 transition-colors group">
-                                        <td className="p-5">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-[#EB8A33] font-bold text-sm">
-                                                    {teacher.name.charAt(0)}
+                    {/* CONTENT AREA */}
+                    {filteredTeachers.length > 0 ? (
+                        <>
+                            {viewMode === 'list' ? (
+                                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead className="bg-gray-50/50 border-b border-gray-200">
+                                            <tr>
+                                                <th className="p-5 text-xs font-bold text-gray-500 uppercase tracking-wider">Teacher Profile</th>
+                                                <th className="p-5 text-xs font-bold text-gray-500 uppercase tracking-wider">Department & Role</th>
+                                                <th className="p-5 text-xs font-bold text-gray-500 uppercase tracking-wider hidden md:table-cell">Contact Info</th>
+                                                <th className="p-5 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Status</th>
+                                                <th className="p-5 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-50">
+                                            {filteredTeachers.map((teacher) => (
+                                                <tr key={teacher.id} className="hover:bg-orange-50/30 transition-colors group">
+                                                    <td className="p-5">
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-[#EB8A33] font-bold text-sm">
+                                                                {teacher.name.charAt(0)}
+                                                            </div>
+                                                            <div>
+                                                                <p className="font-bold text-gray-800 text-sm">{teacher.name}</p>
+                                                                <p className="text-xs text-gray-500 font-mono">{teacher.empid}</p>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-5">
+                                                        <div className="flex flex-col gap-1">
+                                                            <span className="text-sm font-medium text-gray-700">{teacher.dept}</span>
+                                                            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded w-fit">{teacher.role}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-5 hidden md:table-cell">
+                                                        <div className="flex flex-col gap-1">
+                                                            <div className="flex items-center gap-2 text-xs text-gray-600"><Mail size={12} className="text-gray-400" /> {teacher.email}</div>
+                                                            <div className="flex items-center gap-2 text-xs text-gray-600"><Phone size={12} className="text-gray-400" /> {teacher.phone}</div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-5 text-center">
+                                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${teacher.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{teacher.status}</span>
+                                                    </td>
+                                                    <td className="p-5 text-right">
+                                                        <div className="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-all">
+                                                            <button onClick={() => navigate(`/view-teacher/${teacher.id}`)} className="p-1.5 hover:bg-blue-50 text-gray-400 hover:text-blue-600 rounded-lg transition-colors" title="View Profile"><Eye size={18} /></button>
+                                                            <Link to={`/edit-teacher/${teacher.id}`}><button className="p-1.5 hover:bg-orange-50 text-gray-400 hover:text-orange-600 rounded-lg transition-colors" title="Edit"><Pencil size={18} /></button></Link>
+                                                            <button className="p-1.5 hover:bg-red-50 text-gray-400 hover:text-red-600 rounded-lg transition-colors" title="Delete"><Trash2 size={18} /></button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ) : (
+                                /* --- GRID VIEW (Updated to 4 columns on XL) --- */
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                    {filteredTeachers.map((teacher) => (
+                                        <div key={teacher.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow flex flex-col">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-12 h-12 rounded-full bg-orange-100 text-[#EB8A33] flex items-center justify-center text-lg font-bold">
+                                                        {teacher.name.charAt(0)}
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="font-bold text-gray-800 line-clamp-1">{teacher.name}</h3>
+                                                        <p className="text-xs text-gray-500 font-mono">{teacher.empid}</p>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <p className="font-bold text-gray-800 text-sm">{teacher.name}</p>
-                                                    <p className="text-xs text-gray-500 font-mono">{teacher.empid}</p>
+                                                <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${teacher.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                                                    {teacher.status}
+                                                </span>
+                                            </div>
+                                            <div className="space-y-3 mb-5 flex-1">
+                                                <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                                    <p className="text-xs text-gray-400 uppercase font-semibold mb-1">Department</p>
+                                                    <p className="text-sm font-medium text-gray-800">{teacher.dept}</p>
+                                                    <p className="text-xs text-[#EB8A33] font-medium">{teacher.role}</p>
+                                                </div>
+                                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                    <Mail size={14} className="text-gray-400" />
+                                                    <span className="truncate" title={teacher.email}>{teacher.email}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                    <Phone size={14} className="text-gray-400" />
+                                                    <span>{teacher.phone}</span>
                                                 </div>
                                             </div>
-                                        </td>
-                                        <td className="p-5">
-                                            <div className="flex flex-col gap-1">
-                                                <span className="text-sm font-medium text-gray-700">{teacher.dept}</span>
-                                                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded w-fit">{teacher.role}</span>
+                                            <div className="grid grid-cols-3 gap-2 border-t border-gray-100 pt-4 mt-auto">
+                                                <button onClick={() => navigate(`/view-teacher/${teacher.id}`)} className="flex items-center justify-center gap-1 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-blue-50 hover:text-blue-600 rounded-md transition-colors"><Eye size={14} /> View</button>
+                                                <Link to={`/edit-teacher/${teacher.id}`} className="w-full"><button className="w-full flex items-center justify-center gap-1 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors"><Pencil size={14} /> Edit</button></Link>
+                                                <button className="flex items-center justify-center gap-1 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-red-50 hover:text-red-600 rounded-md transition-colors"><Trash2 size={14} /> Del</button>
                                             </div>
-                                        </td>
-                                        <td className="p-5 hidden md:table-cell">
-                                            <div className="flex flex-col gap-1">
-                                                <div className="flex items-center gap-2 text-xs text-gray-600">
-                                                    <Mail size={12} className="text-gray-400" /> {teacher.email}
-                                                </div>
-                                                <div className="flex items-center gap-2 text-xs text-gray-600">
-                                                    <Phone size={12} className="text-gray-400" /> {teacher.phone}
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="p-5 text-center">
-                                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${teacher.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
-                                                }`}>
-                                                {teacher.status}
-                                            </span>
-                                        </td>
-                                        <td className="p-5 text-right">
-                                            <div className="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-all">
-                                                <button onClick={() => navigate(`/view-teacher/${teacher.id}`)} className="p-1.5 hover:bg-blue-50 text-gray-400 hover:text-blue-600 rounded-lg transition-colors" title="View Profile">
-                                                    <Eye size={18} />
-                                                </button>
-                                                <Link to={`/edit-teacher/${teacher.id}`}>
-                                                    <button className="p-1.5 hover:bg-orange-50 text-gray-400 hover:text-orange-600 rounded-lg transition-colors" title="Edit">
-                                                        <Pencil size={18} />
-                                                    </button>
-                                                </Link>
-                                                <button className="p-1.5 hover:bg-red-50 text-gray-400 hover:text-red-600 rounded-lg transition-colors" title="Delete">
-                                                    <Trash2 size={18} />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                )) : (
-                                    <tr>
-                                        <td colSpan="5" className="p-8 text-center text-gray-400 text-sm">No teachers found matching filters.</td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {/* PAGINATION */}
-                    <div className="mt-4 flex items-center justify-between border-t border-gray-200 pt-4 px-2">
-                        <span className="text-xs text-gray-500">Showing {filteredTeachers.length} of {teachers.length} records</span>
-                        <div className="flex gap-2">
-                            <button className="p-2 border border-gray-200 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-white disabled:opacity-50" disabled><ChevronLeft size={16} /></button>
-                            <button className="p-2 border border-gray-200 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-white"><ChevronRight size={16} /></button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            <div className="mt-4 flex items-center justify-between border-t border-gray-200 pt-4 px-2">
+                                <span className="text-xs text-gray-500">Showing {filteredTeachers.length} of {teachers.length} records</span>
+                                <div className="flex gap-2">
+                                    <button className="p-2 border border-gray-200 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-white disabled:opacity-50" disabled><ChevronLeft size={16} /></button>
+                                    <button className="p-2 border border-gray-200 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-white"><ChevronRight size={16} /></button>
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center text-gray-400 text-sm">
+                            No teachers found matching filters.
                         </div>
-                    </div>
-
+                    )}
                 </main>
             </div>
         </div>
     );
 };
 
-// Helper Component for Stats
 const StatCard = ({ icon: Icon, label, value, color }) => (
     <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
         <div className={`w-12 h-12 rounded-full flex items-center justify-center ${color}`}>

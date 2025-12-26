@@ -10,7 +10,8 @@ import {
 import Sidebar from './Sidebar';
 
 const Attendance = () => {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    // Default: Open on PC (width >= 768), Closed on Mobile
+    const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
 
     // -- STATE MANAGEMENT --
     const [selectedDate, setSelectedDate] = useState("2025-12-26");
@@ -35,7 +36,6 @@ const Attendance = () => {
     // -- FILTER LOGIC --
     const filteredStudents = useMemo(() => {
         return students.filter(student => {
-            // Strict equality used for programs to separate Al-Alim from Al-Alimah
             const matchesProgram = filterProgram === "All" || student.program === filterProgram;
             const matchesYear = filterYear === "All" || student.year === filterYear;
             const matchesStatus = filterStatus === "All" || student.status === filterStatus;
@@ -89,7 +89,6 @@ const Attendance = () => {
     // Helper for Initials
     const getInitials = (name) => name ? name.charAt(0).toLowerCase() : "-";
 
-    // Format Date for Header
     const formattedHeaderDate = new Date(selectedDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
     return (
@@ -100,7 +99,7 @@ const Attendance = () => {
             <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "md:ml-64" : "md:ml-20"} ml-0`}>
 
                 {/* --- HEADER --- */}
-                <header className="px-4 py-4 md:px-8 md:py-6 flex items-center justify-between">
+                <header className="px-4 py-4 md:px-8 md:py-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                         <button
                             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -111,16 +110,15 @@ const Attendance = () => {
                         <h1 className="text-xl md:text-2xl font-bold text-gray-800 tracking-tight">Attendance Registry</h1>
                     </div>
 
-                    <div className="bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-100">
-                        <span className="text-gray-700 font-medium">{formattedHeaderDate}</span>
+                    <div className="bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-100 self-start md:self-auto">
+                        <span className="text-gray-700 font-medium text-sm md:text-base">{formattedHeaderDate}</span>
                     </div>
                 </header>
 
-                <main className="px-8 pb-24">
+                <main className="px-4 md:px-8 pb-24">
 
                     {/* --- STATS CARDS --- */}
-                    <div className="grid grid-cols-2 gap-6 mb-6">
-                        {/* Card 1 */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 mb-6">
                         <div className="bg-white rounded-lg p-5 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] flex items-center justify-between">
                             <div>
                                 <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wide">Date Attendance</h3>
@@ -128,7 +126,6 @@ const Attendance = () => {
                             </div>
                             <div className="text-3xl font-bold text-[#10b981]">{dailyRate}%</div>
                         </div>
-                        {/* Card 2 */}
                         <div className="bg-white rounded-lg p-5 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] flex items-center justify-between">
                             <div>
                                 <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wide">Average</h3>
@@ -139,21 +136,19 @@ const Attendance = () => {
                     </div>
 
                     {/* --- FILTERS & ACTIONS CONTAINER --- */}
-                    <div className="bg-white rounded-lg shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] p-5 mb-6">
+                    <div className="bg-white rounded-lg shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] p-4 md:p-5 mb-6">
 
                         {/* Filters Row */}
                         <div className="flex flex-wrap items-end gap-3 mb-6">
                             {/* Date */}
                             <div className="flex-1 min-w-[140px]">
                                 <label className="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block tracking-wider">Date</label>
-                                <div className="relative">
-                                    <input
-                                        type="date"
-                                        value={selectedDate}
-                                        onChange={(e) => setSelectedDate(e.target.value)}
-                                        className="w-full pl-3 pr-2 py-2 border border-gray-300 rounded text-sm text-gray-700 focus:outline-none focus:border-orange-500"
-                                    />
-                                </div>
+                                <input
+                                    type="date"
+                                    value={selectedDate}
+                                    onChange={(e) => setSelectedDate(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-gray-700 focus:outline-none focus:border-orange-500"
+                                />
                             </div>
 
                             {/* Program */}
@@ -220,110 +215,75 @@ const Attendance = () => {
                             </div>
 
                             {/* Load Button */}
-                            <div>
-                                <button className="bg-[#1f2937] hover:bg-gray-800 text-white px-4 py-2 rounded text-sm font-medium flex items-center gap-2 transition-colors h-[38px]">
+                            <div className="w-full md:w-auto">
+                                <button className="w-full md:w-auto bg-[#1f2937] hover:bg-gray-800 text-white px-4 py-2 rounded text-sm font-medium flex justify-center items-center gap-2 transition-colors h-[38px]">
                                     <RotateCcw size={14} /> Load Data
                                 </button>
                             </div>
                         </div>
 
-                        {/* Divider */}
                         <div className="h-px bg-gray-100 mb-4"></div>
 
-                        {/* Bulk Actions */}
-                        <div className="flex gap-3">
-                            <button onClick={() => handleBulkAction('all-present')} className="flex items-center gap-2 px-3 py-1.5 border border-gray-200 rounded text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
+                        {/* Bulk Actions - Scrollable on Mobile */}
+                        <div className="flex gap-3 overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
+                            <button onClick={() => handleBulkAction('all-present')} className="flex-shrink-0 flex items-center gap-2 px-3 py-1.5 border border-gray-200 rounded text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
                                 <Check size={14} className="text-gray-400" /> All Present
                             </button>
-                            <button onClick={() => handleBulkAction('all-absent')} className="flex items-center gap-2 px-3 py-1.5 border border-gray-200 rounded text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
+                            <button onClick={() => handleBulkAction('all-absent')} className="flex-shrink-0 flex items-center gap-2 px-3 py-1.5 border border-gray-200 rounded text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
                                 <X size={14} className="text-gray-400" /> All Absent
                             </button>
-                            <button onClick={() => handleBulkAction('all-holiday')} className="flex items-center gap-2 px-3 py-1.5 border border-gray-200 rounded text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
+                            <button onClick={() => handleBulkAction('all-holiday')} className="flex-shrink-0 flex items-center gap-2 px-3 py-1.5 border border-gray-200 rounded text-xs font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
                                 <Umbrella size={14} className="text-gray-400" /> All Holiday
                             </button>
                         </div>
-
                     </div>
 
                     {/* --- STUDENT LIST TABLE --- */}
                     <div className="bg-white rounded-t-lg shadow-sm border border-gray-200/60 overflow-hidden">
                         {/* Table Header */}
-                        <div className="grid grid-cols-12 bg-[#f8fafc] p-4 border-b border-gray-200 text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                        <div className="grid grid-cols-12 bg-[#f8fafc] p-4 border-b border-gray-200 text-[10px] font-bold text-gray-500 uppercase tracking-wider min-w-[600px]">
                             <div className="col-span-5 pl-2">Student</div>
                             <div className="col-span-4">Class Info</div>
                             <div className="col-span-3 text-left">Status</div>
                         </div>
 
                         {/* Table Body */}
-                        <div className="divide-y divide-gray-100">
-                            {filteredStudents.length > 0 ? filteredStudents.map((student) => (
-                                <div key={student.id} className="grid grid-cols-12 p-3 items-center hover:bg-gray-50 transition-colors group">
-
-                                    {/* Student Column */}
-                                    <div className="col-span-5 flex items-center gap-3 pl-2">
-                                        <div className="w-9 h-9 bg-gray-200 rounded flex items-center justify-center text-gray-500 font-bold text-sm lowercase pb-0.5">
-                                            {getInitials(student.name)}
+                        <div className="divide-y divide-gray-100 overflow-x-auto">
+                            <div className="min-w-[600px]">
+                                {filteredStudents.length > 0 ? filteredStudents.map((student) => (
+                                    <div key={student.id} className="grid grid-cols-12 p-3 items-center hover:bg-gray-50 transition-colors group">
+                                        <div className="col-span-5 flex items-center gap-3 pl-2">
+                                            <div className="w-9 h-9 bg-gray-200 rounded flex items-center justify-center text-gray-500 font-bold text-sm lowercase pb-0.5 shrink-0">
+                                                {getInitials(student.name)}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-sm font-bold text-slate-700 leading-tight truncate">{student.name}</p>
+                                                <p className="text-[11px] text-gray-400 font-medium mt-0.5 truncate">{student.adminId}</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="text-sm font-bold text-slate-700 leading-tight">{student.name}</p>
-                                            <p className="text-[11px] text-gray-400 font-medium mt-0.5">{student.adminId}</p>
+
+                                        <div className="col-span-4">
+                                            <span className="inline-block bg-[#f3f4f6] text-gray-500 text-[11px] px-2.5 py-1 rounded font-medium border border-gray-200 whitespace-nowrap">
+                                                {student.program} {student.year}
+                                            </span>
+                                        </div>
+
+                                        <div className="col-span-3 flex items-center gap-2">
+                                            <button onClick={() => handleStatusChange(student.id, 'Present')} className={`w-8 h-8 rounded border flex items-center justify-center transition-all ${student.status === 'Present' ? 'bg-green-100 border-green-500 text-green-600' : 'bg-white border-gray-200 text-gray-400 hover:border-green-300'}`}><span className="font-bold text-xs">P</span></button>
+                                            <button onClick={() => handleStatusChange(student.id, 'Absent')} className={`w-8 h-8 rounded border flex items-center justify-center transition-all ${student.status === 'Absent' ? 'bg-red-100 border-red-500 text-red-600' : 'bg-white border-gray-200 text-gray-400 hover:border-red-300'}`}><span className="font-bold text-xs">A</span></button>
+                                            <button onClick={() => handleStatusChange(student.id, 'Holiday')} className={`w-8 h-8 rounded border flex items-center justify-center transition-all ${student.status === 'Holiday' ? 'bg-blue-100 border-blue-500 text-blue-600' : 'bg-white border-gray-200 text-gray-400 hover:border-blue-300'}`}><Umbrella size={14} strokeWidth={2.5} /></button>
                                         </div>
                                     </div>
-
-                                    {/* Class Info Column */}
-                                    <div className="col-span-4">
-                                        <span className="inline-block bg-[#f3f4f6] text-gray-500 text-[11px] px-2.5 py-1 rounded font-medium border border-gray-200">
-                                            {student.program} {student.year}
-                                        </span>
-                                    </div>
-
-                                    {/* Status Column */}
-                                    <div className="col-span-3 flex items-center gap-2">
-
-                                        {/* Present Toggle */}
-                                        <button
-                                            onClick={() => handleStatusChange(student.id, 'Present')}
-                                            className={`w-8 h-8 rounded border flex items-center justify-center transition-all ${student.status === 'Present'
-                                                ? 'bg-green-100 border-green-500 text-green-600'
-                                                : 'bg-white border-gray-200 text-gray-400 hover:border-green-300'
-                                                }`}
-                                        >
-                                            <span className="font-bold text-xs">P</span>
-                                        </button>
-
-                                        {/* Absent Toggle */}
-                                        <button
-                                            onClick={() => handleStatusChange(student.id, 'Absent')}
-                                            className={`w-8 h-8 rounded border flex items-center justify-center transition-all ${student.status === 'Absent'
-                                                ? 'bg-red-100 border-red-500 text-red-600'
-                                                : 'bg-white border-gray-200 text-gray-400 hover:border-red-300'
-                                                }`}
-                                        >
-                                            <span className="font-bold text-xs">A</span>
-                                        </button>
-
-                                        {/* Holiday Toggle */}
-                                        <button
-                                            onClick={() => handleStatusChange(student.id, 'Holiday')}
-                                            className={`w-8 h-8 rounded border flex items-center justify-center transition-all ${student.status === 'Holiday'
-                                                ? 'bg-blue-100 border-blue-500 text-blue-600'
-                                                : 'bg-white border-gray-200 text-gray-400 hover:border-blue-300'
-                                                }`}
-                                        >
-                                            <Umbrella size={14} strokeWidth={2.5} />
-                                        </button>
-
-                                    </div>
-                                </div>
-                            )) : (
-                                <div className="p-8 text-center text-gray-400 text-sm">No records found.</div>
-                            )}
+                                )) : (
+                                    <div className="p-8 text-center text-gray-400 text-sm">No records found.</div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </main>
 
                 {/* --- FOOTER --- */}
-                <div className="fixed bottom-0 left-0 md:left-64 right-0 bg-white border-t border-gray-200 px-6 py-3 flex justify-between items-center z-10">
+                <div className={`fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-3 flex justify-between items-center z-10 transition-all duration-300 ${isSidebarOpen ? "md:left-64" : "md:left-20"}`}>
                     <div className="text-sm font-semibold text-gray-500">
                         Records: <span className="text-gray-800">{filteredStudents.length}</span>
                     </div>
@@ -332,7 +292,8 @@ const Attendance = () => {
                         className="bg-[#ea8933] hover:bg-[#d97c2a] text-white px-5 py-2.5 rounded font-bold text-sm flex items-center gap-2 shadow-sm transition-colors"
                     >
                         <Lock size={16} />
-                        Save Attendance
+                        <span className="hidden xs:inline">Save Attendance</span>
+                        <span className="inline xs:hidden">Save</span>
                     </button>
                 </div>
 
@@ -374,7 +335,6 @@ const Attendance = () => {
                     </div>
                 </div>
             )}
-
         </div>
     );
 };

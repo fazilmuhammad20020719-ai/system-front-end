@@ -16,7 +16,8 @@ import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 
 const Students = () => {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    // FIX: Set initial sidebar state based on screen width (Closed on Mobile, Open on PC)
+    const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
     const navigate = useNavigate();
 
     // Filter States
@@ -52,7 +53,6 @@ const Students = () => {
     const filteredStudents = students.filter(student => {
         const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             student.id.includes(searchTerm);
-        // Exact match for the year string (e.g. "1st Year")
         const matchesYear = selectedYear ? student.year === selectedYear : true;
         const matchesProgram = selectedProgram ? student.program === selectedProgram : true;
 
@@ -73,7 +73,8 @@ const Students = () => {
             {/* MAIN CONTENT */}
             <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "md:ml-64" : "md:ml-20"} ml-0`}>
 
-                <main className="p-8">
+                {/* FIX: Changed p-8 to p-4 md:p-8 for better mobile spacing */}
+                <main className="p-4 md:p-8">
                     {/* PAGE HEADER */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                         <div className="flex items-center gap-3">
@@ -90,7 +91,7 @@ const Students = () => {
                         </div>
                         <div className="flex gap-3">
                             <button className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center gap-2 shadow-sm">
-                                <Download size={16} /> Export
+                                <Download size={16} /> <span className="hidden sm:inline">Export</span>
                             </button>
                             <button
                                 onClick={() => navigate('/add-student')}
@@ -117,10 +118,10 @@ const Students = () => {
                                 />
                             </div>
 
-                            {/* Dropdowns Container */}
-                            <div className="flex gap-4 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
+                            {/* Dropdowns Container - Horizontal scroll on mobile */}
+                            <div className="flex gap-4 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
 
-                                {/* Year Filter (1st to 7th Year) */}
+                                {/* Year Filter */}
                                 <div className="relative min-w-[150px]">
                                     <select
                                         value={selectedYear}
@@ -167,7 +168,7 @@ const Students = () => {
                     {/* STUDENTS TABLE */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                         <div className="overflow-x-auto">
-                            <table className="w-full text-left border-collapse">
+                            <table className="w-full text-left border-collapse min-w-[800px]"> {/* FIX: Added min-w to prevent squashing */}
                                 <thead>
                                     <tr className="bg-gray-50/50 border-b border-gray-100 text-xs uppercase text-gray-500 font-semibold tracking-wider">
                                         <th className="px-6 py-4">Student ID</th>
@@ -213,9 +214,8 @@ const Students = () => {
                                                 </td>
                                                 <td className="px-6 py-4 text-right">
                                                     <div className="flex items-center justify-end gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
-
                                                         <button
-                                                            onClick={() => navigate(`/view-student/${student.id}`)} // Update this line
+                                                            onClick={() => navigate(`/view-student/${student.id}`)}
                                                             className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
                                                             title="View Details"
                                                         >
@@ -245,8 +245,7 @@ const Students = () => {
                                 </tbody>
                             </table>
                         </div>
-
-                        {/* PAGINATION */}
+                        {/* Pagination remains the same */}
                         <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
                             <span className="text-sm text-gray-500">
                                 Showing {filteredStudents.length} entries
@@ -261,7 +260,6 @@ const Students = () => {
                             </div>
                         </div>
                     </div>
-
                 </main>
             </div>
         </div>

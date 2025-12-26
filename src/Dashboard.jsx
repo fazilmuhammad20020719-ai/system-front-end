@@ -95,7 +95,7 @@ const Dashboard = () => {
                             <p className="text-gray-500 text-sm mt-1">Manage students and admissions efficiently.</p>
                         </div>
                         <button
-                            onClick={() => navigate('/AddStudent')}
+                            onClick={() => navigate('/add-student')}
                             className="bg-[#E88931] hover:bg-[#d67b28] text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2"
                         >
                             <UserPlus size={18} />
@@ -166,7 +166,7 @@ const StatCard = ({ title, value, subText, icon: Icon, iconColor, iconBg, onClic
         onClick={onClick}
         className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-start gap-5 hover:shadow-md transition-all cursor-pointer group"
     >
-        <div className={`w-14 h-14 rounded-xl ${iconBg}qk flex items-center justify-center shrink-0`}>
+        <div className={`w-14 h-14 rounded-xl ${iconBg} flex items-center justify-center shrink-0`}>
             <Icon className={iconColor} size={28} />
         </div>
         <div className="flex-1">

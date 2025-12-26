@@ -7,7 +7,13 @@ import AddStudent from './AddStudent';
 import EditStudent from './EditStudent';
 import ViewStudent from './ViewStudent';
 import Teachers from './Teachers';
+import AddTeacher from './AddTeacher';
+import EditTeacher from './EditTeacher';
+import ViewTeacher from './ViewTeacher';
+import Programs from './Programs'; // Import Programs page
 import Attendance from './Attendance'; // Import Attendance page
+import Documents from './Documents';
+import ManagementTeam from './ManagementTeam';
 
 function App() {
   return (
@@ -25,9 +31,21 @@ function App() {
 
         {/* Add Teachers Route */}
         <Route path="/teachers" element={<Teachers />} />
+        <Route path="/add-teacher" element={<AddTeacher />} />
+        <Route path="/view-teacher/:id" element={<ViewTeacher />} />
+        <Route path="/edit-teacher/:id" element={<EditTeacher />} />
+
+        {/* Add Management Team Route */}
+        <Route path="/management-team" element={<ManagementTeam />} />
+
+        {/* Add Programs Route */}
+        <Route path="/programs" element={<Programs />} />
 
         {/* Add Attendance Route */}
         <Route path="/attendance" element={<Attendance />} />
+
+        {/* Documents Route */}
+        <Route path="/documents" element={<Documents />} />
       </Routes>
     </BrowserRouter>
   );

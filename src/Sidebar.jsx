@@ -105,8 +105,8 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                             <SidebarItem
                                 icon={Briefcase}
                                 text="Management Team"
-                                to="/Management Team"
-                                active={isActive('/Management Team')}
+                                to="/management-team"
+                                active={isActive('/management-team')}
                                 isOpen={isOpen}
                             />
                         </div>

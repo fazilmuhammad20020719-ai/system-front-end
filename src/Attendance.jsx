@@ -9,14 +9,11 @@ import {
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 
-
-
-
 const Attendance = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
     // -- STATE MANAGEMENT --
-    const [selectedDate, setSelectedDate] = useState("2025-12-26"); // Set to match screenshot date
+    const [selectedDate, setSelectedDate] = useState("2025-12-26");
     const [filterProgram, setFilterProgram] = useState("All");
     const [filterYear, setFilterYear] = useState("All");
     const [filterStatus, setFilterStatus] = useState("All");
@@ -38,7 +35,8 @@ const Attendance = () => {
     // -- FILTER LOGIC --
     const filteredStudents = useMemo(() => {
         return students.filter(student => {
-            const matchesProgram = filterProgram === "All" || student.program.includes(filterProgram);
+            // Strict equality used for programs to separate Al-Alim from Al-Alimah
+            const matchesProgram = filterProgram === "All" || student.program === filterProgram;
             const matchesYear = filterYear === "All" || student.year === filterYear;
             const matchesStatus = filterStatus === "All" || student.status === filterStatus;
             const matchesSearch = student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -54,7 +52,7 @@ const Attendance = () => {
         return Math.round((presentCount / filteredStudents.length) * 100);
     }, [filteredStudents]);
 
-    const averageRate = 0; // Matching screenshot 0%
+    const averageRate = 0; // Placeholder
 
     // -- HANDLERS --
     const handleStatusChange = (id, newStatus) => {
@@ -167,8 +165,11 @@ const Attendance = () => {
                                     className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-gray-700 focus:outline-none focus:border-orange-500 bg-white"
                                 >
                                     <option value="All">All Programs</option>
-                                    <option value="Hifz">Hifz Class</option>
+                                    <option value="Hifz Class">Hifz Class</option>
                                     <option value="Al-Alim">Al-Alim</option>
+                                    <option value="Al-Alimah">Al-Alimah</option>
+                                    <option value="Qiraat Course">Qiraat Course</option>
+                                    <option value="Arabic Language">Arabic Language</option>
                                 </select>
                             </div>
 
@@ -182,7 +183,12 @@ const Attendance = () => {
                                 >
                                     <option value="All">All Years</option>
                                     <option value="1st Year">1st Year</option>
-                                    <option value="Final Year">Final Year</option>
+                                    <option value="2nd Year">2nd Year</option>
+                                    <option value="3rd Year">3rd Year</option>
+                                    <option value="4th Year">4th Year</option>
+                                    <option value="5th Year">5th Year</option>
+                                    <option value="6th Year">6th Year</option>
+                                    <option value="7th Year">7th Year</option>
                                 </select>
                             </div>
 
@@ -197,6 +203,7 @@ const Attendance = () => {
                                     <option value="All">All Status</option>
                                     <option value="Present">Present</option>
                                     <option value="Absent">Absent</option>
+                                    <option value="Holiday">Holiday</option>
                                 </select>
                             </div>
 
@@ -331,7 +338,7 @@ const Attendance = () => {
 
             </div>
 
-            {/* --- PIN MODAL (Functionality Preserved) --- */}
+            {/* --- PIN MODAL --- */}
             {isPinModalOpen && (
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-50 flex items-center justify-center p-4">
                     <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">

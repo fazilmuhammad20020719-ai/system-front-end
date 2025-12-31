@@ -2,40 +2,42 @@ import { useState } from 'react';
 import { Search } from 'lucide-react';
 import Sidebar from './Sidebar';
 
-// IMPORTING NEW COMPONENTS
+// IMPORTING COMPONENTS
 import StudentHeader from './students/StudentHeader';
 import StudentFilters from './students/StudentFilters';
 import StudentList from './students/StudentList';
 import StudentGrid from './students/StudentGrid';
+import StudentStats from './students/StudentStats'; // <-- Import new component
 
 const Students = () => {
     // Responsive sidebar state
     const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
 
     // VIEW STATES
-    const [viewMode, setViewMode] = useState('grid'); // 'list' or 'grid'
-    const [cardSize, setCardSize] = useState('large'); // 'small' or 'large'
+    const [viewMode, setViewMode] = useState('grid');
+    const [cardSize, setCardSize] = useState('large');
 
     // Filter States
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedYear, setSelectedYear] = useState('');
     const [selectedProgram, setSelectedProgram] = useState('');
+    const [selectedStatus, setSelectedStatus] = useState(''); // <-- New State
 
     // Fixed Academic Years Options
     const academicYears = [
         "1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year", "6th Year", "7th Year"
     ];
 
-    // Dummy Data
+    // Dummy Data (Updated with Graduated status for demo)
     const [students] = useState([
         { id: '2025001', name: 'Muhammad Ahmed', program: 'Hifz ul Quran', year: '1st Year', guardian: 'Ali Ahmed', contact: '077 123 4567', status: 'Active' },
         { id: '2025002', name: 'Yusuf Khan', program: 'Qiraat Course', year: '2nd Year', guardian: 'Usman Khan', contact: '076 987 6543', status: 'Active' },
         { id: '2025003', name: 'Ibrahim Zaid', program: 'Arabic Language', year: '3rd Year', guardian: 'Zaid Moor', contact: '075 555 1234', status: 'Inactive' },
-        { id: '2025004', name: 'Abdullah Omar', program: 'Hifz ul Quran', year: '1st Year', guardian: 'Omar Farooq', contact: '071 222 3333', status: 'Active' },
+        { id: '2025004', name: 'Abdullah Omar', program: 'Hifz ul Quran', year: '1st Year', guardian: 'Omar Farooq', contact: '071 222 3333', status: 'Graduated' }, // Changed to Graduated
         { id: '2025005', name: 'Kareem Abdul', program: 'Islamic Theology (Alim)', year: '7th Year', guardian: 'Abdul Jabbar', contact: '077 999 8888', status: 'Active' },
         { id: '2025006', name: 'Fahad Mustafa', program: 'Qiraat Course', year: '4th Year', guardian: 'Mustafa Ali', contact: '077 111 2222', status: 'Active' },
         { id: '2025007', name: 'Zaid Haris', program: 'Arabic Language', year: '1st Year', guardian: 'Haris Khan', contact: '077 333 4444', status: 'Active' },
-        { id: '2025008', name: 'Omar Bin Khattab', program: 'Islamic Theology', year: '2nd Year', guardian: 'Khattab', contact: '077 555 6666', status: 'Active' },
+        { id: '2025008', name: 'Omar Bin Khattab', program: 'Islamic Theology', year: '2nd Year', guardian: 'Khattab', contact: '077 555 6666', status: 'Graduated' }, // Changed to Graduated
     ]);
 
     // Unique Programs for Dropdown
@@ -47,14 +49,16 @@ const Students = () => {
             student.id.includes(searchTerm);
         const matchesYear = selectedYear ? student.year === selectedYear : true;
         const matchesProgram = selectedProgram ? student.program === selectedProgram : true;
+        const matchesStatus = selectedStatus ? student.status === selectedStatus : true; // <-- New Logic
 
-        return matchesSearch && matchesYear && matchesProgram;
+        return matchesSearch && matchesYear && matchesProgram && matchesStatus;
     });
 
     const clearFilters = () => {
         setSearchTerm('');
         setSelectedYear('');
         setSelectedProgram('');
+        setSelectedStatus(''); // Clear status
     };
 
     return (
@@ -73,6 +77,9 @@ const Students = () => {
 
                 <main className="p-4 md:p-8">
 
+                    {/* STATS CARDS (New) */}
+                    <StudentStats students={students} />
+
                     {/* FILTERS & VIEW CONTROLS */}
                     <StudentFilters
                         searchTerm={searchTerm}
@@ -81,6 +88,8 @@ const Students = () => {
                         setSelectedYear={setSelectedYear}
                         selectedProgram={selectedProgram}
                         setSelectedProgram={setSelectedProgram}
+                        selectedStatus={selectedStatus} // Pass state
+                        setSelectedStatus={setSelectedStatus} // Pass setter
                         viewMode={viewMode}
                         setViewMode={setViewMode}
                         cardSize={cardSize}

@@ -1,9 +1,10 @@
-import { Search, Filter, X, Settings2, List, LayoutGrid } from 'lucide-react';
+import { Search, Filter, X, List, LayoutGrid } from 'lucide-react';
 
 const StudentFilters = ({
     searchTerm, setSearchTerm,
     selectedYear, setSelectedYear,
     selectedProgram, setSelectedProgram,
+    selectedStatus, setSelectedStatus,
     viewMode, setViewMode,
     cardSize, setCardSize,
     academicYears, programs,
@@ -51,7 +52,21 @@ const StudentFilters = ({
                             <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
                         </div>
 
-                        {(searchTerm || selectedYear || selectedProgram) && (
+                        <div className="relative min-w-[140px]">
+                            <select
+                                value={selectedStatus}
+                                onChange={(e) => setSelectedStatus(e.target.value)}
+                                className="w-full pl-4 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm appearance-none focus:outline-none focus:border-[#EB8A33] cursor-pointer text-gray-700"
+                            >
+                                <option value="">All Status</option>
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                                <option value="Graduated">Graduated</option>
+                            </select>
+                            <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
+                        </div>
+
+                        {(searchTerm || selectedYear || selectedProgram || selectedStatus) && (
                             <button onClick={clearFilters} className="px-3 py-2.5 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors" title="Clear Filters">
                                 <X size={18} />
                             </button>
@@ -59,24 +74,8 @@ const StudentFilters = ({
                     </div>
                 </div>
 
-                {/* View & Size Controls */}
+                {/* View Controls */}
                 <div className="flex items-center gap-3 self-end md:self-auto">
-
-                    {/* Size Toggle (Only for Grid View) */}
-                    {viewMode === 'grid' && (
-                        <div className="flex items-center bg-gray-50 border border-gray-200 rounded-lg px-2 h-[42px]">
-                            <Settings2 size={16} className="text-gray-400 mr-2" />
-                            <select
-                                value={cardSize}
-                                onChange={(e) => setCardSize(e.target.value)}
-                                className="bg-transparent text-sm text-gray-600 font-medium focus:outline-none cursor-pointer"
-                            >
-                                <option value="large">Large Cards</option>
-                                <option value="small">Small Cards</option>
-                            </select>
-                        </div>
-                    )}
-
                     {/* View Mode Toggle */}
                     <div className="flex items-center bg-gray-100 rounded-lg p-1 border border-gray-200 h-[42px]">
                         <button

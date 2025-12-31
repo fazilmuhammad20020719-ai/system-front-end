@@ -81,7 +81,7 @@ const Attendance = () => {
                     selectedDate={selectedDate}
                 />
 
-                <main className="px-4 md:px-8 pb-24">
+                <main className="p-4 md:p-8 pb-24">
 
                     {/* STATS */}
                     <AttendanceStats dailyRate={dailyRate} averageRate={averageRate} />

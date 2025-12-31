@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './login';
 import Dashboard from './Dashboard';
 import Calendar from './Calendar';
@@ -49,6 +49,9 @@ function App() {
 
         {/* Documents Route */}
         <Route path="/documents" element={<Documents />} />
+
+        {/* Catch-all Route: Redirect to Dashboard (or 404) */}
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>
   );

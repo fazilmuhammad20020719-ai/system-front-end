@@ -1,20 +1,53 @@
-const AttendanceStats = ({ dailyRate, averageRate }) => {
+import { UserCheck, UserX, Percent, Activity } from 'lucide-react';
+
+const AttendanceStats = ({ dailyRate, averageRate, presentCount, absentCount }) => {
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 mb-6">
-            <div className="bg-white rounded-lg p-5 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] flex items-center justify-between">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+
+            {/* Present Count */}
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
                 <div>
-                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wide">Date Attendance</h3>
-                    <p className="text-xs text-gray-300 font-medium mt-1">On Selected Date</p>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Present Today</p>
+                    <p className="text-2xl font-bold text-gray-800">{presentCount}</p>
                 </div>
-                <div className="text-3xl font-bold text-[#10b981]">{dailyRate}%</div>
+                <div className="w-10 h-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center">
+                    <UserCheck size={20} />
+                </div>
             </div>
-            <div className="bg-white rounded-lg p-5 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] flex items-center justify-between">
+
+            {/* Absent Count */}
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
                 <div>
-                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wide">Average</h3>
-                    <p className="text-xs text-gray-300 font-medium mt-1">Till Date (Filtered)</p>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Absent Today</p>
+                    <p className="text-2xl font-bold text-gray-800">{absentCount}</p>
                 </div>
-                <div className="text-3xl font-bold text-[#6366f1]">{averageRate}%</div>
+                <div className="w-10 h-10 rounded-full bg-red-50 text-red-600 flex items-center justify-center">
+                    <UserX size={20} />
+                </div>
             </div>
+
+            {/* Daily Rate */}
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                <div>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Daily Rate</p>
+                    <p className="text-2xl font-bold text-blue-600">{dailyRate}%</p>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <Percent size={20} />
+                </div>
+            </div>
+
+            {/* Average Rate */}
+            <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                <div>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Average Rate</p>
+                    <p className="text-2xl font-bold text-purple-600">{averageRate}%</p>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center">
+                    <Activity size={20} />
+                </div>
+            </div>
+
         </div>
     );
 };

@@ -24,10 +24,10 @@ const Attendance = () => {
 
     // -- MOCK DATA --
     const [students, setStudents] = useState([
-        { id: 1, name: "fathimah", adminId: "2025/002", program: "Al-Alimah", year: "1st Year", status: "Present", admissionDate: "2023-01-01" },
-        { id: 2, name: "qdwaSAS", adminId: "2025/009", program: "Hifz Class", year: "1st Year", status: "Present", admissionDate: "2022-05-15" },
-        { id: 3, name: "agdf", adminId: "2025/009", program: "Qiraat Course", year: "1st Year", status: "Present", admissionDate: "2023-02-20" },
-        { id: 4, name: "fazil", adminId: "2025/01", program: "Al-Alim", year: "1st Year", status: "Present", admissionDate: "2024-01-10" },
+        { id: 1, name: "fathimah", adminId: "2025/002", program: "Al-Alimah", year: "1st Year", status: "", admissionDate: "2023-01-01" },
+        { id: 2, name: "qdwaSAS", adminId: "2025/009", program: "Hifz Class", year: "1st Year", status: "", admissionDate: "2022-05-15" },
+        { id: 3, name: "agdf", adminId: "2025/009", program: "Qiraat Course", year: "1st Year", status: "", admissionDate: "2023-02-20" },
+        { id: 4, name: "fazil", adminId: "2025/01", program: "Al-Alim", year: "1st Year", status: "", admissionDate: "2024-01-10" },
     ]);
 
     // -- FILTER LOGIC --
@@ -42,14 +42,19 @@ const Attendance = () => {
         });
     }, [students, filterProgram, filterYear, filterStatus, searchQuery]);
 
-    // -- STATISTICS --
-    const dailyRate = useMemo(() => {
-        if (filteredStudents.length === 0) return 0;
-        const presentCount = filteredStudents.filter(s => s.status === "Present").length;
-        return Math.round((presentCount / filteredStudents.length) * 100);
+    // -- STATISTICS CALCULATION --
+    const stats = useMemo(() => {
+        const total = filteredStudents.length;
+        if (total === 0) return { present: 0, absent: 0, rate: 0 };
+
+        const present = filteredStudents.filter(s => s.status === "Present").length;
+        const absent = filteredStudents.filter(s => s.status === "Absent").length;
+        const rate = Math.round((present / total) * 100);
+
+        return { present, absent, rate };
     }, [filteredStudents]);
 
-    const averageRate = 0; // Placeholder
+    const averageRate = 85; // Placeholder for historical average
 
     // -- HANDLERS --
     const handleStatusChange = (id, newStatus) => {
@@ -65,7 +70,7 @@ const Attendance = () => {
 
     const handleSaveSuccess = () => {
         setIsPinModalOpen(false);
-        // You can add additional save logic here (e.g., API call)
+        // Add save logic here
     };
 
     return (
@@ -83,8 +88,13 @@ const Attendance = () => {
 
                 <main className="p-4 md:p-8 pb-24">
 
-                    {/* STATS */}
-                    <AttendanceStats dailyRate={dailyRate} averageRate={averageRate} />
+                    {/* STATS (Updated to pass new counts) */}
+                    <AttendanceStats
+                        dailyRate={stats.rate}
+                        averageRate={averageRate}
+                        presentCount={stats.present}
+                        absentCount={stats.absent}
+                    />
 
                     {/* FILTERS & BULK ACTIONS */}
                     <AttendanceFilters

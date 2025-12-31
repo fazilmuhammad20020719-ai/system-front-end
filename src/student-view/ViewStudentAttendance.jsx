@@ -2,7 +2,6 @@ import { useState } from 'react';
 import {
     CheckCircle,
     XCircle,
-    Clock,
     ChevronLeft,
     ChevronRight,
     Calendar as CalendarIcon
@@ -12,13 +11,11 @@ const ViewStudentAttendance = ({ stats }) => {
     // State for the Calendar
     const [currentDate, setCurrentDate] = useState(new Date());
 
-    // Mock Attendance Data (In a real app, this comes from your API)
-    // Format: 'YYYY-MM-DD': 'Status'
+    // Mock Attendance Data
     const attendanceData = {
         '2025-01-01': 'Present',
         '2025-01-02': 'Present',
         '2025-01-03': 'Absent',
-        '2025-01-05': 'Late',
         '2025-01-06': 'Present',
         '2025-01-07': 'Present',
         '2025-01-08': 'Present',
@@ -28,7 +25,6 @@ const ViewStudentAttendance = ({ stats }) => {
         '2025-01-13': 'Present',
         '2025-01-14': 'Holiday',
         '2025-01-15': 'Present',
-        // ... more data
     };
 
     // Calendar Helper Functions
@@ -42,6 +38,10 @@ const ViewStudentAttendance = ({ stats }) => {
 
     const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
+    // Generate Year Range
+    const currentYear = new Date().getFullYear();
+    const years = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i);
+
     const handlePrevMonth = () => {
         setCurrentDate(new Date(year, month - 1, 1));
     };
@@ -50,11 +50,19 @@ const ViewStudentAttendance = ({ stats }) => {
         setCurrentDate(new Date(year, month + 1, 1));
     };
 
+    const handleMonthChange = (e) => {
+        setCurrentDate(new Date(year, parseInt(e.target.value), 1));
+    };
+
+    const handleYearChange = (e) => {
+        setCurrentDate(new Date(parseInt(e.target.value), month, 1));
+    };
+
     // Generate Calendar Grid
     const renderCalendarDays = () => {
         const days = [];
 
-        // Empty slots for days before the 1st of the month
+        // Empty slots for days before the 1st
         for (let i = 0; i < firstDay; i++) {
             days.push(<div key={`empty-${i}`} className="h-10 md:h-14"></div>);
         }
@@ -64,7 +72,7 @@ const ViewStudentAttendance = ({ stats }) => {
             const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
             const status = attendanceData[dateString];
 
-            let statusColor = "bg-gray-50 text-gray-400 border-gray-100"; // Default / Weekend
+            let statusColor = "bg-gray-50 text-gray-400 border-gray-100";
             let tooltip = "No Data";
 
             if (status === 'Present') {
@@ -73,9 +81,6 @@ const ViewStudentAttendance = ({ stats }) => {
             } else if (status === 'Absent') {
                 statusColor = "bg-red-100 text-red-700 border-red-200 font-bold";
                 tooltip = "Absent";
-            } else if (status === 'Late') {
-                statusColor = "bg-orange-100 text-orange-700 border-orange-200 font-bold";
-                tooltip = "Late";
             } else if (status === 'Holiday') {
                 statusColor = "bg-blue-50 text-blue-600 border-blue-100 font-medium";
                 tooltip = "Holiday";
@@ -90,8 +95,6 @@ const ViewStudentAttendance = ({ stats }) => {
                     `}
                 >
                     <span>{day}</span>
-
-                    {/* Tooltip on Hover */}
                     <div className="absolute bottom-full mb-2 hidden group-hover:block z-10">
                         <div className="bg-gray-800 text-white text-[10px] px-2 py-1 rounded shadow-lg whitespace-nowrap">
                             {tooltip}
@@ -135,39 +138,47 @@ const ViewStudentAttendance = ({ stats }) => {
                     </span>
                     <span className="font-bold text-red-800 text-lg">{stats.absent} Days</span>
                 </div>
-
-                <div className="bg-orange-50 p-4 rounded-xl border border-orange-100 flex justify-between items-center">
-                    <span className="text-orange-700 font-medium flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-orange-600 shadow-sm">
-                            <Clock size={16} />
-                        </div>
-                        Late
-                    </span>
-                    <span className="font-bold text-orange-800 text-lg">{stats.late || 0} Days</span>
-                </div>
             </div>
 
             {/* RIGHT SIDE: Interactive Calendar */}
             <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
 
-                {/* Calendar Header */}
-                <div className="flex items-center justify-between mb-6">
+                {/* Calendar Header with Date Menu */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                     <div className="flex items-center gap-2">
                         <CalendarIcon className="text-[#EB8A33]" size={20} />
                         <h3 className="font-bold text-gray-800">Attendance Log</h3>
                     </div>
 
-                    {/* Month Navigator */}
-                    <div className="flex items-center gap-2 bg-gray-50 rounded-lg p-1 border border-gray-200">
-                        <button onClick={handlePrevMonth} className="p-1 hover:bg-white hover:shadow-sm rounded-md transition-all text-gray-500">
-                            <ChevronLeft size={18} />
-                        </button>
-                        <span className="text-sm font-bold text-gray-700 w-32 text-center select-none">
-                            {monthNames[month]} {year}
-                        </span>
-                        <button onClick={handleNextMonth} className="p-1 hover:bg-white hover:shadow-sm rounded-md transition-all text-gray-500">
-                            <ChevronRight size={18} />
-                        </button>
+                    <div className="flex items-center gap-2">
+                        <select
+                            value={month}
+                            onChange={handleMonthChange}
+                            className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 outline-none focus:border-[#EB8A33] cursor-pointer hover:bg-white transition-colors"
+                        >
+                            {monthNames.map((name, index) => (
+                                <option key={index} value={index}>{name}</option>
+                            ))}
+                        </select>
+
+                        <select
+                            value={year}
+                            onChange={handleYearChange}
+                            className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 outline-none focus:border-[#EB8A33] cursor-pointer hover:bg-white transition-colors"
+                        >
+                            {years.map((y) => (
+                                <option key={y} value={y}>{y}</option>
+                            ))}
+                        </select>
+
+                        <div className="flex items-center border border-gray-200 rounded-lg bg-gray-50 ml-1">
+                            <button onClick={handlePrevMonth} className="p-2 hover:bg-white hover:text-[#EB8A33] transition-colors border-r border-gray-200 rounded-l-lg">
+                                <ChevronLeft size={16} />
+                            </button>
+                            <button onClick={handleNextMonth} className="p-2 hover:bg-white hover:text-[#EB8A33] transition-colors rounded-r-lg">
+                                <ChevronRight size={16} />
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -189,7 +200,6 @@ const ViewStudentAttendance = ({ stats }) => {
                 <div className="flex flex-wrap gap-4 mt-6 pt-4 border-t border-gray-100 text-xs text-gray-500 justify-center">
                     <div className="flex items-center gap-1.5"><span className="w-3 h-3 bg-green-100 border border-green-200 rounded"></span> Present</div>
                     <div className="flex items-center gap-1.5"><span className="w-3 h-3 bg-red-100 border border-red-200 rounded"></span> Absent</div>
-                    <div className="flex items-center gap-1.5"><span className="w-3 h-3 bg-orange-100 border border-orange-200 rounded"></span> Late</div>
                     <div className="flex items-center gap-1.5"><span className="w-3 h-3 bg-blue-50 border border-blue-100 rounded"></span> Holiday</div>
                 </div>
 

@@ -54,11 +54,11 @@ const Attendance = () => {
     const stats = useMemo(() => {
         const total = statsStudents.length;
         if (total === 0) return { present: 0, absent: 0, rate: 0 };
-        
+
         const present = statsStudents.filter(s => s.status === "Present").length;
         const absent = statsStudents.filter(s => s.status === "Absent").length;
         const rate = Math.round((present / total) * 100);
-        
+
         return { present, absent, rate };
     }, [statsStudents]); // Depends on the wider list, not the filtered list
 
@@ -72,11 +72,11 @@ const Attendance = () => {
     const handleBulkAction = (action) => {
         const statusMap = { 'all-present': 'Present', 'all-absent': 'Absent', 'all-holiday': 'Holiday' };
         const targetStatus = statusMap[action];
-        
+
         // We apply bulk action only to currently VISIBLE students (filteredStudents)
         // This is correct behavior (e.g. if I search "Ali" and click "All Present", only Ali becomes present)
         const visibleIds = filteredStudents.map(s => s.id);
-        
+
         setStudents(prev => prev.map(s => visibleIds.includes(s.id) ? { ...s, status: targetStatus } : s));
     };
 
@@ -101,8 +101,8 @@ const Attendance = () => {
                 <main className="p-4 md:p-8 pb-24">
 
                     {/* STATS */}
-                    <AttendanceStats 
-                        dailyRate={stats.rate} 
+                    <AttendanceStats
+                        dailyRate={stats.rate}
                         averageRate={averageRate}
                         presentCount={stats.present}
                         absentCount={stats.absent}

@@ -14,7 +14,7 @@ const AttendanceTable = ({ students, onStatusChange }) => {
             </div>
 
             {/* Table Body */}
-            <div className="divide-y divide-gray-100 overflow-x-auto">
+            <div className="divide-y divide-gray-100 overflow-x-auto max-h-[65vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
                 <div className="min-w-[600px]">
                     {students.length > 0 ? students.map((student) => (
                         <div key={student.id} className="grid grid-cols-12 p-3 items-center hover:bg-gray-50 transition-colors group">

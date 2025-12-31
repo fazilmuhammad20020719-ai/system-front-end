@@ -65,12 +65,13 @@ const Students = () => {
             {/* MAIN CONTENT */}
             <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "md:ml-64" : "md:ml-20"} ml-0`}>
 
+                {/* HEADER (Sticky) */}
+                <StudentHeader
+                    toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+                    isSidebarOpen={isSidebarOpen}
+                />
+
                 <main className="p-4 md:p-8">
-                    {/* PAGE HEADER */}
-                    <StudentHeader
-                        toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-                        isSidebarOpen={isSidebarOpen}
-                    />
 
                     {/* FILTERS & VIEW CONTROLS */}
                     <StudentFilters

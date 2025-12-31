@@ -5,7 +5,7 @@ const StudentHeader = ({ toggleSidebar, isSidebarOpen }) => {
     const navigate = useNavigate();
 
     return (
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <header className="px-6 py-4 md:px-8 md:h-20 flex flex-col md:flex-row md:items-center justify-between gap-4 sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm transition-all">
             <div className="flex items-center gap-3">
                 <button
                     onClick={toggleSidebar}
@@ -14,8 +14,8 @@ const StudentHeader = ({ toggleSidebar, isSidebarOpen }) => {
                     <Menu size={20} />
                 </button>
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-800">Students Directory</h2>
-                    <p className="text-sm text-gray-500 mt-1">Manage and view all registered students.</p>
+                    <h2 className="text-xl md:text-2xl font-bold text-gray-800">Students Directory</h2>
+                    <p className="text-sm text-gray-500 mt-0.5">Manage and view all registered students.</p>
                 </div>
             </div>
             <div className="flex gap-3">
@@ -29,7 +29,7 @@ const StudentHeader = ({ toggleSidebar, isSidebarOpen }) => {
                     <Plus size={18} /> Add Student
                 </button>
             </div>
-        </div>
+        </header>
     );
 };
 

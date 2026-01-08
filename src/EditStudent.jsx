@@ -12,7 +12,7 @@ const EditStudent = () => {
     const navigate = useNavigate();
     const { id } = useParams();
 
-    // Form State (Added 'status')
+    // Form State (Updated with new Location/Guardian fields)
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -21,10 +21,22 @@ const EditStudent = () => {
         nic: '',
         email: '',
         phone: '',
+
+        // New Location Fields
+        province: '',
+        district: '',
+        dsDivision: '',
+        gnDivision: '',
         address: '',
+        googleMapLink: '',
+        latitude: '',
+        longitude: '',
+
         guardianName: '',
         guardianRelation: '',
+        guardianOccupation: '', // New
         guardianPhone: '',
+
         program: '',
         year: '',
         session: '',
@@ -32,8 +44,8 @@ const EditStudent = () => {
         status: 'Active'
     });
 
-    // Simulate Fetching Data
     useEffect(() => {
+        // Mock Data with Sri Lanka details
         const dummyData = {
             firstName: 'Muhammad',
             lastName: 'Ahmed',
@@ -42,13 +54,23 @@ const EditStudent = () => {
             nic: '201512345678',
             email: 'student@example.com',
             phone: '077 123 4567',
+
+            province: 'Western',
+            district: 'Colombo',
+            dsDivision: 'Colombo Dist',
+            gnDivision: 'C-123',
             address: '123, Main Street, Colombo',
+            googleMapLink: 'https://maps.google.com',
+            latitude: '6.9271',
+            longitude: '79.8612',
+
             guardianName: 'Ali Ahmed',
             guardianRelation: 'Father',
+            guardianOccupation: 'Merchant',
             guardianPhone: '077 987 6543',
-            program: 'Hifz ul Quran',
+            program: 'Hifzul Quran',
             year: '1st Year',
-            session: '2025-2026',
+            session: '2025',
             previousSchool: 'City High School',
             status: 'Active'
         };
@@ -59,7 +81,6 @@ const EditStudent = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    // Handler specifically for the status buttons
     const handleStatusChange = (newStatus) => {
         setFormData({ ...formData, status: newStatus });
     };
@@ -68,43 +89,23 @@ const EditStudent = () => {
         e.preventDefault();
         console.log("Updated Data:", formData);
         alert("Student record updated successfully!");
-
-        // UPDATED: Navigate to the View Student page for this specific ID
         navigate(`/view-student/${id}`);
     };
 
     return (
         <div className="min-h-screen bg-[#F3F4F6] font-sans flex">
-            {/* SIDEBAR */}
             <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
-
-            {/* MAIN CONTENT */}
             <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "md:ml-64" : "md:ml-20"} ml-0`}>
-
-                {/* STICKY HEADER */}
-                <EditStudentHeader
-                    id={id}
-                    toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-                    onSave={handleSubmit}
-                />
-
+                <EditStudentHeader id={id} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} onSave={handleSubmit} />
                 <main className="p-8">
                     <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-                        {/* LEFT COLUMN */}
                         <div className="lg:col-span-2">
-                            <EditProfileInfo formData={formData} handleChange={handleChange} />
+                            {/* Pass setFormData to handle Map updates if needed */}
+                            <EditProfileInfo formData={formData} handleChange={handleChange} setFormData={setFormData} />
                         </div>
-
-                        {/* RIGHT COLUMN */}
                         <div>
-                            <EditAcademicInfo
-                                formData={formData}
-                                handleChange={handleChange}
-                                handleStatusChange={handleStatusChange}
-                            />
+                            <EditAcademicInfo formData={formData} handleChange={handleChange} handleStatusChange={handleStatusChange} />
                         </div>
-
                     </form>
                 </main>
             </div>

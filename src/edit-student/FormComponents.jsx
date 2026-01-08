@@ -1,7 +1,7 @@
 import { UploadCloud } from 'lucide-react';
 
 export const InputField = ({ label, name, placeholder, value, onChange, icon: Icon, type = "text" }) => (
-    <div className="space-y-1.5">
+    <div className="space-y-1.5 w-full">
         <label className="text-sm font-semibold text-gray-700">{label}</label>
         <div className="relative">
             {Icon && <Icon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />}
@@ -14,6 +14,24 @@ export const InputField = ({ label, name, placeholder, value, onChange, icon: Ic
                 className={`w-full ${Icon ? 'pl-10' : 'px-4'} pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:border-[#EB8A33] focus:ring-1 focus:ring-[#EB8A33] outline-none transition-all placeholder:text-gray-400`}
             />
         </div>
+    </div>
+);
+
+export const SelectField = ({ label, name, value, onChange, options, placeholder, disabled }) => (
+    <div className="space-y-1.5 w-full">
+        <label className="text-sm font-semibold text-gray-700">{label}</label>
+        <select
+            name={name}
+            value={value}
+            onChange={onChange}
+            disabled={disabled}
+            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:border-[#EB8A33] focus:ring-1 focus:ring-[#EB8A33] outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+            <option value="">{placeholder || 'Select'}</option>
+            {options.map((opt) => (
+                <option key={opt} value={opt}>{opt}</option>
+            ))}
+        </select>
     </div>
 );
 

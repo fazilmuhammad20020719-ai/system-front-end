@@ -1,25 +1,38 @@
-import { MapPin, Map, Navigation, CheckCircle, X } from 'lucide-react';
+import { MapPin, Map, Navigation, X } from 'lucide-react';
 import { InputField, SelectField } from './FormComponents';
 import { useState } from 'react';
 
-// SRI LANKA DATA
-const SRI_LANKA_LOCATIONS = {
-    "Western": ["Colombo", "Gampaha", "Kalutara"],
-    "Central": ["Kandy", "Matale", "Nuwara Eliya"],
-    "Southern": ["Galle", "Matara", "Hambantota"],
-    "Northern": ["Jaffna", "Kilinochchi", "Mannar", "Vavuniya", "Mullaitivu"],
-    "Eastern": ["Batticaloa", "Ampara", "Trincomalee"],
-    "North Western": ["Kurunegala", "Puttalam"],
-    "North Central": ["Anuradhapura", "Polonnaruwa"],
-    "Uva": ["Badulla", "Monaragala"],
-    "Sabaragamuwa": ["Ratnapura", "Kegalle"]
-};
+// UPDATED LIST (District + Province)
+const SRI_LANKA_DISTRICTS = [
+    "Colombo (Western Province)",
+    "Gampaha (Western Province)",
+    "Kalutara (Western Province)",
+    "Kandy (Central Province)",
+    "Matale (Central Province)",
+    "Nuwara Eliya (Central Province)",
+    "Galle (Southern Province)",
+    "Matara (Southern Province)",
+    "Hambantota (Southern Province)",
+    "Jaffna (Northern Province)",
+    "Kilinochchi (Northern Province)",
+    "Mannar (Northern Province)",
+    "Vavuniya (Northern Province)",
+    "Mullaitivu (Northern Province)",
+    "Batticaloa (Eastern Province)",
+    "Ampara (Eastern Province)",
+    "Trincomalee (Eastern Province)",
+    "Kurunegala (North Western Province)",
+    "Puttalam (North Western Province)",
+    "Anuradhapura (North Central Province)",
+    "Polonnaruwa (North Central Province)",
+    "Badulla (Uva Province)",
+    "Moneragala (Uva Province)",
+    "Ratnapura (Sabaragamuwa Province)",
+    "Kegalle (Sabaragamuwa Province)"
+];
 
 const StudentLocationInfo = ({ formData, handleChange, setFormData }) => {
     const [showMapModal, setShowMapModal] = useState(false);
-
-    // Derived districts based on province
-    const districts = formData.province ? (SRI_LANKA_LOCATIONS[formData.province] || []) : [];
 
     const handleMapSave = (link, lat, lng) => {
         setFormData(prev => ({
@@ -38,17 +51,24 @@ const StudentLocationInfo = ({ formData, handleChange, setFormData }) => {
                     <MapPin className="text-[#EB8A33]" size={18} /> Address & Location
                 </h3>
 
+                {/* Updated Grid - Removed Province Dropdown */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <SelectField label="Province" name="province" value={formData.province} onChange={handleChange} options={Object.keys(SRI_LANKA_LOCATIONS)} />
-                    <SelectField label="District" name="district" value={formData.district} onChange={handleChange} options={districts} disabled={!formData.province} />
+                    <div className="md:col-span-1">
+                        <SelectField
+                            label="District / Region"
+                            name="district"
+                            value={formData.district}
+                            onChange={handleChange}
+                            options={SRI_LANKA_DISTRICTS}
+                            placeholder="Select District"
+                        />
+                    </div>
                     <InputField label="DS Division" name="dsDivision" value={formData.dsDivision} onChange={handleChange} />
+                    <InputField label="GN Division" name="gnDivision" value={formData.gnDivision} onChange={handleChange} />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <InputField label="GN Division" name="gnDivision" value={formData.gnDivision} onChange={handleChange} />
-                    <div className="md:col-span-2">
-                        <InputField label="Home Address" name="address" value={formData.address} onChange={handleChange} icon={MapPin} />
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                    <InputField label="Home Address" name="address" value={formData.address} onChange={handleChange} icon={MapPin} />
                 </div>
             </div>
 

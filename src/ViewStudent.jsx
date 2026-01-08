@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-    User, FileText, Clock, Award, FileBarChart, CreditCard, Activity, ArrowLeft
+    User, FileText, Clock, Award, CreditCard, Activity, ArrowLeft
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Sidebar from './Sidebar';
@@ -21,28 +21,49 @@ const ViewStudent = () => {
     const [activeTab, setActiveTab] = useState('personal');
     const [student, setStudent] = useState(null);
 
-    // Mock Data Fetching (Centralized Data)
+    // Mock Data Fetching (Updated to match Add Student)
     useEffect(() => {
         const dummyData = {
             id: id,
+            // Personal
             firstName: 'Muhammad',
             lastName: 'Ahmed',
-            image: 'https://via.placeholder.com/150',
-            status: 'Active',
+            image: null, // Placeholder handled in component
             dob: '2015-05-15',
             gender: 'Male',
             nic: '201512345678',
             email: 'student@example.com',
             phone: '077 123 4567',
+
+            // Location (Updated)
+            province: 'Western',
+            district: 'Colombo',
+            dsDivision: 'Colombo Dist', // New
+            gnDivision: 'C-123', // New
             address: '123, Main Street, Colombo, Sri Lanka',
+            googleMapLink: 'https://maps.google.com',
+
+            // Guardian
             guardianName: 'Ali Ahmed',
             guardianRelation: 'Father',
             guardianPhone: '077 987 6543',
             guardianEmail: 'ali.ahmed@example.com',
-            program: 'Hifz ul Quran',
-            year: '1st Year',
-            session: '2025-2026',
+            guardianOccupation: 'Merchant',
+
+            // Academic (Updated)
+            program: 'Hifzul Quran',
+            year: 'Grade 5', // Current Grade/Year
+            session: '2025', // Batch Year
+            admissionDate: '2025-01-10',
+            status: 'Active',
+
+            // Previous Education (New)
             previousSchool: 'City High School',
+            lastStudiedGrade: 'Grade 4',
+            previousCollegeName: 'City Madrasa',
+            mediumOfStudy: 'Tamil',
+
+            // Extra Data
             documents: [
                 { name: 'Birth_Certificate.pdf', size: '1.2 MB', date: '25 Dec 2025' },
                 { name: 'Medical_Report.pdf', size: '2.4 MB', date: '25 Dec 2025' },

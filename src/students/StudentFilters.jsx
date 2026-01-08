@@ -1,21 +1,25 @@
-import { Search, Filter, X, List, LayoutGrid } from 'lucide-react';
+import { Search, Filter, X, List, LayoutGrid, Maximize2, Minimize2 } from 'lucide-react';
 
 const StudentFilters = ({
     searchTerm, setSearchTerm,
     selectedYear, setSelectedYear,
+    selectedBatch, setSelectedBatch, // NEW PROP
     selectedProgram, setSelectedProgram,
     selectedStatus, setSelectedStatus,
     viewMode, setViewMode,
     cardSize, setCardSize,
-    academicYears, programs,
+    academicYears,
+    batchYears, // NEW DATA
+    programs,
     clearFilters
 }) => {
     return (
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 space-y-4 md:space-y-0">
             <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
 
-                {/* Search & Filters Group */}
+                {/* 1. Search & Filters Group */}
                 <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto flex-1">
+                    {/* Search Bar */}
                     <div className="relative flex-1 min-w-[200px]">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <input
@@ -27,24 +31,15 @@ const StudentFilters = ({
                         />
                     </div>
 
-                    <div className="flex gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-hide">
-                        <div className="relative min-w-[140px]">
-                            <select
-                                value={selectedYear}
-                                onChange={(e) => setSelectedYear(e.target.value)}
-                                className="w-full pl-4 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm appearance-none focus:outline-none focus:border-[#EB8A33] cursor-pointer text-gray-700"
-                            >
-                                <option value="">All Years</option>
-                                {academicYears.map(year => <option key={year} value={year}>{year}</option>)}
-                            </select>
-                            <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
-                        </div>
+                    {/* Filter Dropdowns */}
+                    <div className="flex gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-hide w-full md:w-auto">
 
+                        {/* 1. PROGRAM FILTER */}
                         <div className="relative min-w-[160px]">
                             <select
                                 value={selectedProgram}
                                 onChange={(e) => setSelectedProgram(e.target.value)}
-                                className="w-full pl-4 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm appearance-none focus:outline-none focus:border-[#EB8A33] cursor-pointer text-gray-700"
+                                className="w-full pl-4 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm appearance-none focus:outline-none focus:border-[#EB8A33] cursor-pointer text-gray-700 hover:bg-gray-100 transition-colors"
                             >
                                 <option value="">All Programs</option>
                                 {programs.map(prog => <option key={prog} value={prog}>{prog}</option>)}
@@ -52,13 +47,29 @@ const StudentFilters = ({
                             <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
                         </div>
 
-                        <div className="relative min-w-[140px]">
+                        {/* 2. BATCH YEAR FILTER (NEW) */}
+                        <div className="relative min-w-[120px]">
+                            <select
+                                value={selectedBatch}
+                                onChange={(e) => setSelectedBatch(e.target.value)}
+                                className="w-full pl-4 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm appearance-none focus:outline-none focus:border-[#EB8A33] cursor-pointer text-gray-700 hover:bg-gray-100 transition-colors"
+                            >
+                                <option value="">Batch</option>
+                                {batchYears.map(year => <option key={year} value={year}>{year}</option>)}
+                            </select>
+                            <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
+                        </div>
+
+
+
+                        {/* 4. STATUS FILTER */}
+                        <div className="relative min-w-[120px]">
                             <select
                                 value={selectedStatus}
                                 onChange={(e) => setSelectedStatus(e.target.value)}
-                                className="w-full pl-4 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm appearance-none focus:outline-none focus:border-[#EB8A33] cursor-pointer text-gray-700"
+                                className="w-full pl-4 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm appearance-none focus:outline-none focus:border-[#EB8A33] cursor-pointer text-gray-700 hover:bg-gray-100 transition-colors"
                             >
-                                <option value="">All Status</option>
+                                <option value="">Status</option>
                                 <option value="Active">Active</option>
                                 <option value="Inactive">Inactive</option>
                                 <option value="Graduated">Graduated</option>
@@ -66,32 +77,34 @@ const StudentFilters = ({
                             <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
                         </div>
 
-                        {(searchTerm || selectedYear || selectedProgram || selectedStatus) && (
-                            <button onClick={clearFilters} className="px-3 py-2.5 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors" title="Clear Filters">
+                        {/* Clear Filters Button */}
+                        {(searchTerm || selectedYear || selectedBatch || selectedProgram || selectedStatus) && (
+                            <button
+                                onClick={clearFilters}
+                                className="px-3 py-2.5 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors flex items-center justify-center"
+                                title="Clear All Filters"
+                            >
                                 <X size={18} />
                             </button>
                         )}
                     </div>
                 </div>
 
-                {/* View Controls */}
+                {/* 2. View Controls */}
                 <div className="flex items-center gap-3 self-end md:self-auto">
+
+                    {/* Card Size Toggle (Only Visible in Grid Mode) */}
+                    {viewMode === 'grid' && (
+                        <div className="hidden sm:flex items-center bg-gray-50 rounded-lg border border-gray-200 h-[42px] px-1">
+                            <button onClick={() => setCardSize('small')} className={`p-1.5 rounded-md transition-all ${cardSize === 'small' ? 'bg-white shadow text-[#EB8A33]' : 'text-gray-400 hover:text-gray-600'}`}><Minimize2 size={16} /></button>
+                            <button onClick={() => setCardSize('large')} className={`p-1.5 rounded-md transition-all ${cardSize === 'large' ? 'bg-white shadow text-[#EB8A33]' : 'text-gray-400 hover:text-gray-600'}`}><Maximize2 size={16} /></button>
+                        </div>
+                    )}
+
                     {/* View Mode Toggle */}
                     <div className="flex items-center bg-gray-100 rounded-lg p-1 border border-gray-200 h-[42px]">
-                        <button
-                            onClick={() => setViewMode('list')}
-                            className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-white shadow text-[#EB8A33]' : 'text-gray-500 hover:text-gray-700'}`}
-                            title="List View"
-                        >
-                            <List size={18} />
-                        </button>
-                        <button
-                            onClick={() => setViewMode('grid')}
-                            className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white shadow text-[#EB8A33]' : 'text-gray-500 hover:text-gray-700'}`}
-                            title="Grid View"
-                        >
-                            <LayoutGrid size={18} />
-                        </button>
+                        <button onClick={() => setViewMode('list')} className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-white shadow text-[#EB8A33]' : 'text-gray-500 hover:text-gray-700'}`}><List size={18} /></button>
+                        <button onClick={() => setViewMode('grid')} className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white shadow text-[#EB8A33]' : 'text-gray-500 hover:text-gray-700'}`}><LayoutGrid size={18} /></button>
                     </div>
                 </div>
 

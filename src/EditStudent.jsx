@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Sidebar from './Sidebar';
 
-// IMPORTING NEW COMPONENTS
+// IMPORTING SUB-COMPONENTS
 import EditStudentHeader from './edit-student/EditStudentHeader';
 import EditProfileInfo from './edit-student/EditProfileInfo';
 import EditAcademicInfo from './edit-student/EditAcademicInfo';
@@ -12,8 +12,9 @@ const EditStudent = () => {
     const navigate = useNavigate();
     const { id } = useParams();
 
-    // Form State (Updated with new Location/Guardian fields)
+    // Form State - UPDATED with all fields used in sub-components
     const [formData, setFormData] = useState({
+        // Personal
         firstName: '',
         lastName: '',
         dob: '',
@@ -22,30 +23,36 @@ const EditStudent = () => {
         email: '',
         phone: '',
 
-        // New Location Fields
+        // Location
         province: '',
         district: '',
-        dsDivision: '',
-        gnDivision: '',
+        dsDivision: '',  // Added
+        gnDivision: '',  // Added
         address: '',
         googleMapLink: '',
         latitude: '',
         longitude: '',
 
+        // Guardian
         guardianName: '',
         guardianRelation: '',
-        guardianOccupation: '', // New
+        guardianOccupation: '',
         guardianPhone: '',
+        guardianEmail: '', // Added
 
+        // Academic
         program: '',
         year: '',
         session: '',
-        previousSchool: '',
+        previousSchoolName: '', // Renamed to match sub-component
+        lastStudiedGrade: '',   // Added
+        previousCollegeName: '',// Added
+        mediumOfStudy: 'Tamil', // Added
         status: 'Active'
     });
 
     useEffect(() => {
-        // Mock Data with Sri Lanka details
+        // Mock Data with ALL details
         const dummyData = {
             firstName: 'Muhammad',
             lastName: 'Ahmed',
@@ -53,36 +60,45 @@ const EditStudent = () => {
             gender: 'Male',
             nic: '201512345678',
             email: 'student@example.com',
-            phone: '077 123 4567',
+            phone: '0771234567',
 
             province: 'Western',
             district: 'Colombo',
             dsDivision: 'Colombo Dist',
             gnDivision: 'C-123',
             address: '123, Main Street, Colombo',
-            googleMapLink: 'https://maps.google.com',
+            googleMapLink: 'http://maps.google.com/?q=6.9271,79.8612',
             latitude: '6.9271',
             longitude: '79.8612',
 
             guardianName: 'Ali Ahmed',
             guardianRelation: 'Father',
             guardianOccupation: 'Merchant',
-            guardianPhone: '077 987 6543',
+            guardianPhone: '0779876543',
+            guardianEmail: 'ali.parent@example.com',
+
             program: 'Hifzul Quran',
-            year: '1st Year',
+            year: 'Grade 5',
             session: '2025',
-            previousSchool: 'City High School',
+
+            // Previous Education
+            previousSchoolName: 'City High School',
+            lastStudiedGrade: 'Grade 4',
+            previousCollegeName: 'City Madrasa',
+            mediumOfStudy: 'Tamil',
+
             status: 'Active'
         };
         setFormData(dummyData);
     }, [id]);
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const handleStatusChange = (newStatus) => {
-        setFormData({ ...formData, status: newStatus });
+        setFormData(prev => ({ ...prev, status: newStatus }));
     };
 
     const handleSubmit = (e) => {
@@ -100,10 +116,11 @@ const EditStudent = () => {
                 <main className="p-8">
                     <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <div className="lg:col-span-2">
-                            {/* Pass setFormData to handle Map updates if needed */}
+                            {/* Personal, Location, Guardian Info */}
                             <EditProfileInfo formData={formData} handleChange={handleChange} setFormData={setFormData} />
                         </div>
                         <div>
+                            {/* Academic & Documents */}
                             <EditAcademicInfo formData={formData} handleChange={handleChange} handleStatusChange={handleStatusChange} />
                         </div>
                     </form>

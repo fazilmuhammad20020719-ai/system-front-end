@@ -7,7 +7,7 @@ import StudentHeader from './students/StudentHeader';
 import StudentFilters from './students/StudentFilters';
 import StudentList from './students/StudentList';
 import StudentGrid from './students/StudentGrid';
-import StudentStats from './students/StudentStats'; // <-- Import new component
+import StudentStats from './students/StudentStats';
 
 const Students = () => {
     // Responsive sidebar state
@@ -19,46 +19,54 @@ const Students = () => {
 
     // Filter States
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedYear, setSelectedYear] = useState('');
+    const [selectedYear, setSelectedYear] = useState(''); // This is for Grade (1st Year, etc.)
+    const [selectedBatch, setSelectedBatch] = useState(''); // NEW: This is for Session (2025, 2024...)
     const [selectedProgram, setSelectedProgram] = useState('');
-    const [selectedStatus, setSelectedStatus] = useState(''); // <-- New State
+    const [selectedStatus, setSelectedStatus] = useState('');
 
-    // Fixed Academic Years Options
+    // --- DATA CONSISTENCY WITH ADD STUDENT PAGE ---
+
+    // 1. Batch Years (2026 down to 2002)
+    const batchYears = Array.from({ length: 25 }, (_, i) => (2026 - i).toString());
+
+    // 2. Academic Years / Grades
     const academicYears = [
-        "1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year", "6th Year", "7th Year"
+        "1st Year", "2nd Year", "3rd Year", "4th Year",
+        "5th Year", "6th Year", "7th Year", "Final Year",
+        "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5"
     ];
 
-    // Dummy Data (Updated with Graduated status for demo)
-    const [students] = useState([
-        { id: '2025001', name: 'Muhammad Ahmed', program: 'Hifzul Quran', year: '1st Year', guardian: 'Ali Ahmed', contact: '077 123 4567', status: 'Active' },
-        { id: '2025002', name: 'Yusuf Khan', program: 'Al-Alim Course', year: '2nd Year', guardian: 'Usman Khan', contact: '076 987 6543', status: 'Active' },
-        { id: '2025003', name: 'Ibrahim Zaid', program: 'Secondary (Gr 8-10)', year: '3rd Year', guardian: 'Zaid Moor', contact: '075 555 1234', status: 'Inactive' },
-        { id: '2025004', name: 'Abdullah Omar', program: 'Hifzul Quran', year: '1st Year', guardian: 'Omar Farooq', contact: '071 222 3333', status: 'Graduated' },
-        { id: '2025005', name: 'Kareem Abdul', program: 'Al-Alim Course', year: '7th Year', guardian: 'Abdul Jabbar', contact: '077 999 8888', status: 'Active' },
-        { id: '2025006', name: 'Fahad Mustafa', program: 'G.C.E. O/L Prep', year: '4th Year', guardian: 'Mustafa Ali', contact: '077 111 2222', status: 'Active' },
-        { id: '2025007', name: 'Zaid Haris', program: 'G.C.E. A/L', year: '1st Year', guardian: 'Haris Khan', contact: '077 333 4444', status: 'Active' },
-        { id: '2025008', name: 'Omar Bin Khattab', program: 'Al-Alim Course', year: '2nd Year', guardian: 'Khattab', contact: '077 555 6666', status: 'Graduated' },
-    ]);
+    // 3. Programs
+    const programs = ['Hifzul Quran', 'Al-Alim (Boys)', 'Al-Alimah (Girls)'];
 
-    // Unique Programs for Dropdown
-    const programs = [...new Set(students.map(s => s.program))];
+    // Updated Dummy Data with 'session' (Batch) and 'year' (Grade)
+    const [students] = useState([
+        { id: '2025001', name: 'Muhammad Ahmed', program: 'Hifzul Quran', year: '1st Year', session: '2025', guardian: 'Ali Ahmed', contact: '077 123 4567', status: 'Active' },
+        { id: '2025002', name: 'Yusuf Khan', program: 'Al-Alim (Boys)', year: '2nd Year', session: '2024', guardian: 'Usman Khan', contact: '076 987 6543', status: 'Active' },
+        { id: '2025003', name: 'Fathima Zaid', program: 'Al-Alimah (Girls)', year: '3rd Year', session: '2023', guardian: 'Zaid Moor', contact: '075 555 1234', status: 'Inactive' },
+        { id: '2025004', name: 'Abdullah Omar', program: 'Hifzul Quran', year: '1st Year', session: '2025', guardian: 'Omar Farooq', contact: '071 222 3333', status: 'Graduated' },
+        { id: '2025005', name: 'Kareem Abdul', program: 'Al-Alim (Boys)', year: 'Final Year', session: '2020', guardian: 'Abdul Jabbar', contact: '077 999 8888', status: 'Active' },
+        { id: '2025006', name: 'Fahad Mustafa', program: 'Hifzul Quran', year: 'Grade 5', session: '2025', guardian: 'Mustafa Ali', contact: '077 111 2222', status: 'Active' },
+    ]);
 
     // Filter Logic
     const filteredStudents = students.filter(student => {
         const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             student.id.includes(searchTerm);
         const matchesYear = selectedYear ? student.year === selectedYear : true;
+        const matchesBatch = selectedBatch ? student.session === selectedBatch : true; // New Filter
         const matchesProgram = selectedProgram ? student.program === selectedProgram : true;
-        const matchesStatus = selectedStatus ? student.status === selectedStatus : true; // <-- New Logic
+        const matchesStatus = selectedStatus ? student.status === selectedStatus : true;
 
-        return matchesSearch && matchesYear && matchesProgram && matchesStatus;
+        return matchesSearch && matchesYear && matchesBatch && matchesProgram && matchesStatus;
     });
 
     const clearFilters = () => {
         setSearchTerm('');
         setSelectedYear('');
+        setSelectedBatch('');
         setSelectedProgram('');
-        setSelectedStatus(''); // Clear status
+        setSelectedStatus('');
     };
 
     return (
@@ -77,24 +85,20 @@ const Students = () => {
 
                 <main className="p-4 md:p-8">
 
-                    {/* STATS CARDS (New) */}
+                    {/* STATS CARDS */}
                     <StudentStats students={students} />
 
                     {/* FILTERS & VIEW CONTROLS */}
                     <StudentFilters
-                        searchTerm={searchTerm}
-                        setSearchTerm={setSearchTerm}
-                        selectedYear={selectedYear}
-                        setSelectedYear={setSelectedYear}
-                        selectedProgram={selectedProgram}
-                        setSelectedProgram={setSelectedProgram}
-                        selectedStatus={selectedStatus} // Pass state
-                        setSelectedStatus={setSelectedStatus} // Pass setter
-                        viewMode={viewMode}
-                        setViewMode={setViewMode}
-                        cardSize={cardSize}
-                        setCardSize={setCardSize}
+                        searchTerm={searchTerm} setSearchTerm={setSearchTerm}
+                        selectedYear={selectedYear} setSelectedYear={setSelectedYear}
+                        selectedBatch={selectedBatch} setSelectedBatch={setSelectedBatch} // Pass Batch Props
+                        selectedProgram={selectedProgram} setSelectedProgram={setSelectedProgram}
+                        selectedStatus={selectedStatus} setSelectedStatus={setSelectedStatus}
+                        viewMode={viewMode} setViewMode={setViewMode}
+                        cardSize={cardSize} setCardSize={setCardSize}
                         academicYears={academicYears}
+                        batchYears={batchYears} // Pass Batch Data
                         programs={programs}
                         clearFilters={clearFilters}
                     />

@@ -1,4 +1,4 @@
-import { Eye, Edit, Trash2 } from 'lucide-react';
+import { Eye, Edit, Trash2, GraduationCap, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Pagination from './Pagination';
 
@@ -7,10 +7,10 @@ const StudentGrid = ({ students, cardSize }) => {
 
     const getStatusColor = (status) => {
         switch (status) {
-            case 'Active': return 'bg-green-100 text-green-700';
-            case 'Graduated': return 'bg-yellow-100 text-yellow-700';
-            case 'Inactive': return 'bg-red-50 text-red-600'; // Light red
-            default: return 'bg-gray-100 text-gray-600';
+            case 'Active': return 'bg-green-100 text-green-700 border-green-200';
+            case 'Graduated': return 'bg-blue-100 text-blue-700 border-blue-200';
+            case 'Inactive': return 'bg-red-50 text-red-600 border-red-100';
+            default: return 'bg-gray-100 text-gray-600 border-gray-200';
         }
     };
 
@@ -21,61 +21,74 @@ const StudentGrid = ({ students, cardSize }) => {
                 : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
                 }`}>
                 {students.map((student) => (
-                    <div key={student.id} className={`bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col ${cardSize === 'large' ? 'p-5' : 'p-3'
+                    <div key={student.id} className={`bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all flex flex-col group ${cardSize === 'large' ? 'p-5' : 'p-4'
                         }`}>
                         {/* Card Header */}
-                        <div className="flex justify-between items-start mb-3">
+                        <div className="flex justify-between items-start mb-4">
                             <div className="flex items-center gap-3">
-                                <div className={`rounded-full bg-orange-100 text-[#EB8A33] flex items-center justify-center font-bold ${cardSize === 'large' ? 'w-12 h-12 text-lg' : 'w-9 h-9 text-sm'
+                                <div className={`rounded-full bg-orange-50 text-[#EB8A33] border border-orange-100 flex items-center justify-center font-bold uppercase ${cardSize === 'large' ? 'w-12 h-12 text-lg' : 'w-10 h-10 text-sm'
                                     }`}>
                                     {student.name.charAt(0)}
                                 </div>
                                 <div>
-                                    <h3 className={`font-bold text-gray-800 line-clamp-1 ${cardSize === 'large' ? 'text-base' : 'text-sm'
+                                    <h3 className={`font-bold text-gray-800 line-clamp-1 group-hover:text-[#EB8A33] transition-colors ${cardSize === 'large' ? 'text-base' : 'text-sm'
                                         }`}>{student.name}</h3>
-                                    <p className="text-[10px] text-gray-500 font-mono">#{student.id}</p>
+                                    <p className="text-[10px] text-gray-400 font-mono bg-gray-50 px-1.5 py-0.5 rounded w-fit mt-0.5">#{student.id}</p>
                                 </div>
                             </div>
-                            <span className={`rounded text-[10px] font-bold uppercase ${cardSize === 'large' ? 'px-2 py-1' : 'px-1.5 py-0.5'
-                                } ${getStatusColor(student.status)}`}>
+                            <span className={`border rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${getStatusColor(student.status)}`}>
                                 {student.status}
                             </span>
                         </div>
 
-                        {/* Card Details */}
-                        <div className="space-y-2 mb-3 flex-1">
-                            <div className={`bg-gray-50 rounded-lg border border-gray-100 ${cardSize === 'large' ? 'p-3' : 'p-2'
-                                }`}>
-                                <p className="text-[10px] text-gray-400 uppercase font-semibold mb-0.5">Academic</p>
-                                <p className={`font-medium text-gray-800 truncate ${cardSize === 'large' ? 'text-sm' : 'text-xs'
-                                    }`}>{student.program}</p>
-                                <p className="text-[10px] text-[#EB8A33] font-medium">{student.year}</p>
+                        {/* Card Details (Updated for Batch & Grade) */}
+                        <div className="space-y-3 flex-1 mb-4">
+                            <div className={`bg-gray-50/80 rounded-lg border border-gray-100 ${cardSize === 'large' ? 'p-3' : 'p-2.5'}`}>
+                                {/* Program */}
+                                <div className="mb-2">
+                                    <p className="text-[10px] text-gray-400 uppercase font-bold flex items-center gap-1">
+                                        <GraduationCap size={10} /> Program
+                                    </p>
+                                    <p className={`font-semibold text-gray-800 truncate ${cardSize === 'large' ? 'text-sm' : 'text-xs'}`}>
+                                        {student.program}
+                                    </p>
+                                </div>
+
+                                {/* Batch & Year Badges */}
+                                <div className="flex items-center gap-2">
+                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-white border border-gray-200 text-gray-600 shadow-sm">
+                                        <Calendar size={10} className="text-gray-400" />
+                                        Batch {student.session}
+                                    </span>
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-orange-50 border border-orange-100 text-[#EB8A33]">
+                                        {student.year}
+                                    </span>
+                                </div>
                             </div>
 
                             {cardSize === 'large' && (
-                                <>
-                                    <div className="flex justify-between items-center text-sm">
+                                <div className="px-1 space-y-1.5">
+                                    <div className="flex justify-between items-center text-xs">
                                         <span className="text-gray-500">Guardian:</span>
-                                        <span className="font-medium text-gray-700 truncate max-w-[120px]" title={student.guardian}>{student.guardian}</span>
+                                        <span className="font-medium text-gray-800 truncate max-w-[120px]">{student.guardian}</span>
                                     </div>
-                                    <div className="flex justify-between items-center text-sm">
+                                    <div className="flex justify-between items-center text-xs">
                                         <span className="text-gray-500">Contact:</span>
-                                        <span className="font-medium text-gray-700">{student.contact}</span>
+                                        <span className="font-medium text-gray-800">{student.contact}</span>
                                     </div>
-                                </>
+                                </div>
                             )}
                         </div>
 
                         {/* Card Footer */}
-                        <div className={`grid grid-cols-3 gap-2 border-t border-gray-100 pt-3 mt-auto ${cardSize === 'large' ? '' : 'text-xs'
-                            }`}>
-                            <button onClick={() => navigate(`/view-student/${student.id}`)} className="flex items-center justify-center gap-1 py-1.5 font-medium text-gray-600 bg-gray-50 hover:bg-blue-50 hover:text-blue-600 rounded-md transition-colors">
+                        <div className={`grid grid-cols-3 gap-2 border-t border-gray-100 pt-3 mt-auto`}>
+                            <button onClick={() => navigate(`/view-student/${student.id}`)} className="flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold text-gray-500 bg-gray-50 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors border border-transparent hover:border-blue-100">
                                 <Eye size={14} /> {cardSize === 'large' && 'View'}
                             </button>
-                            <button onClick={() => navigate(`/edit-student/${student.id}`)} className="flex items-center justify-center gap-1 py-1.5 font-medium text-gray-600 bg-gray-50 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors">
+                            <button onClick={() => navigate(`/edit-student/${student.id}`)} className="flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold text-gray-500 bg-gray-50 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-colors border border-transparent hover:border-orange-100">
                                 <Edit size={14} /> {cardSize === 'large' && 'Edit'}
                             </button>
-                            <button className="flex items-center justify-center gap-1 py-1.5 font-medium text-gray-600 bg-gray-50 hover:bg-red-50 hover:text-red-600 rounded-md transition-colors">
+                            <button className="flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold text-gray-500 bg-gray-50 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors border border-transparent hover:border-red-100">
                                 <Trash2 size={14} /> {cardSize === 'large' && 'Del'}
                             </button>
                         </div>

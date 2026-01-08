@@ -8,8 +8,8 @@ const StudentList = ({ students }) => {
     const getStatusColor = (status) => {
         switch (status) {
             case 'Active': return 'bg-green-100 text-green-800';
-            case 'Graduated': return 'bg-yellow-100 text-yellow-800';
-            case 'Inactive': return 'bg-red-50 text-red-600'; // Light red
+            case 'Graduated': return 'bg-blue-100 text-blue-800';
+            case 'Inactive': return 'bg-red-50 text-red-600';
             default: return 'bg-gray-100 text-gray-800';
         }
     };
@@ -17,12 +17,13 @@ const StudentList = ({ students }) => {
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse min-w-[800px]">
+                <table className="w-full text-left border-collapse min-w-[900px]">
                     <thead>
                         <tr className="bg-gray-50/50 border-b border-gray-100 text-xs uppercase text-gray-500 font-semibold tracking-wider">
                             <th className="px-6 py-4">Student ID</th>
                             <th className="px-6 py-4">Name</th>
-                            <th className="px-6 py-4">Program & Year</th>
+                            <th className="px-6 py-4">Program</th>
+                            <th className="px-6 py-4">Batch & Grade</th>
                             <th className="px-6 py-4">Guardian</th>
                             <th className="px-6 py-4 text-center">Status</th>
                             <th className="px-6 py-4 text-right">Actions</th>
@@ -38,9 +39,14 @@ const StudentList = ({ students }) => {
                                         <div className="text-sm font-semibold text-gray-800">{student.name}</div>
                                     </div>
                                 </td>
+                                <td className="px-6 py-4 text-sm text-gray-700 font-medium">
+                                    {student.program}
+                                </td>
                                 <td className="px-6 py-4">
-                                    <div className="text-sm text-gray-700">{student.program}</div>
-                                    <div className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 mt-1">{student.year}</div>
+                                    <div className="flex flex-col gap-1">
+                                        <span className="text-xs font-bold text-gray-600 bg-gray-100 px-2 py-0.5 rounded w-fit">Batch {student.session}</span>
+                                        <span className="text-sm text-gray-600">{student.year}</span>
+                                    </div>
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="text-sm text-gray-700">{student.guardian}</div>

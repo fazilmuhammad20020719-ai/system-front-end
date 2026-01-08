@@ -40,51 +40,52 @@ const StudentAcademicInfo = ({ formData, handleChange }) => {
                     <GraduationCap className="text-[#EB8A33]" size={18} /> Previous Education
                 </h3>
 
-                {/* --- School Details --- */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <InputField
-                        label="Previous School Name"
-                        name="previousSchoolName"
-                        value={formData.previousSchoolName}
-                        onChange={handleChange}
-                        icon={School}
-                    />
-                    <InputField
-                        label="School Location"
-                        name="previousSchoolLocation"
-                        value={formData.previousSchoolLocation || ''}
-                        onChange={handleChange}
-                        placeholder="City / Town"
-                        icon={MapPin}
-                    />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <InputField
-                        label="Last Grade / Class"
-                        name="lastStudiedGrade"
-                        value={formData.lastStudiedGrade}
-                        onChange={handleChange}
-                        placeholder="e.g. Grade 5"
-                    />
-                    <InputField
-                        label="Reason for Leaving School"
-                        name="reasonForLeaving"
-                        value={formData.reasonForLeaving || ''}
-                        onChange={handleChange}
-                        placeholder="e.g. Transfer"
-                    />
-                </div>
-
-                {/* --- Madrasa / Religious Education Details --- */}
-                <div className="pt-2 border-t border-gray-100 mt-2">
+                {/* --- 1. Previous School Section --- */}
+                <div className="mb-6 border-b border-gray-50 pb-6">
                     <label className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3 block">
-                        Religious Education History
+                        Previous School Details
                     </label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <InputField
+                            label="School Name"
+                            name="previousSchoolName"
+                            value={formData.previousSchoolName}
+                            onChange={handleChange}
+                            icon={School}
+                        />
+                        <InputField
+                            label="School Location"
+                            name="previousSchoolLocation"
+                            value={formData.previousSchoolLocation || ''}
+                            onChange={handleChange}
+                            placeholder="City / Town"
+                            icon={MapPin}
+                        />
+                        <InputField
+                            label="Last Grade / Class"
+                            name="lastStudiedGrade"
+                            value={formData.lastStudiedGrade}
+                            onChange={handleChange}
+                            placeholder="e.g. Grade 5"
+                        />
+                        <InputField
+                            label="Reason for Leaving School"
+                            name="reasonForLeaving"
+                            value={formData.reasonForLeaving || ''}
+                            onChange={handleChange}
+                            placeholder="e.g. Transfer"
+                        />
+                    </div>
+                </div>
 
+                {/* --- 2. Previous Madrasa Section --- */}
+                <div>
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3 block">
+                        Previous Madrasa Details
+                    </label>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <InputField
-                            label="Previous Madrasa Name"
+                            label="Madrasa Name"
                             name="previousCollegeName"
                             value={formData.previousCollegeName}
                             onChange={handleChange}
@@ -97,17 +98,23 @@ const StudentAcademicInfo = ({ formData, handleChange }) => {
                             placeholder="City / Town"
                             icon={MapPin}
                         />
-                        <div className="md:col-span-2">
-                            <SelectField
-                                label="Medium of Study"
-                                name="mediumOfStudy"
-                                value={formData.mediumOfStudy}
-                                onChange={handleChange}
-                                options={['Tamil', 'Arabic', 'English', 'Sinhala']}
-                            />
-                        </div>
+                        <SelectField
+                            label="Medium of Study"
+                            name="mediumOfStudy"
+                            value={formData.mediumOfStudy}
+                            onChange={handleChange}
+                            options={['Tamil', 'Arabic', 'English', 'Sinhala']}
+                        />
+                        <InputField
+                            label="Reason for Leaving Madrasa"
+                            name="reasonForLeavingMadrasa"
+                            value={formData.reasonForLeavingMadrasa || ''}
+                            onChange={handleChange}
+                            placeholder="e.g. Completed Hifz"
+                        />
                     </div>
                 </div>
+
             </div>
         </div>
     );

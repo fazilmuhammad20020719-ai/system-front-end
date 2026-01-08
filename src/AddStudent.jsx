@@ -21,7 +21,7 @@ const AddStudent = () => {
         // Location
         province: '', district: '', dsDivision: '', gnDivision: '', address: '', googleMapLink: '', latitude: '', longitude: '',
         // Guardian
-        guardianName: '', guardianRelation: 'Father', guardianOccupation: '', guardianPhone: '',
+        guardianName: '', guardianRelation: 'Father', guardianOccupation: '', guardianPhone: '', guardianEmail: '',
         // Academic
         program: '', session: '2025', admissionDate: '', lastStudiedGrade: '', previousSchoolName: '', previousCollegeName: '', mediumOfStudy: 'Tamil',
         // Uploads

@@ -14,6 +14,7 @@ import Programs from './Programs';
 import Attendance from './Attendance';
 import Documents from './Documents';
 import ManagementTeam from './ManagementTeam';
+import ForgotPassword from './ForgotPassword';
 
 
 
@@ -22,6 +23,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/calendar" element={<Calendar />} />
 

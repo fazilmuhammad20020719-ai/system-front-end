@@ -9,10 +9,17 @@ const StudentUploads = ({ formData, handleChange }) => {
             </h3>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                {/* Existing Uploads */}
                 <FileUploadCard label="NIC Front" name="nicFront" file={formData.nicFront} onChange={handleChange} height="h-24" />
                 <FileUploadCard label="NIC Back" name="nicBack" file={formData.nicBack} onChange={handleChange} height="h-24" />
                 <FileUploadCard label="Signature" name="studentSignature" file={formData.studentSignature} onChange={handleChange} height="h-24" />
                 <FileUploadCard label="Birth Cert." name="birthCertificate" file={formData.birthCertificate} onChange={handleChange} height="h-24" />
+
+                {/* New Uploads */}
+                <FileUploadCard label="Medical Report" name="medicalReport" file={formData.medicalReport} onChange={handleChange} height="h-24" />
+                <FileUploadCard label="Guardian NIC" name="guardianNic" file={formData.guardianNic} onChange={handleChange} height="h-24" />
+                <FileUploadCard label="Guardian Photo" name="guardianPhoto" file={formData.guardianPhoto} onChange={handleChange} height="h-24" />
+                <FileUploadCard label="Leaving Cert." name="leavingCertificate" file={formData.leavingCertificate} onChange={handleChange} height="h-24" />
             </div>
         </div>
     );

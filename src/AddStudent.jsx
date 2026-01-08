@@ -25,7 +25,9 @@ const AddStudent = () => {
         // Academic
         program: '', session: '2025', admissionDate: '', lastStudiedGrade: '', previousSchoolName: '', previousCollegeName: '', mediumOfStudy: 'Tamil',
         // Uploads
-        nicFront: null, nicBack: null, studentSignature: null, birthCertificate: null
+        nicFront: null, nicBack: null, studentSignature: null, birthCertificate: null,
+        // New Uploads
+        medicalReport: null, guardianNic: null, guardianPhoto: null, leavingCertificate: null
     });
 
     const handleChange = (e) => {

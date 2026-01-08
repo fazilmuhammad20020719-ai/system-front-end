@@ -1,0 +1,71 @@
+import { Search, Filter, X, List, LayoutGrid } from 'lucide-react';
+
+const TeachersFilters = ({
+    searchTerm, setSearchTerm,
+    selectedDept, setSelectedDept,
+    selectedStatus, setSelectedStatus,
+    viewMode, setViewMode,
+    clearFilters, departments
+}) => {
+    return (
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6">
+            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto flex-1">
+
+                    {/* Search */}
+                    <div className="relative flex-1 w-full">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                        <input
+                            type="text"
+                            placeholder="Search by Name or Employee ID..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#EB8A33] transition-all"
+                        />
+                    </div>
+
+                    {/* Filters */}
+                    <div className="flex gap-3 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
+                        <div className="relative min-w-[160px]">
+                            <select
+                                value={selectedDept}
+                                onChange={(e) => setSelectedDept(e.target.value)}
+                                className="w-full pl-4 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm appearance-none focus:outline-none focus:border-[#EB8A33] cursor-pointer text-gray-700"
+                            >
+                                <option value="All">All Departments</option>
+                                {departments.map(dept => <option key={dept} value={dept}>{dept}</option>)}
+                            </select>
+                            <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
+                        </div>
+                        <div className="relative min-w-[140px]">
+                            <select
+                                value={selectedStatus}
+                                onChange={(e) => setSelectedStatus(e.target.value)}
+                                className="w-full pl-4 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm appearance-none focus:outline-none focus:border-[#EB8A33] cursor-pointer text-gray-700"
+                            >
+                                <option value="All">All Status</option>
+                                <option value="Active">Active</option>
+                                <option value="On Leave">On Leave</option>
+                                <option value="Resigned">Resigned</option>
+                            </select>
+                            <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
+                        </div>
+                        {(searchTerm || selectedDept !== "All" || selectedStatus !== "All") && (
+                            <button onClick={clearFilters} className="px-3 py-2.5 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors" title="Clear Filters">
+                                <X size={18} />
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {/* View Toggles */}
+                <div className="flex items-center bg-gray-100 rounded-lg p-1 border border-gray-200 self-end md:self-auto ml-4">
+                    <button onClick={() => setViewMode('list')} className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-white shadow text-[#EB8A33]' : 'text-gray-500 hover:text-gray-700'}`} title="List View"><List size={18} /></button>
+                    <button onClick={() => setViewMode('grid')} className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white shadow text-[#EB8A33]' : 'text-gray-500 hover:text-gray-700'}`} title="Grid View"><LayoutGrid size={18} /></button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default TeachersFilters;

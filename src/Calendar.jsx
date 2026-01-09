@@ -6,6 +6,7 @@ import CalendarStats from './calendar/CalendarStats';
 import CalendarFilters from './calendar/CalendarFilters';
 import CalendarGrid from './calendar/CalendarGrid';
 import EventModal from './calendar/EventModal';
+import CalendarHeader from './calendar/CalendarHeader';
 
 const Calendar = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -101,16 +102,15 @@ const Calendar = () => {
             <div className={`flex-1 flex flex-col h-full transition-all duration-300 ${isSidebarOpen ? "ml-64" : "ml-20"}`}>
 
                 {/* HEADER */}
-                <header className="px-8 py-6 bg-[#F4F5F7] flex-shrink-0">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-bold text-gray-800">Executive Calendar</h2>
-                        <div className="bg-white px-4 py-2 rounded-lg shadow-sm text-gray-600 font-medium border border-gray-200">
-                            {monthNames[month]} {year}
-                        </div>
-                    </div>
+                <CalendarHeader
+                    toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+                    monthYear={`${monthNames[month]} ${year}`}
+                />
+
+                <div className="px-8 pt-6 pb-2 bg-[#F4F5F7]">
                     <CalendarStats events={events} />
                     <CalendarFilters />
-                </header>
+                </div>
 
                 {/* CALENDAR GRID */}
                 <main className="flex-1 px-8 pb-8 overflow-y-auto">

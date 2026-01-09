@@ -55,3 +55,19 @@ export const FileUploadCard = ({ label, name, file, onChange, height = "h-32" })
         </div>
     </div>
 );
+
+export const TextAreaField = ({ label, name, value, onChange, placeholder, rows = 4, required = false }) => (
+    <div className="space-y-1 w-full">
+        <label className="text-xs font-bold text-gray-600 uppercase tracking-wide">
+            {label} {required && <span className="text-red-500">*</span>}
+        </label>
+        <textarea
+            name={name}
+            value={value}
+            onChange={onChange}
+            rows={rows}
+            placeholder={placeholder}
+            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:border-[#EB8A33] focus:ring-1 focus:ring-[#EB8A33] outline-none transition-all placeholder:text-gray-400 shadow-sm hover:border-gray-400 resize-none"
+        />
+    </div>
+);

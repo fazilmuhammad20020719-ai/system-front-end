@@ -9,7 +9,7 @@ import EventModal from './calendar/EventModal';
 
 const Calendar = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-    const [currentDate, setCurrentDate] = useState(new Date(2025, 11, 25)); // Dec 25, 2025
+    const [currentDate, setCurrentDate] = useState(new Date(2025, 11, 25));
 
     // --- STATE FOR MODAL & EVENTS ---
     const [events, setEvents] = useState([
@@ -35,6 +35,7 @@ const Calendar = () => {
     const blanks = Array.from({ length: firstDay }, (_, i) => i);
     const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
+    // Remaining slots logic...
     const totalSlots = firstDay + daysInMonth;
     const remainingSlots = 7 - (totalSlots % 7);
     const nextMonthBlanks = remainingSlots < 7 ? Array.from({ length: remainingSlots }, (_, i) => i) : [];
@@ -45,14 +46,15 @@ const Calendar = () => {
         setIsModalOpen(true);
     };
 
-    const handleSaveEvent = (newNoteData) => {
-        // Map the custom labels back to internal types
-        const typeMap = {
-            'High (Urgent)': 'urgent',
-            'Medium': 'warning',
-            'Normal': 'success'
-        };
+    // HELPER: Map UI Priority Labels to Internal Types
+    const typeMap = {
+        'High (Urgent)': 'urgent',
+        'Medium': 'warning',
+        'Normal': 'success'
+    };
 
+    // 1. ADD NEW EVENT
+    const handleSaveEvent = (newNoteData) => {
         const newEvent = {
             id: Date.now(),
             day: selectedDay,
@@ -61,8 +63,31 @@ const Calendar = () => {
             type: typeMap[newNoteData.priority] || 'success',
             hasAttachment: !!newNoteData.file
         };
-
         setEvents([...events, newEvent]);
+        setIsModalOpen(false);
+    };
+
+    // 2. DELETE EVENT (New Function)
+    const handleDeleteEvent = (eventId) => {
+        const updatedEvents = events.filter(event => event.id !== eventId);
+        setEvents(updatedEvents);
+    };
+
+    // 3. UPDATE EVENT (New Function)
+    const handleUpdateEvent = (id, updatedData) => {
+        const updatedEvents = events.map(event => {
+            if (event.id === id) {
+                return {
+                    ...event,
+                    title: updatedData.text,
+                    fullText: updatedData.text,
+                    type: typeMap[updatedData.priority] || 'success',
+                    hasAttachment: !!updatedData.file // Keep existing attachment logic if needed
+                };
+            }
+            return event;
+        });
+        setEvents(updatedEvents);
         setIsModalOpen(false);
     };
 
@@ -83,33 +108,33 @@ const Calendar = () => {
                             {monthNames[month]} {year}
                         </div>
                     </div>
-
-                    {/* Stats Component */}
                     <CalendarStats events={events} />
-
-                    {/* Filters Component */}
                     <CalendarFilters />
                 </header>
 
                 {/* CALENDAR GRID */}
                 <main className="flex-1 px-8 pb-8 overflow-y-auto">
                     <CalendarGrid
+                        year={year} month={month} // Added missing props
                         blanks={blanks}
                         days={days}
                         nextMonthBlanks={nextMonthBlanks}
                         getEventsForDay={getEventsForDay}
                         handleDayClick={handleDayClick}
+                        onDateChange={(y, m) => setCurrentDate(new Date(y, m, 1))} // Handle nav
                     />
                 </main>
             </div>
 
-            {/* MODAL POPUP */}
+            {/* MODAL POPUP - Updated Props */}
             <EventModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 selectedDay={selectedDay}
                 dayEvents={selectedDay ? getEventsForDay(selectedDay) : []}
                 onSave={handleSaveEvent}
+                onDelete={handleDeleteEvent} // Pass Delete Handler
+                onUpdate={handleUpdateEvent} // Pass Update Handler
             />
         </div>
     );

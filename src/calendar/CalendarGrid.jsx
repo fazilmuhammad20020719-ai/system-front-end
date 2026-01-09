@@ -103,8 +103,8 @@ const CalendarGrid = ({ year, month, days, blanks, nextMonthBlanks, getEventsFor
                             <div className="flex flex-col gap-1.5">
                                 {dayEvents.map((event, idx) => (
                                     <div key={idx} className={`text-[11px] px-2 py-1.5 rounded-md font-medium flex items-center justify-between border-l-2 ${event.type === 'urgent' ? 'bg-red-50 text-red-800 border-red-500' :
-                                            event.type === 'warning' ? 'bg-amber-50 text-amber-800 border-amber-400' :
-                                                'bg-emerald-50 text-emerald-800 border-emerald-500'
+                                        event.type === 'warning' ? 'bg-amber-50 text-amber-800 border-amber-400' :
+                                            'bg-emerald-50 text-emerald-800 border-emerald-500'
                                         }`}>
                                         <span className="truncate">{event.title}</span>
                                         {event.hasAttachment && <Paperclip size={10} className="ml-1 opacity-70" />}

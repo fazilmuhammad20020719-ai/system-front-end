@@ -8,6 +8,8 @@ import TeachersFilters from './teachers/TeachersFilters';
 import TeacherList from './teachers/TeacherList';
 import TeacherGrid from './teachers/TeacherGrid';
 
+import { TEACHERS_DATA } from './data/mockData';
+
 const Teachers = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
@@ -16,34 +18,36 @@ const Teachers = () => {
 
     // -- FILTERS STATE --
     const [searchTerm, setSearchTerm] = useState("");
-    const [selectedDept, setSelectedDept] = useState("All");
+    const [selectedProgram, setSelectedProgram] = useState("All");
+    const [selectedSubject, setSelectedSubject] = useState("All");
     const [selectedStatus, setSelectedStatus] = useState("All");
 
     // -- MOCK DATA --
-    const [teachers] = useState([
-        { id: 1, name: "Dr. Sarah Wilson", empid: "EMP-001", dept: "Islamic Studies", role: "Head of Dept", email: "sarah@college.edu", phone: "+94 77 123 4567", status: "Active" },
-        { id: 2, name: "Mr. Ahmed Kabeer", empid: "EMP-002", dept: "Arabic Language", role: "Senior Lecturer", email: "ahmed@college.edu", phone: "+94 77 987 6543", status: "Active" },
-        { id: 3, name: "Ms. Fatima Rihana", empid: "EMP-003", dept: "English Unit", role: "Visiting Lecturer", email: "fatima@college.edu", phone: "+94 71 555 0123", status: "On Leave" },
-        { id: 4, name: "Mr. Mohamed Naleem", empid: "EMP-004", dept: "Information Tech", role: "Instructor", email: "naleem@college.edu", phone: "+94 75 000 1111", status: "Active" },
-        { id: 5, name: "Sheikh Abdullah", empid: "EMP-005", dept: "Hifz", role: "Head of Hifz", email: "abdullah@college.edu", phone: "+94 77 222 3333", status: "Active" },
-    ]);
+    const [teachers] = useState(TEACHERS_DATA);
 
-    const departments = ["Islamic Studies", "Arabic Language", "English Unit", "Information Tech", "Hifz"];
+    // Derived Unique Subjects for Filter Dropdown
+    const uniqueSubjects = useMemo(() => {
+        const subjects = teachers.map(t => t.subject);
+        return [...new Set(subjects)];
+    }, [teachers]);
 
     // -- FILTER LOGIC --
     const filteredTeachers = useMemo(() => {
         return teachers.filter(teacher => {
             const matchesSearch = teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 teacher.empid.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesDept = selectedDept === "All" || teacher.dept === selectedDept;
+            const matchesProgram = selectedProgram === "All" || teacher.program === selectedProgram;
+            const matchesSubject = selectedSubject === "All" || teacher.subject === selectedSubject;
             const matchesStatus = selectedStatus === "All" || teacher.status === selectedStatus;
-            return matchesSearch && matchesDept && matchesStatus;
+
+            return matchesSearch && matchesProgram && matchesSubject && matchesStatus;
         });
-    }, [teachers, searchTerm, selectedDept, selectedStatus]);
+    }, [teachers, searchTerm, selectedProgram, selectedSubject, selectedStatus]);
 
     const clearFilters = () => {
         setSearchTerm("");
-        setSelectedDept("All");
+        setSelectedProgram("All");
+        setSelectedSubject("All");
         setSelectedStatus("All");
     };
 
@@ -64,11 +68,12 @@ const Teachers = () => {
                     {/* FILTERS */}
                     <TeachersFilters
                         searchTerm={searchTerm} setSearchTerm={setSearchTerm}
-                        selectedDept={selectedDept} setSelectedDept={setSelectedDept}
+                        selectedProgram={selectedProgram} setSelectedProgram={setSelectedProgram}
+                        selectedSubject={selectedSubject} setSelectedSubject={setSelectedSubject}
                         selectedStatus={selectedStatus} setSelectedStatus={setSelectedStatus}
                         viewMode={viewMode} setViewMode={setViewMode}
                         clearFilters={clearFilters}
-                        departments={departments}
+                        uniqueSubjects={uniqueSubjects}
                     />
 
                     {/* CONTENT AREA */}

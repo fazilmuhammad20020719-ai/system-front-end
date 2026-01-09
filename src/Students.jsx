@@ -9,6 +9,8 @@ import StudentList from './students/StudentList';
 import StudentGrid from './students/StudentGrid';
 import StudentStats from './students/StudentStats';
 
+import { STUDENTS_DATA } from './data/mockData';
+
 const Students = () => {
     // Responsive sidebar state
     const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
@@ -40,14 +42,8 @@ const Students = () => {
     const programs = ['Hifzul Quran', 'Al-Alim (Boys)', 'Al-Alimah (Girls)'];
 
     // Updated Dummy Data with 'session' (Batch) and 'year' (Grade)
-    const [students] = useState([
-        { id: '2025001', name: 'Muhammad Ahmed', program: 'Hifzul Quran', year: '1st Year', session: '2025', guardian: 'Ali Ahmed', contact: '077 123 4567', status: 'Active' },
-        { id: '2025002', name: 'Yusuf Khan', program: 'Al-Alim (Boys)', year: '2nd Year', session: '2024', guardian: 'Usman Khan', contact: '076 987 6543', status: 'Active' },
-        { id: '2025003', name: 'Fathima Zaid', program: 'Al-Alimah (Girls)', year: '3rd Year', session: '2023', guardian: 'Zaid Moor', contact: '075 555 1234', status: 'Inactive' },
-        { id: '2025004', name: 'Abdullah Omar', program: 'Hifzul Quran', year: '1st Year', session: '2025', guardian: 'Omar Farooq', contact: '071 222 3333', status: 'Graduated' },
-        { id: '2025005', name: 'Kareem Abdul', program: 'Al-Alim (Boys)', year: 'Final Year', session: '2020', guardian: 'Abdul Jabbar', contact: '077 999 8888', status: 'Active' },
-        { id: '2025006', name: 'Fahad Mustafa', program: 'Hifzul Quran', year: 'Grade 5', session: '2025', guardian: 'Mustafa Ali', contact: '077 111 2222', status: 'Active' },
-    ]);
+    const [students] = useState(STUDENTS_DATA);
+
 
     // Filter Logic
     const filteredStudents = students.filter(student => {

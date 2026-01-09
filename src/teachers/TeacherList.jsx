@@ -10,7 +10,7 @@ const TeacherList = ({ teachers }) => {
                 <thead className="bg-gray-50/50 border-b border-gray-200">
                     <tr>
                         <th className="p-5 text-xs font-bold text-gray-500 uppercase tracking-wider">Teacher Profile</th>
-                        <th className="p-5 text-xs font-bold text-gray-500 uppercase tracking-wider">Department & Role</th>
+                        <th className="p-5 text-xs font-bold text-gray-500 uppercase tracking-wider">Program & Subject</th>
                         <th className="p-5 text-xs font-bold text-gray-500 uppercase tracking-wider hidden md:table-cell">Contact Info</th>
                         <th className="p-5 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Status</th>
                         <th className="p-5 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Actions</th>
@@ -32,8 +32,8 @@ const TeacherList = ({ teachers }) => {
                             </td>
                             <td className="p-5">
                                 <div className="flex flex-col gap-1">
-                                    <span className="text-sm font-medium text-gray-700">{teacher.dept}</span>
-                                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded w-fit">{teacher.role}</span>
+                                    <span className="text-sm font-medium text-gray-700">{teacher.program}</span>
+                                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded w-fit">{teacher.subject}</span>
                                 </div>
                             </td>
                             <td className="p-5 hidden md:table-cell">

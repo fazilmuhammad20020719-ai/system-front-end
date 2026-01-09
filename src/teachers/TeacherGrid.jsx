@@ -25,9 +25,9 @@ const TeacherGrid = ({ teachers, totalCount }) => {
                         </div>
                         <div className="space-y-3 mb-5 flex-1">
                             <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
-                                <p className="text-xs text-gray-400 uppercase font-semibold mb-1">Department</p>
-                                <p className="text-sm font-medium text-gray-800">{teacher.dept}</p>
-                                <p className="text-xs text-[#EB8A33] font-medium">{teacher.role}</p>
+                                <p className="text-xs text-gray-400 uppercase font-semibold mb-1">Program & Subject</p>
+                                <p className="text-sm font-medium text-gray-800">{teacher.program}</p>
+                                <p className="text-xs text-[#EB8A33] font-medium">{teacher.subject}</p>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-gray-600">
                                 <Mail size={14} className="text-gray-400" />

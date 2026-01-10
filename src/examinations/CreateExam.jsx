@@ -1,20 +1,23 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Save, ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import Sidebar from '../Sidebar';
 
 const CreateExam = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const editingExam = location.state?.exam;
+
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
     // Exam Basic Details
     const [examDetails, setExamDetails] = useState({
-        title: '',
-        targetType: 'class', // 'class', 'program', 'all'
-        targetValue: '',
-        startDate: '',
+        title: editingExam?.title || '',
+        targetType: editingExam?.target?.includes('Year') ? 'class' : 'all', // Simple logic for demo
+        targetValue: editingExam?.target || '',
+        startDate: editingExam?.startDate || '',
         endDate: '',
-        status: 'Upcoming'
+        status: editingExam?.status || 'Upcoming'
     });
 
     // Subjects List State
@@ -57,7 +60,7 @@ const CreateExam = () => {
                         <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-200 rounded-full text-gray-500">
                             <ArrowLeft size={20} />
                         </button>
-                        <h1 className="text-2xl font-bold text-gray-800">Schedule New Examination</h1>
+                        <h1 className="text-2xl font-bold text-gray-800">{editingExam ? 'Edit Examination' : 'Schedule New Examination'}</h1>
                     </div>
 
                     <div className="max-w-4xl mx-auto space-y-6">

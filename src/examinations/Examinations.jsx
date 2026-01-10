@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Calendar, Clock, ChevronRight, BarChart3, Filter } from 'lucide-react';
+import { Plus, Calendar, Clock, ChevronRight, BarChart3, Filter, Edit2, Trash2 } from 'lucide-react';
 import Sidebar from '../Sidebar';
 
 const Examinations = () => {
@@ -9,7 +9,7 @@ const Examinations = () => {
     const [filter, setFilter] = useState('All');
 
     // MOCK DATA: பரிட்சைகள் பட்டியல்
-    const exams = [
+    const [exams, setExams] = useState([
         {
             id: 1,
             title: "Term 1 Examination 2025",
@@ -34,7 +34,7 @@ const Examinations = () => {
             startDate: "2024-12-10",
             subjectsCount: 6
         }
-    ];
+    ]);
 
     const getStatusColor = (status) => {
         switch (status) {
@@ -43,6 +43,16 @@ const Examinations = () => {
             case 'Completed': return 'bg-green-100 text-green-700 border-green-200';
             default: return 'bg-gray-100 text-gray-600';
         }
+    };
+
+    const handleDelete = (id) => {
+        if (window.confirm("Are you sure you want to delete this exam?")) {
+            setExams(exams.filter(e => e.id !== id));
+        }
+    };
+
+    const handleEdit = (exam) => {
+        navigate('/examinations/create', { state: { exam } });
     };
 
     return (
@@ -73,8 +83,8 @@ const Examinations = () => {
                                 key={f}
                                 onClick={() => setFilter(f)}
                                 className={`px-4 py-2 rounded-lg text-sm font-bold border transition-colors ${filter === f
-                                        ? 'bg-white border-[#EB8A33] text-[#EB8A33] shadow-sm'
-                                        : 'bg-transparent border-transparent text-gray-500 hover:bg-white hover:shadow-sm'
+                                    ? 'bg-white border-[#EB8A33] text-[#EB8A33] shadow-sm'
+                                    : 'bg-transparent border-transparent text-gray-500 hover:bg-white hover:shadow-sm'
                                     }`}
                             >
                                 {f}
@@ -86,6 +96,25 @@ const Examinations = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {exams.filter(e => filter === 'All' || e.status === filter).map((exam) => (
                             <div key={exam.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-5 relative overflow-hidden group">
+
+                                {/* Actions (Edit/Delete) */}
+                                <div className="absolute top-4 right-4 flex gap-2 z-10">
+                                    <button
+                                        onClick={() => handleEdit(exam)}
+                                        className="p-1.5 bg-white text-blue-600 rounded-lg hover:bg-blue-50 border border-gray-100 shadow-sm transition-colors"
+                                        title="Edit"
+                                    >
+                                        <Edit2 size={16} />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(exam.id)}
+                                        className="p-1.5 bg-white text-red-600 rounded-lg hover:bg-red-50 border border-gray-100 shadow-sm transition-colors"
+                                        title="Delete"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
+
                                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                                     <BarChart3 size={64} className="text-[#EB8A33]" />
                                 </div>
@@ -96,7 +125,7 @@ const Examinations = () => {
                                     </span>
                                 </div>
 
-                                <h3 className="font-bold text-lg text-gray-800 mb-1">{exam.title}</h3>
+                                <h3 className="font-bold text-lg text-gray-800 mb-1 pr-16">{exam.title}</h3>
                                 <p className="text-sm text-gray-500 mb-4">Target: {exam.target}</p>
 
                                 <div className="space-y-2 mb-6">

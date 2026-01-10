@@ -294,7 +294,7 @@ const ViewStudentFees = ({ fees: initialFees }) => {
                                                             onClick={() => openEditModal(record)}
                                                             className="flex items-center gap-1 bg-[#EB8A33] hover:bg-[#d97d2a] text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm"
                                                         >
-                                                            Pay Now
+                                                            add payment
                                                         </button>
                                                     )}
                                                 </div>

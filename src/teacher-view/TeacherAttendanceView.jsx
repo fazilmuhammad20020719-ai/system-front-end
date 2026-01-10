@@ -63,7 +63,7 @@ const TeacherAttendanceView = ({ stats }) => {
             let tooltip = "No Data";
 
             if (status === 'Present') {
-                statusColor = "bg-green-100 text-green-700 border-green-200 font-bold";
+                statusColor = "bg-white text-green-700 border-green-500 font-bold border";
                 tooltip = "Present";
             } else if (status === 'Absent') {
                 statusColor = "bg-red-100 text-red-700 border-red-200 font-bold";
@@ -106,14 +106,14 @@ const TeacherAttendanceView = ({ stats }) => {
                     <p className="text-xs text-gray-400 mt-1">Total Working Days: {stats?.total || 0}</p>
                 </div>
 
-                <div className="bg-green-50 p-4 rounded-xl border border-green-100 flex justify-between items-center">
-                    <span className="text-green-700 font-medium flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-green-600 shadow-sm">
+                <div className="bg-white p-4 rounded-xl border border-gray-100 flex justify-between items-center shadow-sm">
+                    <span className="text-gray-700 font-medium flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-green-600">
                             <CheckCircle size={16} />
                         </div>
                         Present
                     </span>
-                    <span className="font-bold text-green-800 text-lg">{stats?.present || 0} Days</span>
+                    <span className="font-bold text-gray-800 text-lg">{stats?.present || 0} Days</span>
                 </div>
 
                 <div className="bg-red-50 p-4 rounded-xl border border-red-100 flex justify-between items-center">
@@ -185,7 +185,7 @@ const TeacherAttendanceView = ({ stats }) => {
 
                 {/* Legend */}
                 <div className="flex flex-wrap gap-4 mt-6 pt-4 border-t border-gray-100 text-xs text-gray-500 justify-center">
-                    <div className="flex items-center gap-1.5"><span className="w-3 h-3 bg-green-100 border border-green-200 rounded"></span> Present</div>
+                    <div className="flex items-center gap-1.5"><span className="w-3 h-3 bg-white border border-green-500 rounded"></span> Present</div>
                     <div className="flex items-center gap-1.5"><span className="w-3 h-3 bg-red-100 border border-red-200 rounded"></span> Absent</div>
 
                     <div className="flex items-center gap-1.5"><span className="w-3 h-3 bg-blue-50 border border-blue-100 rounded"></span> Holiday</div>

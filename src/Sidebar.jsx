@@ -9,7 +9,8 @@ import {
     FolderOpen,
     LogOut,
     Briefcase,
-    X
+    X,
+    ClipboardList
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
@@ -128,6 +129,13 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                                 text="Attendance"
                                 to="/attendance"
                                 active={isActive('/attendance')}
+                                isOpen={isOpen}
+                            />
+                            <SidebarItem
+                                icon={ClipboardList}
+                                text="Examinations"
+                                to="/examinations"
+                                active={isActive('/examinations')}
                                 isOpen={isOpen}
                             />
                         </div>

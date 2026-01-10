@@ -13,6 +13,7 @@ import ViewTeacher from './ViewTeacher';
 import Programs from './Programs';
 import ViewProgram from './programs/ViewProgram'; // [NEW IMPORT]
 import ProgramDetails from './programs/ProgramDetails';
+import Examinations from './examinations/Examinations'; // [NEW IMPORT]
 import Attendance from './Attendance';
 import Documents from './Documents';
 import ManagementTeam from './ManagementTeam';
@@ -46,6 +47,9 @@ function App() {
         <Route path="/programs" element={<Programs />} />
         <Route path="/programs/:id" element={<ProgramDetails />} /> {/* Keeping old route just in case, but new one is preferred */}
         <Route path="/view-program/:id" element={<ViewProgram />} /> {/* [NEW ROUTE] */}
+
+        {/* Examinations */}
+        <Route path="/examinations" element={<Examinations />} />
 
         {/* Attendance & Documents */}
         <Route path="/attendance" element={<Attendance />} />

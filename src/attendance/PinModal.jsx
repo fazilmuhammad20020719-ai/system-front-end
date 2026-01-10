@@ -36,7 +36,15 @@ const PinModal = ({ isOpen, onClose, onSuccess }) => {
     return (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
-                <div className="p-6 text-center">
+                {/* 1. Change the wrapper div to a FORM to isolate the inputs */}
+                <form
+                    className="p-6 text-center"
+                    autoComplete="off"
+                    onSubmit={(e) => { e.preventDefault(); verifyPin(); }}
+                >
+                    {/* 2. Add this HIDDEN input. The browser will fill this instead of your search bar */}
+                    <input type="text" name="username" autoComplete="username" style={{ display: 'none' }} />
+
                     <div className="w-12 h-12 bg-orange-100 text-[#ea8933] rounded-full flex items-center justify-center mx-auto mb-4">
                         <Lock size={24} />
                     </div>
@@ -52,6 +60,8 @@ const PinModal = ({ isOpen, onClose, onSuccess }) => {
                                 maxLength="1"
                                 value={digit}
                                 onChange={(e) => handlePinChange(i, e.target.value)}
+                                // 3. Add autoComplete="one-time-code" or "off"
+                                autoComplete="one-time-code"
                                 className="w-10 h-10 text-center text-xl font-bold border-2 border-gray-200 rounded-lg focus:border-[#ea8933] focus:ring-0 outline-none transition-all"
                             />
                         ))}
@@ -60,10 +70,11 @@ const PinModal = ({ isOpen, onClose, onSuccess }) => {
                     {pinError && <p className="text-red-500 text-xs font-bold mb-4">{pinError}</p>}
 
                     <div className="flex gap-2">
-                        <button onClick={onClose} className="flex-1 py-2 text-gray-500 font-medium text-sm hover:bg-gray-50 rounded-lg">Cancel</button>
-                        <button onClick={verifyPin} className="flex-1 py-2 bg-[#ea8933] text-white font-bold text-sm rounded-lg hover:bg-[#d97c2a]">Verify</button>
+                        {/* Change type to button to prevent form submit */}
+                        <button type="button" onClick={onClose} className="flex-1 py-2 text-gray-500 font-medium text-sm hover:bg-gray-50 rounded-lg">Cancel</button>
+                        <button type="button" onClick={verifyPin} className="flex-1 py-2 bg-[#ea8933] text-white font-bold text-sm rounded-lg hover:bg-[#d97c2a]">Verify</button>
                     </div>
-                </div>
+                </form>
                 {successMsg && <div className="bg-green-500 text-white text-center py-2 text-xs font-bold">{successMsg}</div>}
             </div>
         </div>

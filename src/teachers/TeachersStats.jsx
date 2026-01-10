@@ -14,7 +14,7 @@ const StatCard = ({ icon: Icon, label, value, color }) => (
 
 const TeachersStats = ({ teachers }) => {
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-8">
             <StatCard
                 icon={Users}
                 label="Total Teachers"
@@ -32,6 +32,12 @@ const TeachersStats = ({ teachers }) => {
                 label="On Leave"
                 value={teachers.filter(t => t.status === 'On Leave').length}
                 color="bg-orange-50 text-orange-600"
+            />
+            <StatCard
+                icon={User} // You might want a different icon like 'UserX' or 'Ban' if available, but User is fine
+                label="Inactive"
+                value={teachers.filter(t => t.status === 'Inactive').length}
+                color="bg-red-50 text-red-600"
             />
         </div>
     );

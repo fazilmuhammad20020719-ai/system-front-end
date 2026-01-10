@@ -1,143 +1,157 @@
 import React, { useState } from 'react';
-import { X, BookOpen, User, Clock, Calendar, CheckCircle, FileText, DollarSign, Award } from 'lucide-react';
+import { X, BookOpen, User, Calendar, Clock, ArrowLeft, GraduationCap } from 'lucide-react';
+import { TEACHERS_DATA } from '../data/mockData'; // Ensure this path is correct
 
-const ProgramDetails = ({ isOpen, onClose, program }) => {
-    const [activeTab, setActiveTab] = useState('overview');
+const ProgramDetails = ({ isOpen, onClose, program, subjects }) => {
+    const [selectedYear, setSelectedYear] = useState('1st Year');
 
     if (!isOpen || !program) return null;
 
-    // Helper to get mock curriculum based on program name
-    const getCurriculum = (name) => {
-        if (name.includes("Hifz")) return ["Juz 1-5 (Beginner)", "Juz 6-15 (Intermediate)", "Juz 16-30 (Advanced)", "Tajweed Rules", "Revision Cycles"];
-        if (name.includes("Alim")) return ["Arabic Grammar (Nahw/Sarf)", "Fiqh (Jurisprudence)", "Hadith Studies", "Tafseer (Exegesis)", "Islamic History", "Logic (Mantiq)"];
-        if (name.includes("O/L")) return ["Mathematics", "Science", "Religion (Islam)", "Sinhala/Tamil", "English", "History", "ICT (Optional)", "Business Studies (Optional)"];
-        if (name.includes("A/L")) return ["Stream Selection: Bio/Maths/Arts/Comm", "General English", "GIT", "Z-Score Targetting", "Past Paper Revisions"];
-        return ["Core Modules", "Practical Sessions", "Assignments", "Final Exam"];
-    };
+    // Filter Subjects based on Program ID and Selected Year
+    const programSubjects = subjects.filter(
+        sub => sub.programId === program.id && sub.year === selectedYear
+    );
 
-    const curriculum = getCurriculum(program.name);
+    // Filter Teachers based on Program Name
+    const programTeachers = TEACHERS_DATA.filter(
+        teacher => teacher.program === program.name
+    );
+
+    // Available Years
+    const availableYears = ['1st Year', '2nd Year', '3rd Year', 'Final Year'];
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-
-                {/* Header with Dynamic Color */}
-                <div className={`${program.color.split(' ')[0]} p-6 flex justify-between items-start`}>
+        <div className="fixed inset-0 z-50 bg-[#f3f4f6] overflow-y-auto animate-in fade-in duration-200">
+            {/* Top Navigation Bar */}
+            <div className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-10 flex items-center justify-between shadow-sm">
+                <div className="flex items-center gap-4">
+                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors">
+                        <ArrowLeft size={24} />
+                    </button>
                     <div>
-                        <h2 className={`text-2xl font-bold ${program.color.split(' ')[1]}`}>{program.name}</h2>
-                        <span className="inline-flex items-center gap-1 mt-2 px-3 py-1 bg-white/60 rounded-full text-sm font-medium text-gray-700">
-                            <span className={`w-2 h-2 rounded-full ${program.status === 'Active' ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                            {program.status}
-                        </span>
+                        <h2 className="text-xl font-bold text-gray-800">{program.name}</h2>
+                        <p className="text-sm text-gray-500">Program Details & Curriculum</p>
                     </div>
-                    <button onClick={onClose} className="p-2 bg-white/50 hover:bg-white rounded-full transition-colors text-gray-600">
-                        <X size={20} />
-                    </button>
                 </div>
-
-                {/* Tabs */}
-                <div className="flex border-b border-gray-100 px-6 mt-2">
-                    {['overview', 'curriculum', 'schedule'].map((tab) => (
-                        <button
-                            key={tab}
-                            onClick={() => setActiveTab(tab)}
-                            className={`pb-3 pt-3 px-4 text-sm font-medium transition-colors relative ${activeTab === tab ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'
-                                }`}
-                        >
-                            {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                            {activeTab === tab && (
-                                <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></div>
-                            )}
-                        </button>
-                    ))}
+                <div className={`px-4 py-1.5 rounded-full text-sm font-bold ${program.color || 'bg-blue-100 text-blue-600'}`}>
+                    {program.status}
                 </div>
+            </div>
 
-                {/* Body Content */}
-                <div className="p-6 h-[400px] overflow-y-auto custom-scrollbar">
+            <div className="max-w-7xl mx-auto p-6 space-y-6">
 
-                    {/* OVERVIEW TAB */}
-                    {activeTab === 'overview' && (
-                        <div className="space-y-6">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                    <div className="flex items-center gap-2 text-gray-500 mb-1">
-                                        <User size={16} /> <span className="text-xs font-bold uppercase">Head of Dept</span>
-                                    </div>
-                                    <p className="font-semibold text-gray-800">{program.head}</p>
-                                </div>
-                                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                    <div className="flex items-center gap-2 text-gray-500 mb-1">
-                                        <Clock size={16} /> <span className="text-xs font-bold uppercase">Duration</span>
-                                    </div>
-                                    <p className="font-semibold text-gray-800">{program.duration}</p>
-                                </div>
-                                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                    <div className="flex items-center gap-2 text-gray-500 mb-1">
-                                        <DollarSign size={16} /> <span className="text-xs font-bold uppercase">Fee Structure</span>
-                                    </div>
-                                    <p className="font-semibold text-gray-800">{program.fees}</p>
-                                </div>
-                                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                    <div className="flex items-center gap-2 text-gray-500 mb-1">
-                                        <User size={16} /> <span className="text-xs font-bold uppercase">Enrolled</span>
-                                    </div>
-                                    <p className="font-semibold text-gray-800">{program.students} Students</p>
-                                </div>
-                            </div>
-
-                            <div className="p-4 bg-blue-50 text-blue-800 rounded-xl text-sm leading-relaxed">
-                                <h4 className="font-bold flex items-center gap-2 mb-2"><Award size={16} /> Program Goal</h4>
-                                This program is designed to provide comprehensive knowledge in {program.name} following the Sri Lankan national and religious education standards.
-                            </div>
-                        </div>
-                    )}
-
-                    {/* CURRICULUM TAB */}
-                    {activeTab === 'curriculum' && (
+                {/* 1. Program Info Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
+                        <div className="p-3 bg-blue-50 text-blue-600 rounded-lg"><User size={24} /></div>
                         <div>
-                            <h3 className="text-sm font-bold text-gray-400 uppercase mb-3">Syllabus & Subjects</h3>
-                            <ul className="space-y-3">
-                                {curriculum.map((subject, index) => (
-                                    <li key={index} className="flex items-center gap-3 p-3 bg-white border border-gray-100 rounded-lg hover:border-blue-100 transition-colors shadow-sm">
-                                        <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
-                                            <BookOpen size={16} />
-                                        </div>
-                                        <span className="text-gray-700 font-medium">{subject}</span>
-                                    </li>
-                                ))}
-                            </ul>
+                            <p className="text-xs text-gray-500 font-bold uppercase">Head of Dept</p>
+                            <p className="font-semibold text-gray-800">{program.head}</p>
                         </div>
-                    )}
-
-                    {/* SCHEDULE TAB */}
-                    {activeTab === 'schedule' && (
-                        <div className="text-center py-8">
-                            <Calendar size={48} className="mx-auto text-gray-200 mb-4" />
-                            <h3 className="text-lg font-semibold text-gray-800">Class Schedule</h3>
-                            <p className="text-gray-500 mb-6">Standard timing for {program.name}</p>
-
-                            <div className="inline-block text-left bg-gray-50 p-4 rounded-xl border border-gray-200">
-                                <div className="flex items-center justify-between gap-8 mb-2 border-b border-gray-200 pb-2">
-                                    <span className="text-gray-600 font-medium">Weekdays</span>
-                                    <span className="font-bold text-gray-800">7:30 AM - 1:30 PM</span>
-                                </div>
-                                <div className="flex items-center justify-between gap-8">
-                                    <span className="text-gray-600 font-medium">Jumu'ah (Fri)</span>
-                                    <span className="font-bold text-gray-800">7:30 AM - 11:00 AM</span>
-                                </div>
-                            </div>
+                    </div>
+                    <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
+                        <div className="p-3 bg-purple-50 text-purple-600 rounded-lg"><Clock size={24} /></div>
+                        <div>
+                            <p className="text-xs text-gray-500 font-bold uppercase">Duration</p>
+                            <p className="font-semibold text-gray-800">{program.duration}</p>
                         </div>
-                    )}
+                    </div>
+                    <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
+                        <div className="p-3 bg-green-50 text-green-600 rounded-lg"><GraduationCap size={24} /></div>
+                        <div>
+                            <p className="text-xs text-gray-500 font-bold uppercase">Students</p>
+                            <p className="font-semibold text-gray-800">{program.students}</p>
+                        </div>
+                    </div>
+                    <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
+                        <div className="p-3 bg-orange-50 text-orange-600 rounded-lg"><Calendar size={24} /></div>
+                        <div>
+                            <p className="text-xs text-gray-500 font-bold uppercase">Fees</p>
+                            <p className="font-semibold text-gray-800">{program.fees}</p>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Footer */}
-                <div className="p-4 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
-                    <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded-lg transition-colors">
-                        Close
-                    </button>
-                    <button className="px-4 py-2 text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 rounded-lg shadow-sm transition-colors flex items-center gap-2">
-                        <FileText size={16} /> Download Syllabus
-                    </button>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                    {/* 2. SUBJECTS SECTION */}
+                    <div className="lg:col-span-2 space-y-4">
+                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                            <div className="p-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                                    <BookOpen size={20} className="text-[#ea8933]" /> Curriculum / Subjects
+                                </h3>
+
+                                {/* Year Filter Tabs */}
+                                <div className="flex bg-gray-100 p-1 rounded-lg">
+                                    {availableYears.map(year => (
+                                        <button
+                                            key={year}
+                                            onClick={() => setSelectedYear(year)}
+                                            className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${selectedYear === year
+                                                    ? 'bg-white text-gray-800 shadow-sm'
+                                                    : 'text-gray-500 hover:text-gray-700'
+                                                }`}
+                                        >
+                                            {year}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="p-5">
+                                {programSubjects.length > 0 ? (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        {programSubjects.map((subject, idx) => (
+                                            <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-100 rounded-lg">
+                                                <div className="w-8 h-8 rounded-full bg-white text-[#ea8933] flex items-center justify-center font-bold text-sm shadow-sm border border-gray-100">
+                                                    {idx + 1}
+                                                </div>
+                                                <span className="font-medium text-gray-700">{subject.name}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-10 text-gray-400 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                                        <BookOpen size={32} className="mx-auto mb-2 opacity-50" />
+                                        <p>No subjects added for {selectedYear}</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 3. TEACHERS SECTION */}
+                    <div className="lg:col-span-1">
+                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm h-full">
+                            <div className="p-5 border-b border-gray-100">
+                                <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                                    <User size={20} className="text-blue-600" /> Academic Staff
+                                </h3>
+                            </div>
+                            <div className="p-5 space-y-4">
+                                {programTeachers.length > 0 ? (
+                                    programTeachers.map((teacher) => (
+                                        <div key={teacher.id} className="flex items-start gap-3 pb-4 border-b border-gray-50 last:border-0 last:pb-0">
+                                            <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">
+                                                {teacher.name.charAt(0)}
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-gray-800 text-sm">{teacher.name}</p>
+                                                <p className="text-xs text-gray-500">{teacher.role}</p>
+                                                <p className="text-xs text-blue-600 mt-1 bg-blue-50 inline-block px-2 py-0.5 rounded">
+                                                    {teacher.subject}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="text-gray-400 text-sm text-center">No teachers assigned yet.</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>

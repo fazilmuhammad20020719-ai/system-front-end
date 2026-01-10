@@ -11,12 +11,12 @@ import AddTeacher from './AddTeacher';
 import EditTeacher from './EditTeacher';
 import ViewTeacher from './ViewTeacher';
 import Programs from './Programs';
+import ViewProgram from './programs/ViewProgram'; // [NEW IMPORT]
+import ProgramDetails from './programs/ProgramDetails';
 import Attendance from './Attendance';
 import Documents from './Documents';
 import ManagementTeam from './ManagementTeam';
 import ForgotPassword from './ForgotPassword';
-
-
 
 function App() {
   return (
@@ -33,26 +33,25 @@ function App() {
         <Route path="/edit-student/:id" element={<EditStudent />} />
         <Route path="/view-student/:id" element={<ViewStudent />} />
 
-        {/* Add Teachers Route */}
+        {/* Teacher Routes */}
         <Route path="/teachers" element={<Teachers />} />
         <Route path="/add-teacher" element={<AddTeacher />} />
         <Route path="/view-teacher/:id" element={<ViewTeacher />} />
-
         <Route path="/edit-teacher/:id" element={<EditTeacher />} />
 
-        {/* Add Management Team Route */}
+        {/* Management Team */}
         <Route path="/management-team" element={<ManagementTeam />} />
 
-        {/* Add Programs Route */}
+        {/* Program Routes */}
         <Route path="/programs" element={<Programs />} />
+        <Route path="/programs/:id" element={<ProgramDetails />} /> {/* Keeping old route just in case, but new one is preferred */}
+        <Route path="/view-program/:id" element={<ViewProgram />} /> {/* [NEW ROUTE] */}
 
-        {/* Add Attendance Route */}
+        {/* Attendance & Documents */}
         <Route path="/attendance" element={<Attendance />} />
-
-        {/* Documents Route */}
         <Route path="/documents" element={<Documents />} />
 
-        {/* Catch-all Route: Redirect to Dashboard (or 404) */}
+        {/* Catch-all */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>

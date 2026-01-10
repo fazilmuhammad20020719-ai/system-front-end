@@ -5,7 +5,7 @@ const AttendanceTable = ({ students, onStatusChange }) => {
     const getInitials = (name) => name ? name.charAt(0).toLowerCase() : "-";
 
     return (
-        <div className="bg-white rounded-t-lg shadow-sm border border-gray-200/60 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200/60 overflow-hidden">
             {/* Table Header */}
             <div className="grid grid-cols-12 bg-[#f8fafc] p-4 border-b border-gray-200 text-[10px] font-bold text-gray-500 uppercase tracking-wider min-w-[600px]">
                 <div className="col-span-5 pl-2">Student</div>

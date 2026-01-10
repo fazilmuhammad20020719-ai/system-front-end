@@ -39,7 +39,7 @@ const AddTeacher = () => {
         // --- Extra Standard Fields ---
         employeeId: '',
         designation: 'Lecturer',
-        department: '',
+        department: '', // Can be kept or derived
         joiningDate: '',
 
         // --- Financial (New Idea) ---

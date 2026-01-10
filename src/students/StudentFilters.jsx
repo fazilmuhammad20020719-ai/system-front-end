@@ -60,6 +60,19 @@ const StudentFilters = ({
                             <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
                         </div>
 
+                        {/* 3. ACADEMIC YEAR FILTER (GRADE) */}
+                        <div className="relative min-w-[140px]">
+                            <select
+                                value={selectedYear}
+                                onChange={(e) => setSelectedYear(e.target.value)}
+                                className="w-full pl-4 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm appearance-none focus:outline-none focus:border-[#EB8A33] cursor-pointer text-gray-700 hover:bg-gray-100 transition-colors"
+                            >
+                                <option value="">All Year</option>
+                                {academicYears.map(year => <option key={year} value={year}>{year}</option>)}
+                            </select>
+                            <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
+                        </div>
+
 
 
                         {/* 4. STATUS FILTER */}

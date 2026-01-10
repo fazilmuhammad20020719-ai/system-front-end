@@ -17,6 +17,7 @@ export const TEACHERS_DATA = [
     { id: 4, name: "Mr. Mohamed Naleem", empid: "EMP-004", program: "Al-Alim (Boys)", subject: "Information Tech", role: "Instructor", email: "naleem@college.edu", phone: "+94 75 000 1111", status: "Active" },
     { id: 5, name: "Sheikh Abdullah", empid: "EMP-005", program: "Hifzul Quran", subject: "Quran Memorization", role: "Head of Hifz", email: "abdullah@college.edu", phone: "+94 77 222 3333", status: "Active" },
     { id: 6, name: "Moulavi Zaid", empid: "EMP-006", program: "Al-Alim (Boys)", subject: "Fiqh", role: "Lecturer", email: "zaid@college.edu", phone: "+94 77 444 5555", status: "Active" },
+    { id: 7, name: "Mr. Retired Person", empid: "EMP-007", program: "English Unit", subject: "Spoken English", role: "Former Lecturer", email: "retired@college.edu", phone: "+94 77 000 0000", status: "Inactive" },
 ];
 
 export const DOCUMENTS_DATA = [
@@ -38,3 +39,4 @@ export const PAGE_ROUTES = [
     { title: 'Management Team', path: '/management-team', type: 'Page' },
     { title: 'Documents', path: '/documents', type: 'Page' },
 ];
+

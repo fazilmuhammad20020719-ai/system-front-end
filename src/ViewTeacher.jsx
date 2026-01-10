@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-    LayoutDashboard, FileText, Calendar, DollarSign, ArrowLeft
+    LayoutDashboard, FileText, Calendar, DollarSign, ArrowLeft, CheckCircle
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Sidebar from './Sidebar';
@@ -11,6 +11,7 @@ import TeacherOverview from './teacher-view/TeacherOverview';
 import TeacherSchedule from './teacher-view/TeacherSchedule';
 import TeacherPayroll from './teacher-view/TeacherPayroll';
 import TeacherDocuments from './teacher-view/TeacherDocuments';
+import TeacherAttendanceView from './teacher-view/TeacherAttendanceView';
 
 const ViewTeacher = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -34,6 +35,7 @@ const ViewTeacher = () => {
             email: "sarah@college.edu",
             phone: "+94 77 123 4567",
             address: "45, Marine Drive, Colombo 03",
+            googleMapLink: "https://maps.google.com",
 
             // Professional
             employeeId: "EMP-001",
@@ -58,6 +60,7 @@ const ViewTeacher = () => {
                 { day: "Monday", time: "10:00 - 11:00", subject: "Hadith Studies", grade: "Year 5" },
                 { day: "Wednesday", time: "09:00 - 10:30", subject: "Fiqh", grade: "Year 4" },
             ],
+            attendanceStats: { total: 20, present: 18, absent: 2 },
             payroll: [
                 { month: "October 2025", basic: "125,000", bonus: "5,000", status: "Paid" },
                 { month: "September 2025", basic: "125,000", bonus: "0", status: "Paid" },
@@ -90,6 +93,7 @@ const ViewTeacher = () => {
                         <div className="flex min-w-max">
                             <TabItem icon={LayoutDashboard} label="Overview" active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} />
                             <TabItem icon={Calendar} label="Schedule" active={activeTab === 'schedule'} onClick={() => setActiveTab('schedule')} />
+                            <TabItem icon={CheckCircle} label="Attendance" active={activeTab === 'attendance'} onClick={() => setActiveTab('attendance')} />
                             <TabItem icon={DollarSign} label="Payroll" active={activeTab === 'payroll'} onClick={() => setActiveTab('payroll')} />
                             <TabItem icon={FileText} label="Documents" active={activeTab === 'documents'} onClick={() => setActiveTab('documents')} />
                         </div>
@@ -98,6 +102,8 @@ const ViewTeacher = () => {
                     {/* 3. Tab Content Render */}
                     <div className="space-y-6">
                         {activeTab === 'overview' && <TeacherOverview teacher={teacher} />}
+                        {activeTab === 'schedule' && <TeacherSchedule schedule={teacher.schedule} />}
+                        {activeTab === 'attendance' && <TeacherAttendanceView stats={teacher.attendanceStats} />}
                         {activeTab === 'schedule' && <TeacherSchedule schedule={teacher.schedule} />}
                         {activeTab === 'payroll' && <TeacherPayroll teacher={teacher} />}
                         {activeTab === 'documents' && <TeacherDocuments documents={teacher.documents} />}

@@ -1,245 +1,125 @@
 import { useState } from 'react';
-import {
-    Plus,
-    Search,
-    Filter,
-    MoreVertical,
-    FileText,
-    CheckCircle,
-    Calendar,
-    ChevronDown,
-    Save
-} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Calendar, Clock, ChevronRight, BarChart3, Filter } from 'lucide-react';
 import Sidebar from '../Sidebar';
 
 const Examinations = () => {
+    const navigate = useNavigate();
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-    const [activeTab, setActiveTab] = useState('exams'); // 'exams' | 'results'
+    const [filter, setFilter] = useState('All');
 
-    // --- MOCK DATA ---
+    // MOCK DATA: பரிட்சைகள் பட்டியல்
     const exams = [
-        { id: 1, name: "Term 1 Examination 2025", type: "Term Test", startDate: "2025-03-15", endDate: "2025-03-25", status: "Scheduled" },
-        { id: 2, name: "Monthly Assessment - Jan", type: "Assessment", startDate: "2025-01-28", endDate: "2025-01-30", status: "Active" },
+        {
+            id: 1,
+            title: "Term 1 Examination 2025",
+            target: "Year 1 & Year 2",
+            status: "Upcoming",
+            startDate: "2025-03-15",
+            subjectsCount: 5
+        },
+        {
+            id: 2,
+            title: "Monthly Assessment - Jan",
+            target: "Hifz Class A",
+            status: "Ongoing",
+            startDate: "2025-01-28",
+            subjectsCount: 2
+        },
+        {
+            id: 3,
+            title: "Year End Final 2024",
+            target: "All Students",
+            status: "Completed",
+            startDate: "2024-12-10",
+            subjectsCount: 6
+        }
     ];
 
-    const resultStudents = [
-        { id: 101, name: "Ahamad Fazil", index: "STU-001", marks: "" },
-        { id: 102, name: "Mohamed Rizan", index: "STU-002", marks: "" },
-        { id: 103, name: "Fathima Nuzha", index: "STU-003", marks: "" },
-        { id: 104, name: "Yusuf Khan", index: "STU-004", marks: "" },
-    ];
-
-    // --- STATE FOR RESULTS ENTRY ---
-    const [selectedExam, setSelectedExam] = useState('');
-    const [selectedClass, setSelectedClass] = useState('');
-    const [selectedSubject, setSelectedSubject] = useState('');
-    const [studentMarks, setStudentMarks] = useState(resultStudents);
-
-    const handleMarkChange = (id, value) => {
-        setStudentMarks(studentMarks.map(s => s.id === id ? { ...s, marks: value } : s));
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'Upcoming': return 'bg-blue-100 text-blue-700 border-blue-200';
+            case 'Ongoing': return 'bg-amber-100 text-amber-700 border-amber-200 animate-pulse';
+            case 'Completed': return 'bg-green-100 text-green-700 border-green-200';
+            default: return 'bg-gray-100 text-gray-600';
+        }
     };
 
     return (
-        <div className="min-h-screen bg-[#F3F4F6] font-sans flex">
+        <div className="min-h-screen bg-gray-50 flex font-sans">
             <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
 
-            <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "ml-64" : "ml-20"}`}>
-                <main className="p-8">
+            <div className={`flex-1 transition-all duration-300 ${isSidebarOpen ? "ml-64" : "ml-20"}`}>
+                <div className="p-8">
 
                     {/* Header */}
-                    <div className="flex justify-between items-center mb-6">
+                    <div className="flex justify-between items-center mb-8">
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-800">Examinations</h1>
-                            <p className="text-gray-500 text-sm">Manage exams and enter student results</p>
+                            <h1 className="text-2xl font-bold text-gray-800">Examinations Dashboard</h1>
+                            <p className="text-gray-500">Manage schedules, marks, and results</p>
                         </div>
-                        {activeTab === 'exams' && (
-                            <button className="bg-[#EB8A33] hover:bg-[#d67b28] text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm flex items-center gap-2 transition-all hover:scale-105 active:scale-95">
-                                <Plus size={18} /> New Exam
+                        <button
+                            onClick={() => navigate('/examinations/create')}
+                            className="bg-[#EB8A33] hover:bg-[#d67b28] text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-sm transition-transform active:scale-95"
+                        >
+                            <Plus size={20} /> Create New Exam
+                        </button>
+                    </div>
+
+                    {/* Filters */}
+                    <div className="flex gap-3 mb-6">
+                        {['All', 'Upcoming', 'Ongoing', 'Completed'].map(f => (
+                            <button
+                                key={f}
+                                onClick={() => setFilter(f)}
+                                className={`px-4 py-2 rounded-lg text-sm font-bold border transition-colors ${filter === f
+                                        ? 'bg-white border-[#EB8A33] text-[#EB8A33] shadow-sm'
+                                        : 'bg-transparent border-transparent text-gray-500 hover:bg-white hover:shadow-sm'
+                                    }`}
+                            >
+                                {f}
                             </button>
-                        )}
+                        ))}
                     </div>
 
-                    {/* Tabs */}
-                    <div className="flex items-center gap-6 border-b border-gray-200 mb-6">
-                        <button
-                            onClick={() => setActiveTab('exams')}
-                            className={`pb-3 text-sm font-bold transition-colors relative ${activeTab === 'exams' ? 'text-[#EB8A33]' : 'text-gray-500 hover:text-gray-700'}`}
-                        >
-                            Exam List
-                            {activeTab === 'exams' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#EB8A33] rounded-t-full"></div>}
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('results')}
-                            className={`pb-3 text-sm font-bold transition-colors relative ${activeTab === 'results' ? 'text-[#EB8A33]' : 'text-gray-500 hover:text-gray-700'}`}
-                        >
-                            Results Entry
-                            {activeTab === 'results' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#EB8A33] rounded-t-full"></div>}
-                        </button>
-                    </div>
+                    {/* Exam Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {exams.filter(e => filter === 'All' || e.status === filter).map((exam) => (
+                            <div key={exam.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-5 relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                    <BarChart3 size={64} className="text-[#EB8A33]" />
+                                </div>
 
-                    {/* CONTENT AREA */}
-                    {activeTab === 'exams' ? (
-                        /* --- EXAM MANAGEMENT TAB --- */
-                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                            <table className="w-full text-left">
-                                <thead className="bg-gray-50 border-b border-gray-100 text-xs uppercase text-gray-500 font-semibold">
-                                    <tr>
-                                        <th className="px-6 py-4">Exam Name</th>
-                                        <th className="px-6 py-4">Type</th>
-                                        <th className="px-6 py-4">Start Date</th>
-                                        <th className="px-6 py-4">End Date</th>
-                                        <th className="px-6 py-4">Status</th>
-                                        <th className="px-6 py-4 text-right">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-50">
-                                    {exams.map((exam) => (
-                                        <tr key={exam.id} className="hover:bg-gray-50 transition-colors">
-                                            <td className="px-6 py-4 font-bold text-gray-800">{exam.name}</td>
-                                            <td className="px-6 py-4 text-sm text-gray-600">{exam.type}</td>
-                                            <td className="px-6 py-4 text-sm text-gray-600">{exam.startDate}</td>
-                                            <td className="px-6 py-4 text-sm text-gray-600">{exam.endDate}</td>
-                                            <td className="px-6 py-4">
-                                                <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${exam.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-blue-50 text-blue-600'
-                                                    }`}>
-                                                    {exam.status}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <button className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100">
-                                                    <MoreVertical size={16} />
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    ) : (
-                        /* --- RESULTS ENTRY TAB --- */
-                        <div className="space-y-6">
-                            {/* Filters Card */}
-                            <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-                                <h3 className="font-bold text-gray-800 mb-4">Select Exam Details</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div>
-                                        <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Exam</label>
-                                        <div className="relative">
-                                            <select
-                                                value={selectedExam}
-                                                onChange={(e) => setSelectedExam(e.target.value)}
-                                                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:border-[#EB8A33] outline-none appearance-none"
-                                            >
-                                                <option value="">Select Exam</option>
-                                                {exams.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
-                                            </select>
-                                            <ChevronDown size={16} className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
-                                        </div>
+                                <div className="mb-4">
+                                    <span className={`text-xs font-bold px-3 py-1 rounded-full border ${getStatusColor(exam.status)}`}>
+                                        {exam.status}
+                                    </span>
+                                </div>
+
+                                <h3 className="font-bold text-lg text-gray-800 mb-1">{exam.title}</h3>
+                                <p className="text-sm text-gray-500 mb-4">Target: {exam.target}</p>
+
+                                <div className="space-y-2 mb-6">
+                                    <div className="flex items-center text-sm text-gray-600 gap-2">
+                                        <Calendar size={16} className="text-gray-400" />
+                                        <span>Starts: {exam.startDate}</span>
                                     </div>
-                                    <div>
-                                        <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Class / Program</label>
-                                        <div className="relative">
-                                            <select
-                                                value={selectedClass}
-                                                onChange={(e) => setSelectedClass(e.target.value)}
-                                                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:border-[#EB8A33] outline-none appearance-none"
-                                            >
-                                                <option value="">Select Class</option>
-                                                <option value="year1">Al-Alimah Year 1</option>
-                                                <option value="year2">Hifz Class A</option>
-                                            </select>
-                                            <ChevronDown size={16} className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Subject</label>
-                                        <div className="relative">
-                                            <select
-                                                value={selectedSubject}
-                                                onChange={(e) => setSelectedSubject(e.target.value)}
-                                                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:border-[#EB8A33] outline-none appearance-none"
-                                            >
-                                                <option value="">Select Subject</option>
-                                                <option value="fiqh">Fiqh</option>
-                                                <option value="aqidah">Aqidah</option>
-                                                <option value="arabic">Arabic Language</option>
-                                            </select>
-                                            <ChevronDown size={16} className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
-                                        </div>
+                                    <div className="flex items-center text-sm text-gray-600 gap-2">
+                                        <Clock size={16} className="text-gray-400" />
+                                        <span>{exam.subjectsCount} Subjects Scheduled</span>
                                     </div>
                                 </div>
+
+                                <button
+                                    onClick={() => navigate(`/examinations/manage/${exam.id}`)}
+                                    className="w-full py-2.5 rounded-xl border border-gray-200 hover:border-[#EB8A33] hover:text-[#EB8A33] font-bold text-sm transition-colors flex items-center justify-center gap-2 bg-gray-50 hover:bg-white"
+                                >
+                                    Manage Exam <ChevronRight size={16} />
+                                </button>
                             </div>
-
-                            {/* Results Table (Only Show if Filters Selected) */}
-                            {selectedExam && selectedClass && selectedSubject ? (
-                                <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-2">
-                                    <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                                        <h3 className="font-bold text-gray-700">Student Marks</h3>
-                                        <button className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm">
-                                            <Save size={14} /> Save Results
-                                        </button>
-                                    </div>
-                                    <table className="w-full text-left">
-                                        <thead className="border-b border-gray-100 text-xs uppercase text-gray-500 font-semibold bg-white">
-                                            <tr>
-                                                <th className="px-6 py-4 w-20">#</th>
-                                                <th className="px-6 py-4">Index No</th>
-                                                <th className="px-6 py-4">Student Name</th>
-                                                <th className="px-6 py-4 w-40">Marks (100)</th>
-                                                <th className="px-6 py-4">Grade</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-50">
-                                            {studentMarks.map((student, index) => {
-                                                const mark = parseInt(student.marks) || 0;
-                                                let grade = "-";
-                                                if (student.marks) {
-                                                    if (mark >= 75) grade = "A";
-                                                    else if (mark >= 65) grade = "B";
-                                                    else if (mark >= 50) grade = "C";
-                                                    else if (mark >= 35) grade = "S";
-                                                    else grade = "F";
-                                                }
-
-                                                return (
-                                                    <tr key={student.id} className="hover:bg-gray-50">
-                                                        <td className="px-6 py-3 text-gray-400 font-medium">{index + 1}</td>
-                                                        <td className="px-6 py-3 text-sm font-mono text-gray-500">{student.index}</td>
-                                                        <td className="px-6 py-3 font-medium text-gray-800">{student.name}</td>
-                                                        <td className="px-6 py-3">
-                                                            <input
-                                                                type="number"
-                                                                max="100"
-                                                                value={student.marks}
-                                                                onChange={(e) => handleMarkChange(student.id, e.target.value)}
-                                                                className="w-full p-2 border border-gray-200 rounded-lg text-center font-bold focus:border-[#EB8A33] outline-none"
-                                                                placeholder="0"
-                                                            />
-                                                        </td>
-                                                        <td className="px-6 py-3">
-                                                            <span className={`font-bold inline-block w-8 text-center ${grade === 'A' ? 'text-green-600' :
-                                                                    grade === 'F' ? 'text-red-600' :
-                                                                        'text-gray-600'
-                                                                }`}>
-                                                                {grade}
-                                                            </span>
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            ) : (
-                                <div className="text-center py-12 text-gray-400 bg-white rounded-xl border border-dashed border-gray-200">
-                                    <FileText size={48} className="mx-auto mb-3 opacity-20" />
-                                    <p>Select Exam, Class, and Subject to enter results.</p>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                </main>
+                        ))}
+                    </div>
+                </div>
             </div>
         </div>
     );

@@ -13,7 +13,9 @@ import ViewTeacher from './ViewTeacher';
 import Programs from './Programs';
 import ViewProgram from './programs/ViewProgram'; // [NEW IMPORT]
 import ProgramDetails from './programs/ProgramDetails';
-import Examinations from './examinations/Examinations'; // [NEW IMPORT]
+import Examinations from './examinations/Examinations';
+import CreateExam from './examinations/CreateExam';
+import ExamManager from './examinations/ExamManager';
 import Attendance from './Attendance';
 import Documents from './Documents';
 import ManagementTeam from './ManagementTeam';
@@ -50,6 +52,8 @@ function App() {
 
         {/* Examinations */}
         <Route path="/examinations" element={<Examinations />} />
+        <Route path="/examinations/create" element={<CreateExam />} />
+        <Route path="/examinations/manage/:examId" element={<ExamManager />} />
 
         {/* Attendance & Documents */}
         <Route path="/attendance" element={<Attendance />} />

@@ -4,25 +4,38 @@ import Sidebar from './Sidebar';
 // IMPORTING SUB-COMPONENTS
 import AttendanceHeader from './attendance/AttendanceHeader';
 import AttendanceStats from './attendance/AttendanceStats';
-import AttendanceFilters from './attendance/AttendanceFilters';
-import AttendanceTable from './attendance/AttendanceTable';
 import AttendanceFooter from './attendance/AttendanceFooter';
 import PinModal from './attendance/PinModal';
+
+// STUDENT COMPONENTS
+import AttendanceFilters from './attendance/AttendanceFilters';
+import AttendanceTable from './attendance/AttendanceTable';
+
+// TEACHER COMPONENTS (New)
+import TeacherAttendanceFilters from './attendance/TeacherAttendanceFilters';
+import TeacherAttendanceTable from './attendance/TeacherAttendanceTable';
+
+import { TEACHERS_DATA } from './data/mockData';
 
 const Attendance = () => {
     // Default: Open on PC (width >= 768), Closed on Mobile
     const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
 
-    // -- STATE MANAGEMENT --
-    const [selectedDate, setSelectedDate] = useState("2025-12-26");
+    // -- MAIN TOGGLE STATE --
+    const [activeTab, setActiveTab] = useState('students'); // 'students' or 'teachers'
+
+    // -- COMMON STATE --
+    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+
+    // ==========================================
+    // STUDENT LOGIC
+    // ==========================================
     const [filterProgram, setFilterProgram] = useState("All");
     const [filterYear, setFilterYear] = useState("All");
     const [filterStatus, setFilterStatus] = useState("All");
     const [searchQuery, setSearchQuery] = useState("");
 
-    const [isPinModalOpen, setIsPinModalOpen] = useState(false);
-
-    // -- MOCK DATA --
     const [students, setStudents] = useState([
         { id: 1, name: "fathimah", adminId: "2025/002", program: "Al-Alimah", year: "1st Year", status: "", admissionDate: "2023-01-01" },
         { id: 2, name: "qdwaSAS", adminId: "2025/009", program: "Hifz Class", year: "1st Year", status: "", admissionDate: "2022-05-15" },
@@ -30,8 +43,6 @@ const Attendance = () => {
         { id: 4, name: "fazil", adminId: "2025/01", program: "Al-Alim", year: "1st Year", status: "", admissionDate: "2024-01-10" },
     ]);
 
-    // -- 1. STATS DATA (Ignores Search & Status Filter) --
-    // This ensures stats don't change just because you searched for a name
     const statsStudents = useMemo(() => {
         return students.filter(student => {
             const matchesProgram = filterProgram === "All" || student.program === filterProgram;
@@ -40,7 +51,6 @@ const Attendance = () => {
         });
     }, [students, filterProgram, filterYear]);
 
-    // -- 2. TABLE DATA (Applies All Filters) --
     const filteredStudents = useMemo(() => {
         return statsStudents.filter(student => {
             const matchesStatus = filterStatus === "All" || student.status === filterStatus;
@@ -50,40 +60,90 @@ const Attendance = () => {
         });
     }, [statsStudents, filterStatus, searchQuery]);
 
-    // -- STATISTICS CALCULATION (Uses statsStudents) --
-    const stats = useMemo(() => {
+    const studentStats = useMemo(() => {
         const total = statsStudents.length;
         if (total === 0) return { present: 0, absent: 0, rate: 0 };
-
         const present = statsStudents.filter(s => s.status === "Present").length;
         const absent = statsStudents.filter(s => s.status === "Absent").length;
         const rate = Math.round((present / total) * 100);
-
         return { present, absent, rate };
-    }, [statsStudents]); // Depends on the wider list, not the filtered list
+    }, [statsStudents]);
 
-    const averageRate = 85; // Placeholder
+    // ==========================================
+    // TEACHER LOGIC
+    // ==========================================
+    const [teacherFilterProgram, setTeacherFilterProgram] = useState("All");
+    const [teacherFilterStatus, setTeacherFilterStatus] = useState("All");
+    const [teacherSearchQuery, setTeacherSearchQuery] = useState("");
 
-    // -- HANDLERS --
-    const handleStatusChange = (id, newStatus) => {
+    // Initialize with mock data + attendanceStatus field
+    const [teachers, setTeachers] = useState(
+        TEACHERS_DATA.map(t => ({ ...t, attendanceStatus: '' }))
+    );
+
+    const statsTeachers = useMemo(() => {
+        return teachers.filter(teacher => {
+            const matchesProgram = teacherFilterProgram === "All" || teacher.program === teacherFilterProgram;
+            return matchesProgram;
+        });
+    }, [teachers, teacherFilterProgram]);
+
+    const filteredTeachers = useMemo(() => {
+        return statsTeachers.filter(teacher => {
+            const matchesStatus = teacherFilterStatus === "All" || teacher.attendanceStatus === teacherFilterStatus;
+            const matchesSearch = teacher.name.toLowerCase().includes(teacherSearchQuery.toLowerCase()) ||
+                teacher.empid.toLowerCase().includes(teacherSearchQuery.toLowerCase());
+            return matchesStatus && matchesSearch;
+        });
+    }, [statsTeachers, teacherFilterStatus, teacherSearchQuery]);
+
+    const teacherStats = useMemo(() => {
+        const total = statsTeachers.length;
+        if (total === 0) return { present: 0, absent: 0, rate: 0 };
+        const present = statsTeachers.filter(t => t.attendanceStatus === "Present").length;
+        const absent = statsTeachers.filter(t => t.attendanceStatus === "Absent").length;
+        const rate = Math.round((present / total) * 100);
+        return { present, absent, rate };
+    }, [statsTeachers]);
+
+
+    // ==========================================
+    // SHARED HANDLERS
+    // ==========================================
+
+    const handleStudentStatusChange = (id, newStatus) => {
         setStudents(prev => prev.map(s => s.id === id ? { ...s, status: newStatus } : s));
+    };
+
+    const handleTeacherStatusChange = (id, newStatus) => {
+        setTeachers(prev => prev.map(t => t.id === id ? { ...t, attendanceStatus: newStatus } : t));
     };
 
     const handleBulkAction = (action) => {
         const statusMap = { 'all-present': 'Present', 'all-absent': 'Absent', 'all-holiday': 'Holiday' };
         const targetStatus = statusMap[action];
 
-        // We apply bulk action only to currently VISIBLE students (filteredStudents)
-        // This is correct behavior (e.g. if I search "Ali" and click "All Present", only Ali becomes present)
-        const visibleIds = filteredStudents.map(s => s.id);
-
-        setStudents(prev => prev.map(s => visibleIds.includes(s.id) ? { ...s, status: targetStatus } : s));
+        if (activeTab === 'students') {
+            const visibleIds = filteredStudents.map(s => s.id);
+            setStudents(prev => prev.map(s => visibleIds.includes(s.id) ? { ...s, status: targetStatus } : s));
+        } else {
+            const visibleIds = filteredTeachers.map(t => t.id);
+            setTeachers(prev => prev.map(t => visibleIds.includes(t.id) ? { ...t, attendanceStatus: targetStatus } : t));
+        }
     };
 
     const handleSaveSuccess = () => {
         setIsPinModalOpen(false);
-        // Save logic here
+        if (activeTab === 'students') {
+            console.log("Saving Student Attendance...");
+        } else {
+            console.log("Saving Teacher Attendance...");
+        }
     };
+
+    // Determine current stats to show
+    const currentStats = activeTab === 'students' ? studentStats : teacherStats;
+    const currentCount = activeTab === 'students' ? filteredStudents.length : filteredTeachers.length;
 
     return (
         <div className="flex min-h-screen bg-[#f3f4f6] font-sans text-slate-800">
@@ -100,35 +160,75 @@ const Attendance = () => {
 
                 <main className="p-4 md:p-8 pb-32">
 
-                    {/* STATS */}
+                    {/* --- TOGGLE TABS --- */}
+                    <div className="flex justify-center mb-6">
+                        <div className="bg-white p-1 rounded-lg border border-gray-200 shadow-sm inline-flex">
+                            <button
+                                onClick={() => setActiveTab('students')}
+                                className={`px-6 py-2 rounded-md text-sm font-bold transition-all ${activeTab === 'students'
+                                        ? 'bg-orange-500 text-white shadow-sm'
+                                        : 'text-gray-500 hover:bg-gray-50'
+                                    }`}
+                            >
+                                Students
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('teachers')}
+                                className={`px-6 py-2 rounded-md text-sm font-bold transition-all ${activeTab === 'teachers'
+                                        ? 'bg-orange-500 text-white shadow-sm'
+                                        : 'text-gray-500 hover:bg-gray-50'
+                                    }`}
+                            >
+                                Teachers
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* STATS (Reused for both) */}
                     <AttendanceStats
-                        dailyRate={stats.rate}
-                        averageRate={averageRate}
-                        presentCount={stats.present}
-                        absentCount={stats.absent}
+                        dailyRate={currentStats.rate}
+                        averageRate={85} // You can make this dynamic too
+                        presentCount={currentStats.present}
+                        absentCount={currentStats.absent}
                     />
 
-                    {/* FILTERS & BULK ACTIONS */}
-                    <AttendanceFilters
-                        selectedDate={selectedDate} setSelectedDate={setSelectedDate}
-                        filterProgram={filterProgram} setFilterProgram={setFilterProgram}
-                        filterYear={filterYear} setFilterYear={setFilterYear}
-                        filterStatus={filterStatus} setFilterStatus={setFilterStatus}
-                        searchQuery={searchQuery} setSearchQuery={setSearchQuery}
-                        onBulkAction={handleBulkAction}
-                    />
-
-                    {/* TABLE */}
-                    <AttendanceTable
-                        students={filteredStudents}
-                        onStatusChange={handleStatusChange}
-                    />
+                    {/* CONDITIONAL RENDERING */}
+                    {activeTab === 'students' ? (
+                        <>
+                            <AttendanceFilters
+                                selectedDate={selectedDate} setSelectedDate={setSelectedDate}
+                                filterProgram={filterProgram} setFilterProgram={setFilterProgram}
+                                filterYear={filterYear} setFilterYear={setFilterYear}
+                                filterStatus={filterStatus} setFilterStatus={setFilterStatus}
+                                searchQuery={searchQuery} setSearchQuery={setSearchQuery}
+                                onBulkAction={handleBulkAction}
+                            />
+                            <AttendanceTable
+                                students={filteredStudents}
+                                onStatusChange={handleStudentStatusChange}
+                            />
+                        </>
+                    ) : (
+                        <>
+                            <TeacherAttendanceFilters
+                                selectedDate={selectedDate} setSelectedDate={setSelectedDate}
+                                filterProgram={teacherFilterProgram} setFilterProgram={setTeacherFilterProgram}
+                                filterStatus={teacherFilterStatus} setFilterStatus={setTeacherFilterStatus}
+                                searchQuery={teacherSearchQuery} setSearchQuery={setTeacherSearchQuery}
+                                onBulkAction={handleBulkAction}
+                            />
+                            <TeacherAttendanceTable
+                                teachers={filteredTeachers}
+                                onStatusChange={handleTeacherStatusChange}
+                            />
+                        </>
+                    )}
 
                 </main>
 
                 {/* FOOTER */}
                 <AttendanceFooter
-                    count={filteredStudents.length} // Footer count shows VISIBLE rows (correct)
+                    count={currentCount}
                     onSaveClick={() => setIsPinModalOpen(true)}
                     isSidebarOpen={isSidebarOpen}
                 />

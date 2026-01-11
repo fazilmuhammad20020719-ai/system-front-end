@@ -29,7 +29,7 @@ const ViewStudentTimeline = () => {
                     <span className="absolute -left-[9px] top-0 w-4 h-4 bg-green-500 rounded-full border-4 border-white shadow-sm"></span>
                     <p className="text-xs text-gray-500 font-bold uppercase mb-1">Jan 2025</p>
                     <h4 className="text-sm font-bold text-gray-800">Admission Joined</h4>
-                    <p className="text-xs text-gray-500 mt-1">Enrolled in Hifz ul Quran (1st Year)</p>
+                    <p className="text-xs text-gray-500 mt-1">Enrolled in Hifz ul Quran (Grade 1)</p>
                 </div>
 
             </div>

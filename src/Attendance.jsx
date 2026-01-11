@@ -37,10 +37,10 @@ const Attendance = () => {
     const [searchQuery, setSearchQuery] = useState("");
 
     const [students, setStudents] = useState([
-        { id: 1, name: "fathimah", adminId: "2025/002", program: "Al-Alimah", year: "1st Year", status: "", admissionDate: "2023-01-01" },
-        { id: 2, name: "qdwaSAS", adminId: "2025/009", program: "Hifz Class", year: "1st Year", status: "", admissionDate: "2022-05-15" },
-        { id: 3, name: "agdf", adminId: "2025/009", program: "Qiraat Course", year: "1st Year", status: "", admissionDate: "2023-02-20" },
-        { id: 4, name: "fazil", adminId: "2025/01", program: "Al-Alim", year: "1st Year", status: "", admissionDate: "2024-01-10" },
+        { id: 1, name: "fathimah", adminId: "2025/002", program: "Al-Alimah", year: "Grade 1", status: "", admissionDate: "2023-01-01" },
+        { id: 2, name: "qdwaSAS", adminId: "2025/009", program: "Hifz Class", year: "Grade 1", status: "", admissionDate: "2022-05-15" },
+        { id: 3, name: "agdf", adminId: "2025/009", program: "Qiraat Course", year: "Grade 1", status: "", admissionDate: "2023-02-20" },
+        { id: 4, name: "fazil", adminId: "2025/01", program: "Al-Alim", year: "Grade 1", status: "", admissionDate: "2024-01-10" },
     ]);
 
     const statsStudents = useMemo(() => {
@@ -166,8 +166,8 @@ const Attendance = () => {
                             <button
                                 onClick={() => setActiveTab('students')}
                                 className={`px-6 py-2 rounded-md text-sm font-bold transition-all ${activeTab === 'students'
-                                        ? 'bg-orange-500 text-white shadow-sm'
-                                        : 'text-gray-500 hover:bg-gray-50'
+                                    ? 'bg-orange-500 text-white shadow-sm'
+                                    : 'text-gray-500 hover:bg-gray-50'
                                     }`}
                             >
                                 Students
@@ -175,8 +175,8 @@ const Attendance = () => {
                             <button
                                 onClick={() => setActiveTab('teachers')}
                                 className={`px-6 py-2 rounded-md text-sm font-bold transition-all ${activeTab === 'teachers'
-                                        ? 'bg-orange-500 text-white shadow-sm'
-                                        : 'text-gray-500 hover:bg-gray-50'
+                                    ? 'bg-orange-500 text-white shadow-sm'
+                                    : 'text-gray-500 hover:bg-gray-50'
                                     }`}
                             >
                                 Teachers

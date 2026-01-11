@@ -13,7 +13,7 @@ const ViewProgram = () => {
     const navigate = useNavigate();
     const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
     const [activeTab, setActiveTab] = useState('overview');
-    const [selectedYear, setSelectedYear] = useState('1st Year');
+    const [selectedYear, setSelectedYear] = useState('Grade 1');
 
     // MOCK DATA FETCHING (Simulating API)
     const [program, setProgram] = useState(null);
@@ -27,7 +27,7 @@ const ViewProgram = () => {
             id: id,
             name: "Hifzul Quran",
             head: "Sheikh Abdullah",
-            duration: "3 Years",
+            duration: "3 Years", // Duration remains in Years
             description: "A comprehensive program designed for students to memorize the Holy Quran with Tajweed rules, coupled with basic Islamic studies.",
             students: 120,
             fees: "Free",
@@ -37,10 +37,10 @@ const ViewProgram = () => {
         });
 
         setSubjects([
-            { id: 101, year: '1st Year', name: 'Juz 1-5' },
-            { id: 102, year: '1st Year', name: 'Tajweed Basics' },
-            { id: 103, year: '2nd Year', name: 'Juz 6-15' },
-            { id: 104, year: '3rd Year', name: 'Juz 16-30' },
+            { id: 101, year: 'Grade 1', name: 'Juz 1-5' },
+            { id: 102, year: 'Grade 1', name: 'Tajweed Basics' },
+            { id: 103, year: 'Grade 2', name: 'Juz 6-15' },
+            { id: 104, year: 'Grade 3', name: 'Juz 16-30' },
         ]);
     }, [id]);
 
@@ -49,7 +49,7 @@ const ViewProgram = () => {
     // Filter Logic
     const programTeachers = TEACHERS_DATA.filter(t => t.program === program.name);
     const currentSubjects = subjects.filter(s => s.year === selectedYear);
-    const availableYears = ['1st Year', '2nd Year', '3rd Year', 'Final Year'];
+    const availableYears = ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 5'];
 
     return (
         <div className="flex min-h-screen bg-[#f3f4f6] font-sans text-slate-800">

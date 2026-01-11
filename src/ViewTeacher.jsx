@@ -56,9 +56,9 @@ const ViewTeacher = () => {
                 { id: 3, name: "Appointment Letter.pdf", size: "500 KB", date: "2015-01-12" },
             ],
             schedule: [
-                { day: "Monday", time: "08:00 - 09:00", subject: "Quranic Tafseer", grade: "Year 3" },
-                { day: "Monday", time: "10:00 - 11:00", subject: "Hadith Studies", grade: "Year 5" },
-                { day: "Wednesday", time: "09:00 - 10:30", subject: "Fiqh", grade: "Year 4" },
+                { day: "Monday", time: "08:00 - 09:00", subject: "Quranic Tafseer", grade: "Grade 3" },
+                { day: "Monday", time: "10:00 - 11:00", subject: "Hadith Studies", grade: "Grade 5" },
+                { day: "Wednesday", time: "09:00 - 10:30", subject: "Fiqh", grade: "Grade 4" },
             ],
             attendanceStats: { total: 20, present: 18, absent: 2 },
             payroll: [

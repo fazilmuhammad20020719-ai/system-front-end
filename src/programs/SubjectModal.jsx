@@ -4,7 +4,7 @@ import { X, BookOpen, Edit2 } from 'lucide-react';
 const SubjectModal = ({ isOpen, onClose, programs, onSave, initialData = null, isEditing = false }) => {
     const [formData, setFormData] = useState({
         programId: '',
-        year: '1st Year',
+        year: 'Grade 1',
         name: ''
     });
 
@@ -12,12 +12,12 @@ const SubjectModal = ({ isOpen, onClose, programs, onSave, initialData = null, i
         if (isOpen && isEditing && initialData) {
             setFormData({
                 programId: initialData.programId || '', // Assuming initialData has programId if needed, or we might need to pass current program ID if it's fixed in ViewProgram
-                year: initialData.year || '1st Year',
+                year: initialData.year || 'Grade 1',
                 name: initialData.name || ''
             });
         } else if (isOpen && !isEditing) {
             // Reset for Add mode
-            setFormData({ programId: '', year: '1st Year', name: '' });
+            setFormData({ programId: '', year: 'Grade 1', name: '' });
         }
     }, [isOpen, isEditing, initialData]);
 
@@ -61,16 +61,17 @@ const SubjectModal = ({ isOpen, onClose, programs, onSave, initialData = null, i
 
                     {/* Year Selection */}
                     <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-1">Academic Year</label>
+                        <label className="block text-sm font-bold text-gray-700 mb-1">Academic Grade</label>
                         <select
                             value={formData.year}
                             onChange={(e) => setFormData({ ...formData, year: e.target.value })}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#ea8933] bg-white"
                         >
-                            <option value="1st Year">1st Year</option>
-                            <option value="2nd Year">2nd Year</option>
-                            <option value="3rd Year">3rd Year</option>
-                            <option value="Final Year">Final Year</option>
+                            <option value="Grade 1">Grade 1</option>
+                            <option value="Grade 2">Grade 2</option>
+                            <option value="Grade 3">Grade 3</option>
+                            <option value="Grade 4">Grade 4</option>
+                            <option value="Grade 5">Grade 5</option>
                         </select>
                     </div>
 

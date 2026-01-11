@@ -31,11 +31,11 @@ const Students = () => {
     // 1. Batch Years (2026 down to 2002)
     const batchYears = Array.from({ length: 25 }, (_, i) => (2026 - i).toString());
 
-    // 2. Academic Years / Grades
+    // 2. Academic Grades
     const academicYears = [
-        "1st Year", "2nd Year", "3rd Year", "4th Year",
-        "5th Year", "6th Year", "7th Year", "Final Year",
-        "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5"
+        "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5",
+        "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10",
+        "Grade 11", "Grade 12", "Grade 13"
     ];
 
     // 3. Programs

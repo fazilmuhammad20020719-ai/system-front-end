@@ -30,7 +30,7 @@ const RecentActivities = () => {
                     iconBg="bg-indigo-100"
                     iconColor="text-indigo-600"
                     title="New Admission"
-                    desc="agdf - Qiraat Course 1st Year"
+                    desc="agdf - Qiraat Course Grade 1"
                     time="25 Dec, 01:41 PM"
                 />
                 <ActivityItem

@@ -71,7 +71,7 @@ const ExamManager = () => {
                             </button>
                             <div>
                                 <h1 className="text-2xl font-bold text-gray-800">Exam Manager</h1>
-                                <p className="text-sm text-gray-500">Term 1 Examination 2025 • Year 1</p>
+                                <p className="text-sm text-gray-500">Term 1 Examination 2025 • Grade 1</p>
                             </div>
                         </div>
                         <div className="flex gap-4">
@@ -160,8 +160,8 @@ const ExamManager = () => {
                                                 <button
                                                     onClick={() => toggleAttendance(student.id)}
                                                     className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors ${student.attendance === 'Present'
-                                                            ? 'border-red-200 text-red-600 hover:bg-red-50'
-                                                            : 'border-green-200 text-green-600 hover:bg-green-50'
+                                                        ? 'border-red-200 text-red-600 hover:bg-red-50'
+                                                        : 'border-green-200 text-green-600 hover:bg-green-50'
                                                         }`}
                                                 >
                                                     Mark {student.attendance === 'Present' ? 'Absent' : 'Present'}

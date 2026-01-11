@@ -3,7 +3,7 @@ import { X, BookOpen, User, Calendar, Clock, ArrowLeft, GraduationCap } from 'lu
 import { TEACHERS_DATA } from '../data/mockData'; // Ensure this path is correct
 
 const ProgramDetails = ({ isOpen, onClose, program, subjects }) => {
-    const [selectedYear, setSelectedYear] = useState('1st Year');
+    const [selectedYear, setSelectedYear] = useState('Grade 1');
 
     if (!isOpen || !program) return null;
 
@@ -18,7 +18,7 @@ const ProgramDetails = ({ isOpen, onClose, program, subjects }) => {
     );
 
     // Available Years
-    const availableYears = ['1st Year', '2nd Year', '3rd Year', 'Final Year'];
+    const availableYears = ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 5'];
 
     return (
         <div className="fixed inset-0 z-50 bg-[#f3f4f6] overflow-y-auto animate-in fade-in duration-200">
@@ -89,8 +89,8 @@ const ProgramDetails = ({ isOpen, onClose, program, subjects }) => {
                                             key={year}
                                             onClick={() => setSelectedYear(year)}
                                             className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${selectedYear === year
-                                                    ? 'bg-white text-gray-800 shadow-sm'
-                                                    : 'text-gray-500 hover:text-gray-700'
+                                                ? 'bg-white text-gray-800 shadow-sm'
+                                                : 'text-gray-500 hover:text-gray-700'
                                                 }`}
                                         >
                                             {year}

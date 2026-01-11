@@ -20,6 +20,15 @@ const StudentProfileHeader = ({ student }) => {
                     <h1 className="text-2xl font-bold text-gray-800">{student.firstName} {student.lastName}</h1>
                     <div className="flex items-center gap-3 text-gray-500 mt-1">
                         <span className="flex items-center gap-1.5 text-sm"><GraduationCap size={16} /> {student.program}</span>
+
+                        <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                        <span className="text-sm font-medium text-gray-700">{student.year}</span>
+
+                        <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-bold uppercase ${student.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                            {student.status}
+                        </span>
+
                         <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
                         <span className="text-sm">#{student.id}</span>
                     </div>

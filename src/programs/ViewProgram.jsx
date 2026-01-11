@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     ArrowLeft, BookOpen, Users, User, Clock, Calendar,
-    Award, CheckCircle, GraduationCap, Download, Edit2, Trash2, Plus
+    Award, CheckCircle, GraduationCap, Download, Edit2, Trash2, Plus, MapPin
 } from 'lucide-react';
 import Sidebar from '../Sidebar';
 import { TEACHERS_DATA } from '../data/mockData'; // Import Mock Data
 import SubjectModal from './SubjectModal';
+// ScheduleModal removed
 
 const ViewProgram = () => {
     const { id } = useParams();
@@ -20,6 +21,8 @@ const ViewProgram = () => {
     const [subjects, setSubjects] = useState([]);
     const [showSubjectModal, setShowSubjectModal] = useState(false);
     const [editingSubject, setEditingSubject] = useState(null);
+
+    // SCHEDULE STATE REMOVED
 
     useEffect(() => {
         // In a real app, fetch based on ID. Here we mock it.
@@ -42,6 +45,7 @@ const ViewProgram = () => {
             { id: 103, year: 'Grade 2', name: 'Juz 6-15' },
             { id: 104, year: 'Grade 3', name: 'Juz 16-30' },
         ]);
+
     }, [id]);
 
     if (!program) return <div className="p-10 text-center">Loading Program Details...</div>;
@@ -264,31 +268,26 @@ const ViewProgram = () => {
 
 
 
+
                     </div>
                 </main>
                 <SubjectModal
                     isOpen={showSubjectModal}
                     onClose={() => setShowSubjectModal(false)}
-                    // We pass current program ID here. In a real app the list of programs might be fetched, or we just fix it to this program.
-                    /* 
-                       Ideally SubjectModal should list all programs if we are on global scope, but here we are in a specific program view.
-                       To make it compatible, we can pass a dummy list containing just this program, or modify SubjectModal to handle single program context.
-                       For now, let's pass a list with just the current program so the dropdown works but only has one option.
-                    */
                     programs={program ? [program] : []}
                     initialData={editingSubject}
                     isEditing={!!editingSubject}
                     onSave={(data) => {
                         if (editingSubject) {
-                            // Update
                             setSubjects(subjects.map(s => s.id === editingSubject.id ? { ...s, ...data } : s));
                         } else {
-                            // Add
                             setSubjects([...subjects, { id: Date.now(), ...data }]);
                         }
                         setShowSubjectModal(false);
                     }}
                 />
+
+
             </div>
         </div >
     );

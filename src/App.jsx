@@ -11,6 +11,7 @@ import AddTeacher from './AddTeacher';
 import EditTeacher from './EditTeacher';
 import ViewTeacher from './ViewTeacher';
 import Programs from './Programs';
+import Schedule from './schedule/Schedule';
 import ViewProgram from './programs/ViewProgram'; // [NEW IMPORT]
 import ProgramDetails from './programs/ProgramDetails';
 import Examinations from './examinations/Examinations';
@@ -29,6 +30,7 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/calendar" element={<Calendar />} />
+        <Route path="/schedule" element={<Schedule />} />
 
         {/* Student Routes */}
         <Route path="/students" element={<Students />} />

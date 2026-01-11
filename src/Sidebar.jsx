@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard,
     Calendar,
+    Clock,
     GraduationCap,
     Users,
     Layers,
@@ -80,6 +81,13 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                                 text="Calendar"
                                 to="/calendar"
                                 active={isActive('/calendar')}
+                                isOpen={isOpen}
+                            />
+                            <SidebarItem
+                                icon={Clock}
+                                text="Schedule"
+                                to="/schedule"
+                                active={isActive('/schedule')}
                                 isOpen={isOpen}
                             />
                         </div>

@@ -2,12 +2,32 @@
 // MOCK DATA FOR THE SYSTEM
 
 export const STUDENTS_DATA = [
-    { id: '2025001', name: 'Muhammad Ahmed', program: 'Al Hafiz', year: 'Grade 1', session: '2025', guardian: 'Ali Ahmed', contact: '077 123 4567', status: 'Active' },
-    { id: '2025002', name: 'Yusuf Khan', program: 'Al Alim', year: 'Grade 2', session: '2024', guardian: 'Usman Khan', contact: '076 987 6543', status: 'Active' },
-    { id: '2025003', name: 'Fathima Zaid', program: 'Al Alimah', year: 'Grade 3', session: '2023', guardian: 'Zaid Moor', contact: '075 555 1234', status: 'Inactive' },
-    { id: '2025004', name: 'Abdullah Omar', program: 'Al Hafiz', year: 'Grade 1', session: '2025', guardian: 'Omar Farooq', contact: '071 222 3333', status: 'Graduated' },
-    { id: '2025005', name: 'Kareem Abdul', program: 'Al Alim', year: 'Grade 5', session: '2020', guardian: 'Abdul Jabbar', contact: '077 999 8888', status: 'Active' },
-    { id: '2025006', name: 'Fahad Mustafa', program: 'Al Hafiz', year: 'Grade 5', session: '2025', guardian: 'Mustafa Ali', contact: '077 111 2222', status: 'Active' },
+    // Hifzul Quran - Grade 1
+    { id: '2025001', name: 'Muhammad Ahmed', program: 'Hifzul Quran', year: 'Grade 1', session: '2025', guardian: 'Ali Ahmed', contact: '077 123 4567', status: 'Active' },
+    { id: '2025002', name: 'Omar Farooq', program: 'Hifzul Quran', year: 'Grade 1', session: '2025', guardian: 'Farooq Khan', contact: '071 222 3333', status: 'Active' },
+    { id: '2025003', name: 'Zaid Ibn Harith', program: 'Hifzul Quran', year: 'Grade 1', session: '2025', guardian: 'Harith', contact: '075 555 1234', status: 'Active' },
+
+    // Hifzul Quran - Grade 2
+    { id: '2024001', name: 'Bilal Philips', program: 'Hifzul Quran', year: 'Grade 2', session: '2024', guardian: 'Philips', contact: '076 987 6543', status: 'Active' },
+    { id: '2024002', name: 'Hamza Yusuf', program: 'Hifzul Quran', year: 'Grade 2', session: '2024', guardian: 'Yusuf', contact: '077 888 9999', status: 'Active' },
+
+    // Hifzul Quran - Grade 3
+    { id: '2023001', name: 'Khalid Bin Walid', program: 'Hifzul Quran', year: 'Grade 3', session: '2023', guardian: 'Walid', contact: '077 111 2233', status: 'Active' },
+    { id: '2023002', name: 'Tariq Jameel', program: 'Hifzul Quran', year: 'Grade 3', session: '2023', guardian: 'Jameel', contact: '071 444 5566', status: 'Active' },
+
+    // Al-Alim (Boys) - Year 1
+    { id: '2025010', name: 'Yusuf Islam', program: 'Al-Alim (Boys)', year: 'Year 1', session: '2025', guardian: 'Cat Stevens', contact: '077 444 5555', status: 'Active' },
+    { id: '2025011', name: 'Nouman Khan', program: 'Al-Alim (Boys)', year: 'Year 1', session: '2025', guardian: 'Ali Khan', contact: '071 333 4444', status: 'Active' },
+
+    // Al-Alim (Boys) - Year 2
+    { id: '2024010', name: 'Ismail Menk', program: 'Al-Alim (Boys)', year: 'Year 2', session: '2024', guardian: 'Musa Menk', contact: '075 111 2222', status: 'Active' },
+
+    // Al-Alimah (Girls) - Grade 1
+    { id: '2025020', name: 'Ayesha Siddiqa', program: 'Al-Alimah (Girls)', year: 'Grade 1', session: '2025', guardian: 'Abu Bakr', contact: '077 999 8888', status: 'Active' },
+    { id: '2025021', name: 'Fathima Zahra', program: 'Al-Alimah (Girls)', year: 'Grade 1', session: '2025', guardian: 'Ali', contact: '071 777 6666', status: 'Active' },
+
+    // English Unit - Level 1
+    { id: '2025030', name: 'John Doe', program: 'English Unit', year: 'Level 1', session: '2025', guardian: 'Jane Doe', contact: '077 000 1111', status: 'Active' },
 ];
 
 export const TEACHERS_DATA = [

@@ -13,6 +13,8 @@ import TeacherPayroll from './teacher-view/TeacherPayroll';
 import TeacherDocuments from './teacher-view/TeacherDocuments';
 import TeacherAttendanceView from './teacher-view/TeacherAttendanceView';
 
+import { TEACHERS_DATA, PROGRAMS_DATA, SCHEDULES_DATA, SUBJECTS_DATA } from './data/mockData';
+
 const ViewTeacher = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const navigate = useNavigate();
@@ -22,29 +24,47 @@ const ViewTeacher = () => {
 
     // Mock Data Fetching
     useEffect(() => {
+        // 1. Find Basic Teacher Info
+        const foundListTeacher = TEACHERS_DATA.find(t => t.id === parseInt(id));
+
+        // 2. Filter & Map Schedule (From LocalStorage or Mock)
+        const storedSchedules = JSON.parse(localStorage.getItem('schedules')) || SCHEDULES_DATA;
+        const teacherSchedule = storedSchedules
+            .filter(s => s.teacherId === parseInt(id))
+            .map(slot => {
+                const subject = SUBJECTS_DATA.find(sub => sub.id === parseInt(slot.subjectId));
+                const program = PROGRAMS_DATA.find(prog => prog.id === parseInt(slot.programId));
+                return {
+                    day: slot.day,
+                    time: `${slot.startTime} - ${slot.endTime}`,
+                    subject: subject ? subject.name : 'Unknown Subject',
+                    grade: program ? program.name : 'Unknown Program'
+                };
+            });
+
         const dummyData = {
             id: id || 1,
-            firstName: "Sarah",
-            lastName: "Wilson",
-            fullName: "Dr. Sarah Wilson",
+            firstName: foundListTeacher ? foundListTeacher.name.split(' ')[0] : "Sarah",
+            lastName: foundListTeacher ? foundListTeacher.name.split(' ').slice(1).join(' ') : "Wilson",
+            fullName: foundListTeacher ? foundListTeacher.name : "Dr. Sarah Wilson",
             image: null,
-            status: "Active",
+            status: foundListTeacher ? foundListTeacher.status : "Active",
             dob: "1985-05-15",
             gender: "Female",
             nic: "851350123V",
-            email: "sarah@college.edu",
-            phone: "+94 77 123 4567",
+            email: foundListTeacher ? foundListTeacher.email : "sarah@college.edu",
+            phone: foundListTeacher ? foundListTeacher.phone : "+94 77 123 4567",
             address: "45, Marine Drive, Colombo 03",
             googleMapLink: "https://maps.google.com",
 
             // Professional
-            employeeId: "EMP-001",
+            employeeId: foundListTeacher ? foundListTeacher.empid : "EMP-001",
             department: "Islamic Studies",
-            designation: "Head of Department",
+            designation: foundListTeacher ? foundListTeacher.role : "Head of Department",
             qualification: "PhD in Islamic Theology",
             experience: "12 Years",
             joiningDate: "2015-01-12",
-            role: "Senior Lecturer",
+            role: foundListTeacher ? foundListTeacher.role : "Senior Lecturer",
 
             // Financial
             salary: "125,000.00",
@@ -55,11 +75,7 @@ const ViewTeacher = () => {
                 { id: 2, name: "PhD Certificate.jpg", size: "1.1 MB", date: "2015-02-20" },
                 { id: 3, name: "Appointment Letter.pdf", size: "500 KB", date: "2015-01-12" },
             ],
-            schedule: [
-                { day: "Monday", time: "08:00 - 09:00", subject: "Quranic Tafseer", grade: "Grade 3" },
-                { day: "Monday", time: "10:00 - 11:00", subject: "Hadith Studies", grade: "Grade 5" },
-                { day: "Wednesday", time: "09:00 - 10:30", subject: "Fiqh", grade: "Grade 4" },
-            ],
+            schedule: teacherSchedule, // USE DYNAMIC SCHEDULE
             attendanceStats: { total: 20, present: 18, absent: 2 },
             payroll: [
                 { month: "October 2025", basic: "125,000", bonus: "5,000", status: "Paid" },

@@ -8,22 +8,25 @@ const ScheduleModal = ({ isOpen, onClose, subjects, teachers, onSave, initialDat
         teacherId: '',
         startTime: '08:00',
         endTime: '09:00',
-        room: ''
+        room: '',
+        grade: '' // Added Grade
     });
 
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const grades = ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7'];
 
     useEffect(() => {
         if (isOpen && isEditing && initialData) {
             setFormData(initialData);
         } else if (isOpen && !isEditing) {
             setFormData({
-                day: 'Monday',
+                day: initialData?.day || 'Monday',
                 subjectId: subjects[0]?.id || '',
                 teacherId: teachers[0]?.id || '',
                 startTime: '08:00',
                 endTime: '09:00',
-                room: ''
+                room: '',
+                grade: 'Grade 1' // Default grade
             });
         }
     }, [isOpen, isEditing, initialData, subjects, teachers]);
@@ -47,15 +50,28 @@ const ScheduleModal = ({ isOpen, onClose, subjects, teachers, onSave, initialDat
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-1">Day of Week</label>
-                        <select
-                            value={formData.day}
-                            onChange={(e) => setFormData({ ...formData, day: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#ea8933] bg-white"
-                        >
-                            {days.map(day => <option key={day} value={day}>{day}</option>)}
-                        </select>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-1">Day of Week</label>
+                            <select
+                                value={formData.day}
+                                onChange={(e) => setFormData({ ...formData, day: e.target.value })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#ea8933] bg-white"
+                            >
+                                {days.map(day => <option key={day} value={day}>{day}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-1">Grade</label>
+                            <select
+                                value={formData.grade}
+                                onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#ea8933] bg-white"
+                            >
+                                <option value="">Select Grade</option>
+                                {grades.map(g => <option key={g} value={g}>{g}</option>)}
+                            </select>
+                        </div>
                     </div>
 
                     <div>

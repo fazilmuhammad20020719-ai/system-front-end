@@ -5,7 +5,7 @@ import {
     Award, CheckCircle, GraduationCap, Download, Edit2, Trash2, Plus, MapPin
 } from 'lucide-react';
 import Sidebar from '../Sidebar';
-import { TEACHERS_DATA } from '../data/mockData'; // Import Mock Data
+import { TEACHERS_DATA, PROGRAMS_DATA } from '../data/mockData'; // Import Mock Data
 import SubjectModal from './SubjectModal';
 // ScheduleModal removed
 
@@ -25,19 +25,21 @@ const ViewProgram = () => {
     // SCHEDULE STATE REMOVED
 
     useEffect(() => {
-        // In a real app, fetch based on ID. Here we mock it.
-        setProgram({
-            id: id,
-            name: "Hifzul Quran",
-            head: "Sheikh Abdullah",
-            duration: "3 Years", // Duration remains in Years
-            description: "A comprehensive program designed for students to memorize the Holy Quran with Tajweed rules, coupled with basic Islamic studies.",
-            students: 120,
-            fees: "Free",
-            status: "Active",
-            color: "bg-emerald-100 text-emerald-600",
-            startDate: "January 2025"
-        });
+        // Find program from mock data
+        const foundProgram = PROGRAMS_DATA.find(p => p.id === parseInt(id));
+
+        if (foundProgram) {
+            setProgram({
+                ...foundProgram,
+                duration: "3 Years", // Default or add to mock data if needed
+                description: "A comprehensive program designed for students involved in this course.",
+                students: 120, // Mock
+                fees: "Free", // Mock
+                status: "Active", // Mock
+                startDate: "January 2025" // Mock
+            });
+        }
+
 
         setSubjects([
             { id: 101, year: 'Grade 1', name: 'Juz 1-5' },

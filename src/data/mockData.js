@@ -85,4 +85,3 @@ export const SCHEDULES_DATA = [
     { id: 3, programId: 1, day: 'Tuesday', subjectId: 103, teacherId: 2, startTime: '09:00', endTime: '10:30', room: 'Hall B', grade: 'Grade 3' },
     { id: 4, programId: 4, day: 'Wednesday', subjectId: 106, teacherId: 7, startTime: '08:00', endTime: '09:30', room: 'Class 10A', grade: 'Grade 4' },
 ];
-

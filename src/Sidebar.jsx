@@ -21,6 +21,9 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     // Helper to determine if a path is active
     const isActive = (path) => location.pathname === path;
 
+    // Get user from local storage
+    const user = JSON.parse(localStorage.getItem('user'));
+
     return (
         <>
             {/* Mobile Overlay */}
@@ -167,19 +170,19 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                 {/* FOOTER USER PROFILE */}
                 <div className="p-4 border-t border-orange-400/30 bg-[#E0690C]">
                     <div className={`flex items-center gap-3 ${!isOpen && "justify-center"}`}>
-                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-[#F57D1F] font-bold shadow-sm">
-                            A
+                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-[#F57D1F] font-bold shadow-sm uppercase">
+                            {user?.username?.charAt(0) || 'A'}
                         </div>
 
                         {isOpen && (
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-bold truncate">Administrator</p>
-                                <p className="text-xs text-orange-200 truncate">Super Admin</p>
+                                <p className="text-sm font-bold truncate capitalize">{user?.username || 'Administrator'}</p>
+                                <p className="text-xs text-orange-200 truncate capitalize">{user?.role || 'Super Admin'}</p>
                             </div>
                         )}
 
                         {isOpen && (
-                            <Link to="/" className="text-orange-200 hover:text-white transition-colors">
+                            <Link to="/" onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('user'); }} className="text-orange-200 hover:text-white transition-colors">
                                 <LogOut size={20} />
                             </Link>
                         )}

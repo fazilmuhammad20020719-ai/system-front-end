@@ -29,7 +29,10 @@ const DashboardStats = () => {
         programs: 0,
         studentAttendance: '0%',
         teacherAttendance: '0%',
-        documents: 0
+        documents: 0,
+        activeStudents: 0,
+        activeTeachers: 0,
+        teachers: 0 // Added to track total teachers for ratio
     });
 
     useEffect(() => {
@@ -70,22 +73,22 @@ const DashboardStats = () => {
                 onClick={() => navigate('/programs')}
             />
             <StatCard
-                title="Student Attendance"
+                title="Active Students"
                 value={stats.studentAttendance}
-                subText="Mocked Present"
+                subText={`${stats.activeStudents || 0} / ${stats.students} Active`}
                 icon={CalendarCheck}
                 iconColor="text-green-600"
                 iconBg="bg-green-100"
-                onClick={() => navigate('/attendance')}
+                onClick={() => navigate('/students')}
             />
             <StatCard
-                title="Teacher Attendance"
+                title="Active Teachers"
                 value={stats.teacherAttendance}
-                subText="Mocked Present"
+                subText={`${stats.activeTeachers || 0} / ${stats.teachers || 0} Active`} // Fix: teacher count wasn't passed, handled gracefully
                 icon={Users}
                 iconColor="text-blue-600"
                 iconBg="bg-blue-100"
-                onClick={() => navigate('/attendance')}
+                onClick={() => navigate('/teachers')}
             />
             <StatCard
                 title="Documents"

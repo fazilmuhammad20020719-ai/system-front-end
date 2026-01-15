@@ -35,11 +35,31 @@ const AddStudent = () => {
         setFormData({ ...formData, [name]: type === 'file' ? files[0] : value });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log("Submitting:", formData);
-        alert("Student Saved!");
-        navigate('/students');
+
+        try {
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            const response = await fetch(`${apiUrl}/api/students`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                alert("Student Saved Successfully!");
+                navigate('/students');
+            } else {
+                alert(data.message || "Error saving student");
+            }
+        } catch (error) {
+            console.error("Error submitting form:", error);
+            alert("Network error. Please try again.");
+        }
     };
 
     return (

@@ -28,6 +28,25 @@ const DashboardHeader = ({ toggleSidebar, onAlertClick }) => {
         documents: []
     });
 
+    const [alertCount, setAlertCount] = useState(0);
+
+    // Fetch alert count
+    useEffect(() => {
+        const fetchAlertCount = async () => {
+            try {
+                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+                const response = await fetch(`${apiUrl}/api/dashboard/alerts`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setAlertCount(data.length);
+                }
+            } catch (error) {
+                console.error("Error fetching alert count:", error);
+            }
+        };
+        fetchAlertCount();
+    }, []);
+
     useEffect(() => {
         const fetchResults = async () => {
             if (!searchTerm.trim()) {
@@ -182,8 +201,12 @@ const DashboardHeader = ({ toggleSidebar, onAlertClick }) => {
                     className="relative p-2.5 bg-white hover:bg-gray-50 text-gray-600 border border-gray-200 rounded-lg shadow-sm transition-colors group"
                 >
                     <Bell size={20} className="group-hover:text-indigo-600 transition-colors" />
-                    {/* Notification Dot */}
-                    <span className="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border border-white ring-1 ring-red-500/30"></span>
+                    {/* Notification Badge - Dynamic */}
+                    {alertCount > 0 && (
+                        <span className="absolute top-1.5 right-2 min-w-[18px] h-[18px] bg-red-500 rounded-full border border-white flex items-center justify-center">
+                            <span className="text-white text-[10px] font-bold">{alertCount}</span>
+                        </span>
+                    )}
                 </button>
             </div>
         </header>

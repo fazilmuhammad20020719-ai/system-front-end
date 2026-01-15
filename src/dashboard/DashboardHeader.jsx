@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Menu, Calendar, Bell, Search } from 'lucide-react';
+import { API_URL } from '../config';
 
 
 // MOCK PAGES DATA (Client-side routing only)
@@ -44,8 +45,7 @@ const DashboardHeader = ({ toggleSidebar, onAlertClick, alertCount = 0 }) => {
 
             try {
                 // Backend Search
-                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-                const response = await fetch(`${apiUrl}/api/search?q=${encodeURIComponent(searchTerm)}`);
+                const response = await fetch(`${API_URL}/api/search?q=${encodeURIComponent(searchTerm)}`);
                 if (response.ok) {
                     const data = await response.json();
                     setSearchResults({

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { API_URL } from './config';
 import Sidebar from './Sidebar';
 
 // IMPORTING NEW COMPONENTS
@@ -13,15 +14,27 @@ const Calendar = () => {
     const [currentDate, setCurrentDate] = useState(new Date(2025, 11, 25));
 
     // --- STATE FOR MODAL & EVENTS ---
-    const [events, setEvents] = useState([
-        { id: 1, day: 22, title: "we need collabo..", type: "urgent", fullText: "We need collaboration on the main project." },
-        { id: 2, day: 24, title: "pary", type: "warning", fullText: "pary" },
-        { id: 3, day: 31, title: "last day photo ..", type: "success", hasAttachment: true, fullText: "Submit last day photos." },
-        { id: 4, day: 31, title: "asdfasfasf..", type: "warning", fullText: "asdfasfasf.." },
-    ]);
+    const [events, setEvents] = useState([]); // Dynamic state
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedDay, setSelectedDay] = useState(null);
+
+    // FETCH EVENTS FROM API
+    useEffect(() => {
+        fetchEvents();
+    }, []);
+
+    const fetchEvents = async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/calendar/events`);
+            if (response.ok) {
+                const data = await response.json();
+                setEvents(data);
+            }
+        } catch (error) {
+            console.error("Error fetching events:", error);
+        }
+    };
 
     // --- CALENDAR LOGIC ---
     const year = currentDate.getFullYear();
@@ -54,42 +67,63 @@ const Calendar = () => {
         'Normal': 'success'
     };
 
+    const normalizeType = (typeLabel) => typeMap[typeLabel] || 'success';
+
     // 1. ADD NEW EVENT
-    const handleSaveEvent = (newNoteData) => {
-        const newEvent = {
-            id: Date.now(),
-            day: selectedDay,
-            title: newNoteData.text,
-            fullText: newNoteData.text,
-            type: typeMap[newNoteData.priority] || 'success',
-            hasAttachment: !!newNoteData.file
-        };
-        setEvents([...events, newEvent]);
-        setIsModalOpen(false);
-    };
+    const handleSaveEvent = async (newNoteData) => {
+        try {
+            const response = await fetch(`${API_URL}/api/calendar/events`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
 
-    // 2. DELETE EVENT (New Function)
-    const handleDeleteEvent = (eventId) => {
-        const updatedEvents = events.filter(event => event.id !== eventId);
-        setEvents(updatedEvents);
-    };
-
-    // 3. UPDATE EVENT (New Function)
-    const handleUpdateEvent = (id, updatedData) => {
-        const updatedEvents = events.map(event => {
-            if (event.id === id) {
-                return {
-                    ...event,
-                    title: updatedData.text,
-                    fullText: updatedData.text,
-                    type: typeMap[updatedData.priority] || 'success',
-                    hasAttachment: !!updatedData.file // Keep existing attachment logic if needed
-                };
+            if (response.ok) {
+                fetchEvents(); // Refresh from server
+                setIsModalOpen(false);
             }
-            return event;
-        });
-        setEvents(updatedEvents);
-        setIsModalOpen(false);
+        } catch (error) {
+            console.error("Error saving event:", error);
+        }
+    };
+
+    // 2. DELETE EVENT
+    const handleDeleteEvent = async (eventId) => {
+        try {
+            const response = await fetch(`${API_URL}/api/calendar/events/${eventId}`, {
+                method: 'DELETE'
+            });
+            if (response.ok) {
+                // Optimistic update or refetch
+                setEvents(events.filter(e => e.id !== eventId));
+            }
+        } catch (error) {
+            console.error("Error deleting event:", error);
+        }
+    };
+
+    // 3. UPDATE EVENT
+    const handleUpdateEvent = async (id, updatedData) => {
+        try {
+            const payload = {
+                title: updatedData.text,
+                description: updatedData.text,
+                type: normalizeType(updatedData.priority)
+            };
+
+            const response = await fetch(`${API_URL}/api/calendar/events/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                fetchEvents(); // Refresh
+                setIsModalOpen(false);
+            }
+        } catch (error) {
+            console.error("Error updating event:", error);
+        }
     };
 
     const getEventsForDay = (day) => events.filter(e => e.day === day);

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_URL } from './config';
 import { Save, X, ChevronRight, Menu } from 'lucide-react';
 import Sidebar from './Sidebar';
 
@@ -39,8 +40,7 @@ const AddStudent = () => {
         e.preventDefault();
 
         try {
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-            const response = await fetch(`${apiUrl}/api/students`, {
+            const response = await fetch(`${API_URL}/api/students`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

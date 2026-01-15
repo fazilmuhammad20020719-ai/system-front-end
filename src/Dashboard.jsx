@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { API_URL } from './config';
 import DashboardHeader from './dashboard/DashboardHeader';
 import DashboardStats from './dashboard/DashboardStats';
 import QuickActions from './dashboard/QuickActions';
@@ -27,8 +28,7 @@ const Dashboard = () => {
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
-                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-                const response = await fetch(`${apiUrl}/api/dashboard`);
+                const response = await fetch(`${API_URL}/api/dashboard`);
                 if (response.ok) {
                     const data = await response.json();
                     setDashboardData(data);
@@ -64,18 +64,17 @@ const Dashboard = () => {
 
                     <QuickActions />
 
-                    {/* Pass Dynamic Activities */}
-                    <RecentActivities activities={dashboardData.activities} />
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Activities takes 2 columns */}
+                        <div className="lg:col-span-2">
+                            <RecentActivities activities={dashboardData.activities} />
+                        </div>
 
-                    {/* Note: User snippet added CalendarGrid and Alerts in grid. 
-                        I will adapt the layout slightly to match their request while keeping our components. 
-                        But our previous layout was Stats -> QuickActions -> RecentActivities. 
-                        The user request had a Grid with Calendar and Alerts.
-                        I will stick to the previous layout structure BUT with Props passing, 
-                        unless I see compelling reason to change layout completely. 
-                        Actually, let's Stick to the Previous Layout but pass props. 
-                        This minimizes visual regression while fulfilling the "Single API" request.
-                    */}
+                        {/* Upcoming Alerts takes 1 column */}
+                        <div className="lg:col-span-1">
+                            <UpcomingAlerts alerts={dashboardData.alerts} />
+                        </div>
+                    </div>
                 </main>
             </div>
 

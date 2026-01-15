@@ -1,7 +1,7 @@
 import { X } from 'lucide-react';
 import UpcomingAlerts from './UpcomingAlerts';
 
-const AlertsModal = ({ onClose }) => {
+const AlertsModal = ({ onClose, alerts = [] }) => {
     return (
         // BACKDROP WITH BLUR
         <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 md:pt-28 px-4 bg-gray-900/30 backdrop-blur-sm transition-all animate-fade-in">
@@ -23,7 +23,7 @@ const AlertsModal = ({ onClose }) => {
                 {/* ALERTS COMPONENT */}
                 <div className="bg-white rounded-xl shadow-2xl overflow-hidden ring-1 ring-black/5">
                     {/* Reuse your existing UpcomingAlerts component */}
-                    <UpcomingAlerts />
+                    <UpcomingAlerts alerts={alerts} />
                 </div>
             </div>
         </div>

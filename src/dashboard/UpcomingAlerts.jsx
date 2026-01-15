@@ -1,25 +1,8 @@
 import { AlertTriangle, Calendar, CreditCard, Bell, Clock } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-const UpcomingAlerts = () => {
-    const [alerts, setAlerts] = useState([]);
-
-    useEffect(() => {
-        const fetchAlerts = async () => {
-            try {
-                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-                const response = await fetch(`${apiUrl}/api/dashboard/alerts`);
-                if (response.ok) {
-                    const data = await response.json();
-                    setAlerts(data);
-                }
-            } catch (error) {
-                console.error("Error fetching alerts:", error);
-            }
-        };
-
-        fetchAlerts();
-    }, []);
+const UpcomingAlerts = ({ alerts = [] }) => {
+    // Removed internal fetching logic
 
     // OPACITY CALCULATION LOGIC
     const getOpacityClass = (days) => {

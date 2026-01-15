@@ -22,35 +22,10 @@ const StatCard = ({ title, value, subText, icon: Icon, iconColor, iconBg, onClic
     </div>
 );
 
-const DashboardStats = () => {
+const DashboardStats = ({ stats }) => {
     const navigate = useNavigate();
-    const [stats, setStats] = useState({
-        students: 0,
-        programs: 0,
-        studentAttendance: '0%',
-        teacherAttendance: '0%',
-        documents: 0,
-        activeStudents: 0,
-        activeTeachers: 0,
-        teachers: 0 // Added to track total teachers for ratio
-    });
-
-    useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-                const response = await fetch(`${apiUrl}/api/dashboard/stats`);
-                if (response.ok) {
-                    const data = await response.json();
-                    setStats(data);
-                }
-            } catch (error) {
-                console.error("Error fetching stats:", error);
-            }
-        };
-
-        fetchStats();
-    }, []);
+    // Removed internal fetching logic
+    // Using props 'stats' directly
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

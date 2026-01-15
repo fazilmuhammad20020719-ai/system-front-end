@@ -17,25 +17,8 @@ const ActivityItem = ({ icon: Icon, iconBg, iconColor, title, desc, time }) => (
     </div>
 );
 
-const RecentActivities = () => {
-    const [activities, setActivities] = useState([]);
-
-    useEffect(() => {
-        const fetchActivities = async () => {
-            try {
-                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-                const response = await fetch(`${apiUrl}/api/dashboard/activities`);
-                if (response.ok) {
-                    const data = await response.json();
-                    setActivities(data);
-                }
-            } catch (error) {
-                console.error("Error fetching activities:", error);
-            }
-        };
-
-        fetchActivities();
-    }, []);
+const RecentActivities = ({ activities = [] }) => {
+    // Removed internal fetching logic
 
     // Helper to map DB icon type to Lucide Icon
     const getIcon = (type) => {

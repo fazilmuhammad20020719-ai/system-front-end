@@ -15,7 +15,7 @@ const PAGE_ROUTES = [
     { title: 'Documents', path: '/documents', type: 'Page' },
 ];
 
-const DashboardHeader = ({ toggleSidebar, onAlertClick }) => {
+const DashboardHeader = ({ toggleSidebar, onAlertClick, alertCount = 0 }) => {
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
     const [showResults, setShowResults] = useState(false);
@@ -28,24 +28,7 @@ const DashboardHeader = ({ toggleSidebar, onAlertClick }) => {
         documents: []
     });
 
-    const [alertCount, setAlertCount] = useState(0);
-
-    // Fetch alert count
-    useEffect(() => {
-        const fetchAlertCount = async () => {
-            try {
-                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-                const response = await fetch(`${apiUrl}/api/dashboard/alerts`);
-                if (response.ok) {
-                    const data = await response.json();
-                    setAlertCount(data.length);
-                }
-            } catch (error) {
-                console.error("Error fetching alert count:", error);
-            }
-        };
-        fetchAlertCount();
-    }, []);
+    // Removed internal alert fetching logic as it is now passed via props
 
     useEffect(() => {
         const fetchResults = async () => {

@@ -9,17 +9,34 @@ const Login = () => {
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
         setError('');
 
-        // Updated logic: Removed alert, navigates directly
-        if (username === "admin" && password === "Admin1234#") {
-            navigate("/dashboard"); // Go directly to dashboard
-            return;
-        }
+        try {
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            const response = await fetch(`${apiUrl}/api/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password }),
+            });
 
-        setError("Invalid username or password");
+            const data = await response.json();
+
+            if (response.ok) {
+                // Store token in localStorage (or context)
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                navigate("/dashboard");
+            } else {
+                setError(data.message || "Invalid username or password");
+            }
+        } catch (err) {
+            console.error("Login Error:", err);
+            setError("Server error. Please try again later.");
+        }
     };
 
     return (

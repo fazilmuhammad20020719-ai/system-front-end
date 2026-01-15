@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { GraduationCap, BookOpen, CalendarCheck, Folder, ArrowRight, Users } from 'lucide-react';
 
 // Component: Individual Stat Card
@@ -23,12 +24,36 @@ const StatCard = ({ title, value, subText, icon: Icon, iconColor, iconBg, onClic
 
 const DashboardStats = () => {
     const navigate = useNavigate();
+    const [stats, setStats] = useState({
+        students: 0,
+        programs: 0,
+        studentAttendance: '0%',
+        teacherAttendance: '0%',
+        documents: 0
+    });
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+                const response = await fetch(`${apiUrl}/api/dashboard/stats`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setStats(data);
+                }
+            } catch (error) {
+                console.error("Error fetching stats:", error);
+            }
+        };
+
+        fetchStats();
+    }, []);
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <StatCard
                 title="Total Students"
-                value="4"
+                value={stats.students}
                 subText="View Directory"
                 icon={GraduationCap}
                 iconColor="text-indigo-600"
@@ -37,7 +62,7 @@ const DashboardStats = () => {
             />
             <StatCard
                 title="Programs"
-                value="6"
+                value={stats.programs}
                 subText="Manage Courses"
                 icon={BookOpen}
                 iconColor="text-orange-600"
@@ -46,8 +71,8 @@ const DashboardStats = () => {
             />
             <StatCard
                 title="Student Attendance"
-                value="50%"
-                subText="2 / 4 Present"
+                value={stats.studentAttendance}
+                subText="Mocked Present"
                 icon={CalendarCheck}
                 iconColor="text-green-600"
                 iconBg="bg-green-100"
@@ -55,8 +80,8 @@ const DashboardStats = () => {
             />
             <StatCard
                 title="Teacher Attendance"
-                value="85%"
-                subText="6 / 7 Present"
+                value={stats.teacherAttendance}
+                subText="Mocked Present"
                 icon={Users}
                 iconColor="text-blue-600"
                 iconBg="bg-blue-100"
@@ -64,7 +89,7 @@ const DashboardStats = () => {
             />
             <StatCard
                 title="Documents"
-                value="15"
+                value={stats.documents || 0}
                 subText="File Repository"
                 icon={Folder}
                 iconColor="text-purple-600"

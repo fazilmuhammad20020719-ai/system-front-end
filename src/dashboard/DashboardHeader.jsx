@@ -1,35 +1,70 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Menu, Calendar, Bell, Search } from 'lucide-react';
 
 
-import { STUDENTS_DATA, TEACHERS_DATA, DOCUMENTS_DATA, PAGE_ROUTES } from '../data/mockData';
+// MOCK PAGES DATA (Client-side routing only)
+const PAGE_ROUTES = [
+    { title: 'Dashboard', path: '/dashboard', type: 'Page' },
+    { title: 'Calendar', path: '/calendar', type: 'Page' },
+    { title: 'Students Directory', path: '/students', type: 'Page' },
+    { title: 'Teachers Directory', path: '/teachers', type: 'Page' },
+    { title: 'Attendance', path: '/attendance', type: 'Page' },
+    { title: 'Programs / Courses', path: '/programs', type: 'Page' },
+    { title: 'Management Team', path: '/management-team', type: 'Page' },
+    { title: 'Documents', path: '/documents', type: 'Page' },
+];
 
 const DashboardHeader = ({ toggleSidebar, onAlertClick }) => {
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
     const [showResults, setShowResults] = useState(false);
 
-    // Filter Logic
-    const filteredResults = {
-        pages: PAGE_ROUTES.filter(item => item.title.toLowerCase().includes(searchTerm.toLowerCase())),
-        students: STUDENTS_DATA.filter(item =>
-            item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.id.includes(searchTerm) ||
-            item.program.toLowerCase().includes(searchTerm.toLowerCase())
-        ),
-        teachers: TEACHERS_DATA.filter(item =>
-            item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.empid.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.dept.toLowerCase().includes(searchTerm.toLowerCase())
-        ),
-        documents: DOCUMENTS_DATA.filter(item =>
-            item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.category.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-    };
+    // Search Results State
+    const [searchResults, setSearchResults] = useState({
+        pages: [],
+        students: [],
+        teachers: [],
+        documents: []
+    });
 
-    const hasResults = Object.values(filteredResults).some(arr => arr.length > 0);
+    useEffect(() => {
+        const fetchResults = async () => {
+            if (!searchTerm.trim()) {
+                setSearchResults({ pages: [], students: [], teachers: [], documents: [] });
+                return;
+            }
+
+            // Local Filter for Pages
+            const matchingPages = PAGE_ROUTES.filter(item =>
+                item.title.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+
+            try {
+                // Backend Search
+                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+                const response = await fetch(`${apiUrl}/api/search?q=${encodeURIComponent(searchTerm)}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setSearchResults({
+                        pages: matchingPages,
+                        students: data.students || [],
+                        teachers: data.teachers || [],
+                        documents: data.documents || []
+                    });
+                }
+            } catch (error) {
+                console.error("Search error:", error);
+                // Fallback to just pages if API fails
+                setSearchResults(prev => ({ ...prev, pages: matchingPages }));
+            }
+        };
+
+        const timeoutId = setTimeout(fetchResults, 300); // 300ms debounce
+        return () => clearTimeout(timeoutId);
+    }, [searchTerm]);
+
+    const hasResults = Object.values(searchResults).some(arr => arr.length > 0);
 
     const handleSearch = (path) => {
         navigate(path);
@@ -75,10 +110,10 @@ const DashboardHeader = ({ toggleSidebar, onAlertClick }) => {
                         {hasResults ? (
                             <div className="py-2">
                                 {/* PAGES */}
-                                {filteredResults.pages.length > 0 && (
+                                {searchResults.pages.length > 0 && (
                                     <div className="mb-2">
                                         <h3 className="px-4 py-1 text-xs font-bold text-gray-400 uppercase tracking-wider">Pages</h3>
-                                        {filteredResults.pages.map((item, index) => (
+                                        {searchResults.pages.map((item, index) => (
                                             <button key={`page-${index}`} onClick={() => handleSearch(item.path)} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-[#EB8A33] transition-colors flex items-center justify-between">
                                                 <span>{item.title}</span>
                                                 <Search size={14} className="opacity-50" />
@@ -88,39 +123,39 @@ const DashboardHeader = ({ toggleSidebar, onAlertClick }) => {
                                 )}
 
                                 {/* STUDENTS */}
-                                {filteredResults.students.length > 0 && (
+                                {searchResults.students.length > 0 && (
                                     <div className="mb-2">
                                         <h3 className="px-4 py-1 text-xs font-bold text-gray-400 uppercase tracking-wider">Students</h3>
-                                        {filteredResults.students.map((item, index) => (
+                                        {searchResults.students.map((item, index) => (
                                             <button key={`student-${index}`} onClick={() => handleSearch('/students')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-[#EB8A33] transition-colors">
                                                 <div className="font-medium">{item.name}</div>
-                                                <div className="text-xs text-gray-500">{item.id} • {item.program}</div>
+                                                <div className="text-xs text-gray-500">{item.id} • {item.program_id}</div>
                                             </button>
                                         ))}
                                     </div>
                                 )}
 
                                 {/* TEACHERS */}
-                                {filteredResults.teachers.length > 0 && (
+                                {searchResults.teachers.length > 0 && (
                                     <div className="mb-2">
                                         <h3 className="px-4 py-1 text-xs font-bold text-gray-400 uppercase tracking-wider">Teachers</h3>
-                                        {filteredResults.teachers.map((item, index) => (
+                                        {searchResults.teachers.map((item, index) => (
                                             <button key={`teacher-${index}`} onClick={() => handleSearch('/teachers')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-[#EB8A33] transition-colors">
                                                 <div className="font-medium">{item.name}</div>
-                                                <div className="text-xs text-gray-500">{item.empid} • {item.subject}</div>
+                                                <div className="text-xs text-gray-500">{item.emp_id} • {item.subject}</div>
                                             </button>
                                         ))}
                                     </div>
                                 )}
 
                                 {/* DOCUMENTS */}
-                                {filteredResults.documents.length > 0 && (
+                                {searchResults.documents.length > 0 && (
                                     <div className="mb-2">
                                         <h3 className="px-4 py-1 text-xs font-bold text-gray-400 uppercase tracking-wider">Documents</h3>
-                                        {filteredResults.documents.map((item, index) => (
+                                        {searchResults.documents.map((item, index) => (
                                             <button key={`doc-${index}`} onClick={() => handleSearch('/documents')} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-[#EB8A33] transition-colors flex items-center justify-between">
                                                 <span>{item.name}</span>
-                                                <span className="text-xs text-gray-400 border border-gray-200 px-1 rounded">{item.type}</span>
+                                                <span className="text-xs text-gray-400 border border-gray-200 px-1 rounded">{item.category}</span>
                                             </button>
                                         ))}
                                     </div>

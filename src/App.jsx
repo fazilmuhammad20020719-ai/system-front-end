@@ -1,69 +1,85 @@
+import { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Login from './login';
-import Dashboard from './Dashboard';
-import Calendar from './Calendar';
-import Students from './Students';
-import AddStudent from './AddStudent';
-import EditStudent from './EditStudent';
-import ViewStudent from './ViewStudent';
-import Teachers from './Teachers';
-import AddTeacher from './AddTeacher';
-import EditTeacher from './EditTeacher';
-import ViewTeacher from './ViewTeacher';
-import Programs from './Programs';
-import Schedule from './schedule/Schedule';
-import ViewProgram from './programs/ViewProgram'; // [NEW IMPORT]
-import ProgramDetails from './programs/ProgramDetails';
-import Examinations from './examinations/Examinations';
-import CreateExam from './examinations/CreateExam';
-import ExamManager from './examinations/ExamManager';
-import Attendance from './Attendance';
-import Documents from './Documents';
-import ManagementTeam from './ManagementTeam';
-import ForgotPassword from './ForgotPassword';
+import Loader from './components/Loader';
+
+// Lazy Load Components
+const Login = lazy(() => import('./login'));
+const ForgotPassword = lazy(() => import('./ForgotPassword'));
+const Dashboard = lazy(() => import('./Dashboard'));
+const Calendar = lazy(() => import('./Calendar'));
+const Schedule = lazy(() => import('./schedule/Schedule'));
+
+// Student Routes
+const Students = lazy(() => import('./Students'));
+const AddStudent = lazy(() => import('./AddStudent'));
+const EditStudent = lazy(() => import('./EditStudent'));
+const ViewStudent = lazy(() => import('./ViewStudent'));
+
+// Teacher Routes
+const Teachers = lazy(() => import('./Teachers'));
+const AddTeacher = lazy(() => import('./AddTeacher'));
+const EditTeacher = lazy(() => import('./EditTeacher'));
+const ViewTeacher = lazy(() => import('./ViewTeacher'));
+
+// Management & Programs
+const ManagementTeam = lazy(() => import('./ManagementTeam'));
+const Programs = lazy(() => import('./Programs'));
+const ViewProgram = lazy(() => import('./programs/ViewProgram'));
+const ProgramDetails = lazy(() => import('./programs/ProgramDetails'));
+
+// Examinations
+const Examinations = lazy(() => import('./examinations/Examinations'));
+const CreateExam = lazy(() => import('./examinations/CreateExam'));
+const ExamManager = lazy(() => import('./examinations/ExamManager'));
+
+// Others
+const Attendance = lazy(() => import('./Attendance'));
+const Documents = lazy(() => import('./Documents'));
 
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/calendar" element={<Calendar />} />
-        <Route path="/schedule" element={<Schedule />} />
+      <Suspense fallback={<Loader />}>
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/calendar" element={<Calendar />} />
+          <Route path="/schedule" element={<Schedule />} />
 
-        {/* Student Routes */}
-        <Route path="/students" element={<Students />} />
-        <Route path="/add-student" element={<AddStudent />} />
-        <Route path="/edit-student/:id" element={<EditStudent />} />
-        <Route path="/view-student/:id" element={<ViewStudent />} />
+          {/* Student Routes */}
+          <Route path="/students" element={<Students />} />
+          <Route path="/add-student" element={<AddStudent />} />
+          <Route path="/edit-student/:id" element={<EditStudent />} />
+          <Route path="/view-student/:id" element={<ViewStudent />} />
 
-        {/* Teacher Routes */}
-        <Route path="/teachers" element={<Teachers />} />
-        <Route path="/add-teacher" element={<AddTeacher />} />
-        <Route path="/view-teacher/:id" element={<ViewTeacher />} />
-        <Route path="/edit-teacher/:id" element={<EditTeacher />} />
+          {/* Teacher Routes */}
+          <Route path="/teachers" element={<Teachers />} />
+          <Route path="/add-teacher" element={<AddTeacher />} />
+          <Route path="/view-teacher/:id" element={<ViewTeacher />} />
+          <Route path="/edit-teacher/:id" element={<EditTeacher />} />
 
-        {/* Management Team */}
-        <Route path="/management-team" element={<ManagementTeam />} />
+          {/* Management Team */}
+          <Route path="/management-team" element={<ManagementTeam />} />
 
-        {/* Program Routes */}
-        <Route path="/programs" element={<Programs />} />
-        <Route path="/programs/:id" element={<ProgramDetails />} /> {/* Keeping old route just in case, but new one is preferred */}
-        <Route path="/view-program/:id" element={<ViewProgram />} /> {/* [NEW ROUTE] */}
+          {/* Program Routes */}
+          <Route path="/programs" element={<Programs />} />
+          <Route path="/programs/:id" element={<ProgramDetails />} />
+          <Route path="/view-program/:id" element={<ViewProgram />} />
 
-        {/* Examinations */}
-        <Route path="/examinations" element={<Examinations />} />
-        <Route path="/examinations/create" element={<CreateExam />} />
-        <Route path="/examinations/manage/:examId" element={<ExamManager />} />
+          {/* Examinations */}
+          <Route path="/examinations" element={<Examinations />} />
+          <Route path="/examinations/create" element={<CreateExam />} />
+          <Route path="/examinations/manage/:examId" element={<ExamManager />} />
 
-        {/* Attendance & Documents */}
-        <Route path="/attendance" element={<Attendance />} />
-        <Route path="/documents" element={<Documents />} />
+          {/* Attendance & Documents */}
+          <Route path="/attendance" element={<Attendance />} />
+          <Route path="/documents" element={<Documents />} />
 
-        {/* Catch-all */}
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
+          {/* Catch-all */}
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

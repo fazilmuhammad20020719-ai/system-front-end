@@ -2,7 +2,7 @@ import { Eye, Edit, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Pagination from './Pagination';
 
-const StudentList = ({ students }) => {
+const StudentList = ({ students, currentPage, totalPages, onPageChange }) => {
     const navigate = useNavigate();
 
     const getStatusColor = (status) => {
@@ -69,7 +69,7 @@ const StudentList = ({ students }) => {
                     </tbody>
                 </table>
             </div>
-            <Pagination />
+            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} />
         </div>
     );
 };

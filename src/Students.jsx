@@ -30,15 +30,12 @@ const Students = () => {
     const [programOptions, setProgramOptions] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // 1. Batch Years (2026 down to 2002)
-    const batchYears = Array.from({ length: 25 }, (_, i) => (2026 - i).toString());
+    // 1. Dynamic Filter Data (Derived from Students)
+    const uniqueBatchYears = [...new Set(students.map(s => s.session).filter(Boolean))]
+        .sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
 
-    // 2. Academic Grades
-    const academicYears = [
-        "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5",
-        "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10",
-        "Grade 11", "Grade 12", "Grade 13", "Year 1", "Year 2", "Year 3", "Level 1", "Level 2"
-    ];
+    const uniqueAcademicYears = [...new Set(students.map(s => s.year).filter(Boolean))]
+        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
 
     // FETCH DATA
     useEffect(() => {
@@ -67,6 +64,10 @@ const Students = () => {
         fetchData();
     }, []);
 
+    // PAGINATION STATE
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+
     // Filter Logic
     const filteredStudents = students.filter(student => {
         const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -79,12 +80,25 @@ const Students = () => {
         return matchesSearch && matchesYear && matchesBatch && matchesProgram && matchesStatus;
     });
 
+    // Reset page on filter change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, selectedYear, selectedBatch, selectedProgram, selectedStatus]);
+
+    // PAGINATION CALCULATION
+    const totalPages = Math.max(1, Math.ceil(filteredStudents.length / itemsPerPage));
+    const paginatedStudents = filteredStudents.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+    );
+
     const clearFilters = () => {
         setSearchTerm('');
         setSelectedYear('');
         setSelectedBatch('');
         setSelectedProgram('');
         setSelectedStatus('');
+        setCurrentPage(1);
     };
 
     if (loading) return <div className="p-20 text-center">Loading Students...</div>;
@@ -117,8 +131,8 @@ const Students = () => {
                         selectedStatus={selectedStatus} setSelectedStatus={setSelectedStatus}
                         viewMode={viewMode} setViewMode={setViewMode}
                         cardSize={cardSize} setCardSize={setCardSize}
-                        academicYears={academicYears}
-                        batchYears={batchYears}
+                        academicYears={uniqueAcademicYears}
+                        batchYears={uniqueBatchYears}
                         programs={programOptions}
                         clearFilters={clearFilters}
                     />
@@ -127,9 +141,20 @@ const Students = () => {
                     {filteredStudents.length > 0 ? (
                         <>
                             {viewMode === 'list' ? (
-                                <StudentList students={filteredStudents} />
+                                <StudentList
+                                    students={paginatedStudents}
+                                    currentPage={currentPage}
+                                    totalPages={totalPages}
+                                    onPageChange={setCurrentPage}
+                                />
                             ) : (
-                                <StudentGrid students={filteredStudents} cardSize={cardSize} />
+                                <StudentGrid
+                                    students={paginatedStudents}
+                                    cardSize={cardSize}
+                                    currentPage={currentPage}
+                                    totalPages={totalPages}
+                                    onPageChange={setCurrentPage}
+                                />
                             )}
                         </>
                     ) : (

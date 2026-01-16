@@ -12,7 +12,7 @@ import {
     Briefcase,
     X,
     ClipboardList
-} from 'lucide-react';
+} from 'lucide-react'
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
     // Get current location to automatically set the "active" state

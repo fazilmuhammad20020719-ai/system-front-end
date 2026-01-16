@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { GraduationCap, BookOpen, CalendarCheck, Folder, ArrowRight, Users } from 'lucide-react';
+import { GraduationCap, CalendarCheck, Folder, ArrowRight, Users } from 'lucide-react';
 
 // Component: Individual Stat Card
 const StatCard = ({ title, value, subText, icon: Icon, iconColor, iconBg, onClick }) => (
@@ -37,15 +37,7 @@ const DashboardStats = ({ stats }) => {
                 iconBg="bg-indigo-100"
                 onClick={() => navigate('/students')}
             />
-            <StatCard
-                title="Programs"
-                value={stats.programs}
-                subText="Manage Courses"
-                icon={BookOpen}
-                iconColor="text-green-600"
-                iconBg="bg-green-100"
-                onClick={() => navigate('/programs')}
-            />
+
             <StatCard
                 title="Active Students"
                 value={stats.studentAttendance}

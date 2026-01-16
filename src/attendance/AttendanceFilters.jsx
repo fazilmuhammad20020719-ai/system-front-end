@@ -20,7 +20,7 @@ const AttendanceFilters = ({
                         type="date"
                         value={selectedDate}
                         onChange={(e) => setSelectedDate(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-gray-700 focus:outline-none focus:border-orange-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-gray-700 focus:outline-none focus:border-green-500 placeholder-gray-400"
                     />
                 </div>
 
@@ -30,7 +30,7 @@ const AttendanceFilters = ({
                     <select
                         value={filterProgram}
                         onChange={(e) => setFilterProgram(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-gray-700 focus:outline-none focus:border-orange-500 bg-white"
+                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-gray-700 focus:outline-none focus:border-green-500 bg-white"
                     >
                         <option value="All">All Programs</option>
                         <option value="Hifzul Quran">Hifzul Quran</option>
@@ -48,7 +48,7 @@ const AttendanceFilters = ({
                     <select
                         value={filterYear}
                         onChange={(e) => setFilterYear(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-gray-700 focus:outline-none focus:border-orange-500 bg-white"
+                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-gray-700 focus:outline-none focus:border-green-500 bg-white"
                     >
                         <option value="All">All Years</option>
                         <option value="Grade 1">Grade 1</option>
@@ -67,7 +67,7 @@ const AttendanceFilters = ({
                     <select
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-gray-700 focus:outline-none focus:border-orange-500 bg-white"
+                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-gray-700 focus:outline-none focus:border-green-500 bg-white"
                     >
                         <option value="All">All Status</option>
                         <option value="Present">Present</option>
@@ -84,7 +84,7 @@ const AttendanceFilters = ({
                         placeholder="Name or ID..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-gray-700 focus:outline-none focus:border-orange-500 placeholder-gray-400"
+                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-gray-700 focus:outline-none focus:border-green-500 placeholder-gray-400"
                     />
                 </div>
 

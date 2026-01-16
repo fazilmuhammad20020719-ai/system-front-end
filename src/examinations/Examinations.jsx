@@ -70,7 +70,7 @@ const Examinations = () => {
                         </div>
                         <button
                             onClick={() => navigate('/examinations/create')}
-                            className="bg-[#EB8A33] hover:bg-[#d67b28] text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-sm transition-transform active:scale-95"
+                            className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-sm transition-transform active:scale-95"
                         >
                             <Plus size={20} /> Create New Exam
                         </button>
@@ -83,7 +83,7 @@ const Examinations = () => {
                                 key={f}
                                 onClick={() => setFilter(f)}
                                 className={`px-4 py-2 rounded-lg text-sm font-bold border transition-colors ${filter === f
-                                    ? 'bg-white border-[#EB8A33] text-[#EB8A33] shadow-sm'
+                                    ? 'bg-white border-green-600 text-green-600 shadow-sm'
                                     : 'bg-transparent border-transparent text-gray-500 hover:bg-white hover:shadow-sm'
                                     }`}
                             >
@@ -116,7 +116,7 @@ const Examinations = () => {
                                 </div>
 
                                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                    <BarChart3 size={64} className="text-[#EB8A33]" />
+                                    <BarChart3 size={64} className="text-green-600" />
                                 </div>
 
                                 <div className="mb-4">
@@ -141,7 +141,7 @@ const Examinations = () => {
 
                                 <button
                                     onClick={() => navigate(`/examinations/manage/${exam.id}`)}
-                                    className="w-full py-2.5 rounded-xl border border-gray-200 hover:border-[#EB8A33] hover:text-[#EB8A33] font-bold text-sm transition-colors flex items-center justify-center gap-2 bg-gray-50 hover:bg-white"
+                                    className="w-full py-2.5 rounded-xl border border-gray-200 hover:border-green-600 hover:text-green-600 font-bold text-sm transition-colors flex items-center justify-center gap-2 bg-gray-50 hover:bg-white"
                                 >
                                     Manage Exam <ChevronRight size={16} />
                                 </button>

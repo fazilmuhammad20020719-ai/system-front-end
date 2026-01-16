@@ -179,10 +179,10 @@ const CreateExam = () => {
             <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
                 <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
                     {/* Modal Header */}
-                    <div className="bg-[#EB8A33] px-6 py-4 flex justify-between items-center text-white">
+                    <div className="bg-green-600 px-6 py-4 flex justify-between items-center text-white">
                         <div>
                             <h3 className="font-bold text-lg">Select Students</h3>
-                            <p className="text-orange-100 text-xs">{currentYearForSelection} - {examDetails.program}</p>
+                            <p className="text-green-100 text-xs">{currentYearForSelection} - {examDetails.program}</p>
                         </div>
                         <button onClick={() => setIsModalOpen(false)} className="p-1 hover:bg-white/20 rounded-full transition">
                             <X size={20} />
@@ -196,7 +196,7 @@ const CreateExam = () => {
                         </div>
                         <button
                             onClick={() => handleSelectAllForYear(!isAllSelected)}
-                            className="text-sm font-bold text-[#EB8A33] hover:underline"
+                            className="text-sm font-bold text-green-600 hover:underline"
                         >
                             {isAllSelected ? 'Deselect All' : 'Select All Students'}
                         </button>
@@ -212,9 +212,9 @@ const CreateExam = () => {
                                         <div
                                             key={student.id}
                                             onClick={() => handleStudentToggle(student.id)}
-                                            className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors border ${isSelected ? 'bg-orange-50 border-orange-200' : 'bg-white border-transparent hover:bg-gray-50'}`}
+                                            className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors border ${isSelected ? 'bg-green-50 border-green-200' : 'bg-white border-transparent hover:bg-gray-50'}`}
                                         >
-                                            <div className={`text-[#EB8A33] transition-transform duration-200 ${isSelected ? 'scale-110' : 'scale-100 text-gray-300'}`}>
+                                            <div className={`text-green-600 transition-transform duration-200 ${isSelected ? 'scale-110' : 'scale-100 text-gray-300'}`}>
                                                 {isSelected ? <CheckSquare size={20} /> : <Square size={20} />}
                                             </div>
                                             <div>
@@ -271,7 +271,7 @@ const CreateExam = () => {
                                     <input
                                         type="text"
                                         placeholder="e.g. Term 1 Final Examination 2025"
-                                        className="w-full p-3 border border-gray-200 rounded-lg focus:border-[#EB8A33] outline-none"
+                                        className="w-full p-3 border border-gray-200 rounded-lg focus:border-green-600 outline-none bg-white"
                                         value={examDetails.title}
                                         onChange={e => setExamDetails({ ...examDetails, title: e.target.value })}
                                     />
@@ -281,7 +281,7 @@ const CreateExam = () => {
                                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Start Date</label>
                                     <input
                                         type="date"
-                                        className="w-full p-3 border border-gray-200 rounded-lg focus:border-[#EB8A33] outline-none"
+                                        className="w-full p-3 border border-gray-200 rounded-lg focus:border-green-600 outline-none bg-white"
                                         value={examDetails.startDate}
                                         onChange={e => setExamDetails({ ...examDetails, startDate: e.target.value })}
                                     />
@@ -312,14 +312,14 @@ const CreateExam = () => {
                                                 const { selected, total } = getSelectedCountForYear(year);
 
                                                 return (
-                                                    <div key={year} className={`relative p-4 rounded-xl border-2 transition-all ${isSelected ? 'border-[#EB8A33] bg-orange-50' : 'border-gray-100 bg-white hover:border-orange-200'}`}>
+                                                    <div key={year} className={`relative p-4 rounded-xl border-2 transition-all ${isSelected ? 'border-green-600 bg-green-50' : 'border-gray-100 bg-white hover:border-green-200'}`}>
 
                                                         {/* Top Row: Checkbox & Year Name */}
                                                         <div className="flex items-center justify-between mb-2">
                                                             <label className="flex items-center gap-3 cursor-pointer select-none">
                                                                 <div
                                                                     onClick={() => handleYearCheckbox(year)}
-                                                                    className={`w-5 h-5 rounded flex items-center justify-center border transition-colors ${isSelected ? 'bg-[#EB8A33] border-[#EB8A33] text-white' : 'bg-white border-gray-300'}`}
+                                                                    className={`w-5 h-5 rounded flex items-center justify-center border transition-colors ${isSelected ? 'bg-green-600 border-green-600 text-white' : 'bg-white border-gray-300'}`}
                                                                 >
                                                                     {isSelected && <CheckSquare size={14} />}
                                                                 </div>
@@ -330,13 +330,13 @@ const CreateExam = () => {
                                                         {/* Bottom Row: Student Count & Edit Button */}
                                                         {isSelected && (
                                                             <div className="flex items-center justify-between text-xs pl-8">
-                                                                <span className="text-gray-600 font-medium bg-white px-2 py-1 rounded border border-orange-100">
-                                                                    <Users size={12} className="inline mr-1 text-[#EB8A33]" />
+                                                                <span className="text-gray-600 font-medium bg-white px-2 py-1 rounded border border-green-100">
+                                                                    <Users size={12} className="inline mr-1 text-green-600" />
                                                                     {selected} / {total} Students
                                                                 </span>
                                                                 <button
                                                                     onClick={() => handleOpenStudentSelection(year)}
-                                                                    className="text-[#EB8A33] font-bold hover:underline flex items-center gap-1"
+                                                                    className="text-green-600 font-bold hover:underline flex items-center gap-1"
                                                                 >
                                                                     <UserCheck size={14} /> Edit Selection
                                                                 </button>
@@ -357,7 +357,7 @@ const CreateExam = () => {
                                 <h2 className="font-bold text-gray-800">Step 2: Subjects & Timetable</h2>
                                 <button
                                     onClick={handleAddSubject}
-                                    className="text-xs font-bold text-[#EB8A33] flex items-center gap-1 hover:underline"
+                                    className="text-xs font-bold text-green-600 flex items-center gap-1 hover:underline"
                                 >
                                     <Plus size={14} /> Add Subject
                                 </button>
@@ -394,7 +394,7 @@ const CreateExam = () => {
                         </div>
 
                         <div className="flex justify-end pt-4">
-                            <button onClick={handleSave} className="bg-[#EB8A33] hover:bg-[#d67b28] text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg">
+                            <button onClick={handleSave} className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg">
                                 <Save size={20} /> Create Exam
                             </button>
                         </div>

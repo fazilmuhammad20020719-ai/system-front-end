@@ -22,13 +22,13 @@ const ProgramsHeader = ({ toggleSidebar, onAddClick, onAddSubjectClick }) => {
                     onClick={onAddSubjectClick}
                     className="bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 px-4 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 shadow-sm transition-colors"
                 >
-                    <BookOpen size={18} className="text-[#ea8933]" /> Add Subject
+                    <BookOpen size={18} className="text-green-600" /> Add Subject
                 </button>
 
                 {/* Add Program Button */}
                 <button
                     onClick={onAddClick}
-                    className="bg-[#ea8933] hover:bg-[#d97c2a] text-white px-5 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 shadow-sm transition-colors"
+                    className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg text-sm font-bold flex items-center gap-2 shadow-sm transition-colors"
                 >
                     <Plus size={18} /> Add Program
                 </button>

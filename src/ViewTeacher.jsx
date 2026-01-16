@@ -72,7 +72,7 @@ const ViewTeacher = () => {
                     {/* Back Button */}
                     <button
                         onClick={() => navigate('/teachers')}
-                        className="mb-6 flex items-center gap-2 text-gray-500 hover:text-[#EB8A33] transition-colors font-medium"
+                        className="mb-6 flex items-center gap-2 text-gray-500 hover:text-green-600 transition-colors font-medium"
                     >
                         <ArrowLeft size={18} /> Back to Directory
                     </button>
@@ -110,7 +110,7 @@ const ViewTeacher = () => {
 const TabItem = ({ icon: Icon, label, active, onClick }) => (
     <button
         onClick={onClick}
-        className={`flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all border-b-2 whitespace-nowrap ${active ? "border-[#EB8A33] text-[#EB8A33] bg-orange-50/30" : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+        className={`flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all border-b-2 whitespace-nowrap ${active ? "border-green-600 text-green-600 bg-green-50/30" : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
             }`}
     >
         <Icon size={18} /> {label}

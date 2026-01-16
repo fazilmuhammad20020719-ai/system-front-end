@@ -51,7 +51,7 @@ const TeacherOverview = ({ teacher }) => {
                             icon={Mail}
                             label="Email"
                             onClick={() => window.open(`mailto:${teacher.email}`)}
-                            color="text-orange-600 bg-orange-50 hover:bg-orange-100 border-orange-200"
+                            color="text-green-600 bg-green-50 hover:bg-orange-100 border-green-200"
                         />
                     )}
                 </div>

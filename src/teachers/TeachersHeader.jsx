@@ -22,7 +22,7 @@ const TeachersHeader = ({ toggleSidebar }) => {
                     <Download size={16} /> Export CSV
                 </button>
                 <Link to="/add-teacher">
-                    <button className="bg-[#EB8A33] hover:bg-[#d67b2b] text-white px-5 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 shadow-sm transition-all">
+                    <button className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 shadow-sm transition-all">
                         <Plus size={18} /> Add Teacher
                     </button>
                 </Link>

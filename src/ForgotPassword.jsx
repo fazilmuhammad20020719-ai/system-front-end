@@ -19,12 +19,12 @@ const ForgotPassword = () => {
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden relative">
 
                 {/* Decoration */}
-                <div className="absolute top-0 w-full h-2 bg-[#EB8A33]"></div>
+                <div className="absolute top-0 w-full h-2 bg-green-600"></div>
 
                 <div className="p-8">
                     {/* Header */}
                     <div className="text-center mb-8">
-                        <div className="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-4 text-[#EB8A33]">
+                        <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4 text-green-600">
                             {submitted ? <CheckCircle size={32} /> : <Mail size={32} />}
                         </div>
                         <h2 className="text-2xl font-bold text-gray-800">
@@ -54,7 +54,7 @@ const ForgotPassword = () => {
                                         placeholder="admin@college.edu"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#EB8A33] focus:border-transparent transition-all"
+                                        className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                                         required
                                     />
                                 </div>
@@ -62,7 +62,7 @@ const ForgotPassword = () => {
 
                             <button
                                 type="submit"
-                                className="w-full bg-[#EB8A33] hover:bg-[#d67b2b] text-white font-bold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-200"
+                                className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-200"
                             >
                                 Send Reset Link
                             </button>
@@ -80,7 +80,7 @@ const ForgotPassword = () => {
                     <div className="mt-8 text-center">
                         <Link
                             to="/"
-                            className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-[#EB8A33] font-medium transition-colors"
+                            className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-green-600 font-medium transition-colors"
                         >
                             <ArrowLeft size={16} /> Back to Login
                         </Link>

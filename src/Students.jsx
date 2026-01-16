@@ -164,7 +164,7 @@ const Students = () => {
                                 <Search className="text-gray-300" size={32} />
                             </div>
                             <h3 className="text-lg font-bold text-gray-800">No students found</h3>
-                            <button onClick={clearFilters} className="mt-4 text-[#EB8A33] hover:underline font-medium text-sm">Clear all filters</button>
+                            <button onClick={clearFilters} className="mt-4 text-green-600 hover:underline font-medium text-sm">Clear all filters</button>
                         </div>
                     )}
                 </main>

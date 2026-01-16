@@ -27,7 +27,7 @@ const StudentFilters = ({
                             placeholder="Search by name or ID..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#EB8A33] focus:ring-1 focus:ring-[#EB8A33] transition-all"
+                            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-all"
                         />
                     </div>
 
@@ -39,7 +39,7 @@ const StudentFilters = ({
                             <select
                                 value={selectedProgram}
                                 onChange={(e) => setSelectedProgram(e.target.value)}
-                                className="w-full pl-4 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm appearance-none focus:outline-none focus:border-[#EB8A33] cursor-pointer text-gray-700 hover:bg-gray-100 transition-colors"
+                                className="w-full pl-4 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm appearance-none focus:outline-none focus:border-green-500 cursor-pointer text-gray-700 hover:bg-gray-100 transition-colors"
                             >
                                 <option value="">All Programs</option>
                                 {programs.map(prog => <option key={prog} value={prog}>{prog}</option>)}
@@ -52,7 +52,7 @@ const StudentFilters = ({
                             <select
                                 value={selectedBatch}
                                 onChange={(e) => setSelectedBatch(e.target.value)}
-                                className="w-full pl-4 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm appearance-none focus:outline-none focus:border-[#EB8A33] cursor-pointer text-gray-700 hover:bg-gray-100 transition-colors"
+                                className="w-full pl-4 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm appearance-none focus:outline-none focus:border-green-500 cursor-pointer text-gray-700 hover:bg-gray-100 transition-colors"
                             >
                                 <option value="">Batch</option>
                                 {batchYears.map(year => <option key={year} value={year}>{year}</option>)}
@@ -65,7 +65,7 @@ const StudentFilters = ({
                             <select
                                 value={selectedYear}
                                 onChange={(e) => setSelectedYear(e.target.value)}
-                                className="w-full pl-4 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm appearance-none focus:outline-none focus:border-[#EB8A33] cursor-pointer text-gray-700 hover:bg-gray-100 transition-colors"
+                                className="w-full pl-4 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm appearance-none focus:outline-none focus:border-green-500 cursor-pointer text-gray-700 hover:bg-gray-100 transition-colors"
                             >
                                 <option value="">All Grades</option>
                                 {academicYears.map(year => <option key={year} value={year}>{year}</option>)}
@@ -80,7 +80,7 @@ const StudentFilters = ({
                             <select
                                 value={selectedStatus}
                                 onChange={(e) => setSelectedStatus(e.target.value)}
-                                className="w-full pl-4 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm appearance-none focus:outline-none focus:border-[#EB8A33] cursor-pointer text-gray-700 hover:bg-gray-100 transition-colors"
+                                className="w-full pl-4 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm appearance-none focus:outline-none focus:border-green-500 cursor-pointer text-gray-700 hover:bg-gray-100 transition-colors"
                             >
                                 <option value="">Status</option>
                                 <option value="Active">Active</option>
@@ -109,15 +109,15 @@ const StudentFilters = ({
                     {/* Card Size Toggle (Only Visible in Grid Mode) */}
                     {viewMode === 'grid' && (
                         <div className="hidden sm:flex items-center bg-gray-50 rounded-lg border border-gray-200 h-[42px] px-1">
-                            <button onClick={() => setCardSize('small')} className={`p-1.5 rounded-md transition-all ${cardSize === 'small' ? 'bg-white shadow text-[#EB8A33]' : 'text-gray-400 hover:text-gray-600'}`}><Minimize2 size={16} /></button>
-                            <button onClick={() => setCardSize('large')} className={`p-1.5 rounded-md transition-all ${cardSize === 'large' ? 'bg-white shadow text-[#EB8A33]' : 'text-gray-400 hover:text-gray-600'}`}><Maximize2 size={16} /></button>
+                            <button onClick={() => setCardSize('small')} className={`p-1.5 rounded-md transition-all ${cardSize === 'small' ? 'bg-white shadow text-green-600' : 'text-gray-400 hover:text-gray-600'}`}><Minimize2 size={16} /></button>
+                            <button onClick={() => setCardSize('large')} className={`p-1.5 rounded-md transition-all ${cardSize === 'large' ? 'bg-white shadow text-green-600' : 'text-gray-400 hover:text-gray-600'}`}><Maximize2 size={16} /></button>
                         </div>
                     )}
 
                     {/* View Mode Toggle */}
                     <div className="flex items-center bg-gray-100 rounded-lg p-1 border border-gray-200 h-[42px]">
-                        <button onClick={() => setViewMode('list')} className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-white shadow text-[#EB8A33]' : 'text-gray-500 hover:text-gray-700'}`}><List size={18} /></button>
-                        <button onClick={() => setViewMode('grid')} className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white shadow text-[#EB8A33]' : 'text-gray-500 hover:text-gray-700'}`}><LayoutGrid size={18} /></button>
+                        <button onClick={() => setViewMode('list')} className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-white shadow text-green-600' : 'text-gray-500 hover:text-gray-700'}`}><List size={18} /></button>
+                        <button onClick={() => setViewMode('grid')} className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white shadow text-green-600' : 'text-gray-500 hover:text-gray-700'}`}><LayoutGrid size={18} /></button>
                     </div>
                 </div>
 

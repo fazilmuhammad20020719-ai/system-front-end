@@ -29,7 +29,7 @@ const UpcomingAlerts = ({ alerts = [] }) => {
     const getColors = (theme) => {
         switch (theme) {
             case 'red': return { text: 'text-red-600', border: 'border-red-200', bg: 'bg-red-50' };
-            case 'orange': return { text: 'text-orange-600', border: 'border-orange-200', bg: 'bg-orange-50' };
+            case 'orange': return { text: 'text-green-600', border: 'border-green-200', bg: 'bg-green-50' };
             case 'blue': return { text: 'text-blue-600', border: 'border-blue-200', bg: 'bg-blue-50' };
             default: return { text: 'text-gray-600', border: 'border-gray-200', bg: 'bg-gray-50' };
         }

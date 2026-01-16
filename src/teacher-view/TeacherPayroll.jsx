@@ -260,7 +260,7 @@ const TeacherPayroll = ({ teacher }) => {
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-2">
-                        <CreditCard className="text-[#EB8A33]" size={20} />
+                        <CreditCard className="text-green-600" size={20} />
                         <h3 className="font-bold text-gray-800">Salary History</h3>
                     </div>
 
@@ -438,7 +438,7 @@ const TeacherPayroll = ({ teacher }) => {
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
                     <div className="bg-white rounded-xl w-full max-w-sm shadow-2xl p-6 text-center animate-in zoom-in duration-200">
                         <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Lock className="text-[#EB8A33]" size={24} />
+                            <Lock className="text-green-600" size={24} />
                         </div>
                         <h3 className="text-xl font-bold text-gray-900 mb-2">Admin Verification</h3>
                         <p className="text-sm text-gray-500 mb-6">Enter password to process payroll.</p>

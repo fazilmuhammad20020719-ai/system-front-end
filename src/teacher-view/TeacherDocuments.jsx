@@ -22,7 +22,7 @@ const TeacherDocuments = ({ documents }) => {
                 {docs.map((doc, i) => (
                     <div key={i} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-orange-300 transition-colors">
                         <div className="flex items-center gap-3">
-                            <div className="bg-orange-50 text-[#EB8A33] p-2 rounded"><FileText size={20} /></div>
+                            <div className="bg-orange-50 text-green-600 p-2 rounded"><FileText size={20} /></div>
                             <div>
                                 <p className="text-sm font-bold text-gray-700">{doc.name}</p>
                                 <p className="text-xs text-gray-400">{doc.size} • {doc.date}</p>

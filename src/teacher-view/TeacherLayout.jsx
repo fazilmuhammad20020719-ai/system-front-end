@@ -63,7 +63,7 @@ const TeacherLayout = () => {
                         </div>
                         <div className="flex gap-2">
                             <button className="flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-bold hover:bg-gray-50"><Printer size={16} /> Print</button>
-                            <button className="flex items-center gap-2 px-3 py-1.5 bg-[#EB8A33] text-white rounded-lg text-sm font-bold hover:bg-[#d97c2a]"><Download size={16} /> Report</button>
+                            <button className="flex items-center gap-2 px-3 py-1.5 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700"><Download size={16} /> Report</button>
                         </div>
                     </div>
 
@@ -89,7 +89,7 @@ const TeacherLayout = () => {
 const NavTab = ({ to, icon: Icon, label }) => (
     <NavLink
         to={to}
-        className={({ isActive }) => `flex items-center gap-2 pb-3 text-sm font-bold border-b-2 transition-colors ${isActive ? "border-[#EB8A33] text-[#EB8A33]" : "border-transparent text-gray-500 hover:text-gray-700"
+        className={({ isActive }) => `flex items-center gap-2 pb-3 text-sm font-bold border-b-2 transition-colors ${isActive ? "border-green-600 text-green-600" : "border-transparent text-gray-500 hover:text-gray-700"
             }`}
     >
         <Icon size={16} /> {label}

@@ -36,12 +36,12 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
             <aside
                 className={`
-        bg-[#F57D1F] h-screen fixed left-0 top-0 z-30 transition-all duration-300 ease-in-out flex flex-col text-white
+        bg-green-600 h-screen fixed left-0 top-0 z-30 transition-all duration-300 ease-in-out flex flex-col text-white
         ${isOpen ? "w-64 translate-x-0" : "w-64 -translate-x-full md:translate-x-0 md:w-20"}
       `}
             >
                 {/* LOGO SECTION */}
-                <div className="h-20 flex items-center justify-between px-6 border-b border-orange-400/30">
+                <div className="h-20 flex items-center justify-between px-6 border-b border-green-400/30">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center p-1">
                             {/* Ensure you have a logo.png in your public folder or change this source */}
@@ -70,7 +70,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
                     {/* Section: MAIN */}
                     <div>
-                        {isOpen && <p className="text-xs font-semibold text-orange-100/70 mb-3 px-2 uppercase tracking-wider">Main</p>}
+                        {isOpen && <p className="text-xs font-semibold text-green-100/70 mb-3 px-2 uppercase tracking-wider">Main</p>}
                         <div className="space-y-1">
                             <SidebarItem
                                 icon={LayoutDashboard}
@@ -98,7 +98,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
                     {/* Section: DIRECTORY */}
                     <div>
-                        {isOpen && <p className="text-xs font-semibold text-orange-100/70 mb-3 px-2 uppercase tracking-wider mt-2">Directory</p>}
+                        {isOpen && <p className="text-xs font-semibold text-green-100/70 mb-3 px-2 uppercase tracking-wider mt-2">Directory</p>}
                         <div className="space-y-1">
                             <SidebarItem
                                 icon={GraduationCap}
@@ -126,7 +126,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
                     {/* Section: ACADEMIC */}
                     <div>
-                        {isOpen && <p className="text-xs font-semibold text-orange-100/70 mb-3 px-2 uppercase tracking-wider mt-2">Academic</p>}
+                        {isOpen && <p className="text-xs font-semibold text-green-100/70 mb-3 px-2 uppercase tracking-wider mt-2">Academic</p>}
                         <div className="space-y-1">
                             <SidebarItem
                                 icon={Layers}
@@ -154,7 +154,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
 
                     {/* Section: OFFICE */}
                     <div>
-                        {isOpen && <p className="text-xs font-semibold text-orange-100/70 mb-3 px-2 uppercase tracking-wider mt-2">Office</p>}
+                        {isOpen && <p className="text-xs font-semibold text-green-100/70 mb-3 px-2 uppercase tracking-wider mt-2">Office</p>}
                         <div className="space-y-1">
                             <SidebarItem
                                 icon={FolderOpen}
@@ -168,21 +168,21 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                 </nav>
 
                 {/* FOOTER USER PROFILE */}
-                <div className="p-4 border-t border-orange-400/30 bg-[#E0690C]">
+                <div className="p-4 border-t border-green-400/30 bg-green-700">
                     <div className={`flex items-center gap-3 ${!isOpen && "justify-center"}`}>
-                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-[#F57D1F] font-bold shadow-sm uppercase">
+                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-green-600 font-bold shadow-sm uppercase">
                             {user?.username?.charAt(0) || 'A'}
                         </div>
 
                         {isOpen && (
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-bold truncate capitalize">{user?.username || 'Administrator'}</p>
-                                <p className="text-xs text-orange-200 truncate capitalize">{user?.role || 'Super Admin'}</p>
+                                <p className="text-xs text-green-200 truncate capitalize">{user?.role || 'Super Admin'}</p>
                             </div>
                         )}
 
                         {isOpen && (
-                            <Link to="/" onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('user'); }} className="text-orange-200 hover:text-white transition-colors">
+                            <Link to="/" onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('user'); }} className="text-green-200 hover:text-white transition-colors">
                                 <LogOut size={20} />
                             </Link>
                         )}
@@ -200,7 +200,7 @@ const SidebarItem = ({ icon: Icon, text, active, isOpen, to }) => (
         className={`
             flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-all duration-200 font-medium block
             ${active
-                ? "bg-white text-[#F57D1F] shadow-sm"
+                ? "bg-white text-green-600 shadow-sm"
                 : "text-white hover:bg-white/10"
             }
             ${!isOpen && "justify-center px-2"}

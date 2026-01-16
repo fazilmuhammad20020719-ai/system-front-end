@@ -13,7 +13,7 @@ export const InputField = ({ label, name, placeholder, value, onChange, icon: Ic
                 value={value}
                 onChange={onChange}
                 placeholder={placeholder}
-                className={`w-full ${Icon ? 'pl-9' : 'px-3'} pr-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:border-[#EB8A33] focus:ring-1 focus:ring-[#EB8A33] outline-none transition-all placeholder:text-gray-400 shadow-sm hover:border-gray-400`}
+                className={`w-full ${Icon ? 'pl-9' : 'px-3'} pr-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-all placeholder:text-gray-400 shadow-sm hover:border-gray-400`}
             />
         </div>
     </div>
@@ -29,7 +29,7 @@ export const SelectField = ({ label, name, value, onChange, options, placeholder
             value={value}
             onChange={onChange}
             disabled={disabled}
-            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:border-[#EB8A33] focus:ring-1 focus:ring-[#EB8A33] outline-none transition-all disabled:opacity-50 disabled:bg-gray-100 shadow-sm hover:border-gray-400 cursor-pointer"
+            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-all disabled:opacity-50 disabled:bg-gray-100 shadow-sm hover:border-gray-400 cursor-pointer"
         >
             <option value="">{placeholder || 'Select'}</option>
             {options.map((opt) => (
@@ -40,15 +40,15 @@ export const SelectField = ({ label, name, value, onChange, options, placeholder
 );
 
 export const FileUploadCard = ({ label, name, file, onChange, height = "h-32" }) => (
-    <div className="p-3 border border-gray-200 rounded-lg hover:border-[#EB8A33] transition-colors bg-white shadow-sm">
+    <div className="p-3 border border-gray-200 rounded-lg hover:border-green-500 transition-colors bg-white shadow-sm">
         <p className="font-bold text-gray-700 mb-2 text-xs uppercase">{label}</p>
-        <div className={`${height} bg-gray-50 rounded-md border-2 border-dashed border-gray-300 flex flex-col items-center justify-center relative overflow-hidden group hover:bg-orange-50/30 transition-colors`}>
+        <div className={`${height} bg-gray-50 rounded-md border-2 border-dashed border-gray-300 flex flex-col items-center justify-center relative overflow-hidden group hover:bg-green-50/30 transition-colors`}>
             {file ? (
                 <img src={URL.createObjectURL(file)} className="w-full h-full object-contain" alt="preview" />
             ) : (
                 <>
-                    <ImageIcon className="text-gray-300 mb-1 group-hover:text-[#EB8A33] transition-colors" size={24} />
-                    <span className="text-[10px] text-gray-400 font-medium group-hover:text-[#EB8A33]">Click to upload</span>
+                    <ImageIcon className="text-gray-300 mb-1 group-hover:text-green-600 transition-colors" size={24} />
+                    <span className="text-[10px] text-gray-400 font-medium group-hover:text-green-600">Click to upload</span>
                 </>
             )}
             <input type="file" name={name} onChange={onChange} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" />
@@ -67,7 +67,7 @@ export const TextAreaField = ({ label, name, value, onChange, placeholder, rows 
             onChange={onChange}
             rows={rows}
             placeholder={placeholder}
-            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:border-[#EB8A33] focus:ring-1 focus:ring-[#EB8A33] outline-none transition-all placeholder:text-gray-400 shadow-sm hover:border-gray-400 resize-none"
+            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-all placeholder:text-gray-400 shadow-sm hover:border-gray-400 resize-none"
         />
     </div>
 );

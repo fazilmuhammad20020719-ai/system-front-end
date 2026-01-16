@@ -5,13 +5,13 @@ const StudentPersonalInfo = ({ formData, handleChange }) => {
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
             <h3 className="text-base font-bold text-gray-800 mb-5 flex items-center gap-2 border-b border-gray-100 pb-3">
-                <User className="text-[#EB8A33]" size={18} /> Personal Information
+                <User className="text-green-600" size={18} /> Personal Information
             </h3>
 
             <div className="flex flex-col lg:flex-row gap-6">
                 {/* Photo Upload - Compact Sidebar Style */}
                 <div className="flex-shrink-0 flex flex-col items-center gap-3">
-                    <div className="w-32 h-32 rounded-lg bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden relative group hover:border-[#EB8A33] transition-colors">
+                    <div className="w-32 h-32 rounded-lg bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden relative group hover:border-green-600 transition-colors">
                         {formData.studentPhoto ? (
                             <img src={URL.createObjectURL(formData.studentPhoto)} alt="Preview" className="w-full h-full object-cover" />
                         ) : (

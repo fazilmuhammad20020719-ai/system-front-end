@@ -36,7 +36,7 @@ const TeacherProfileHeader = ({ teacher }) => {
                 <button onClick={() => navigate(`/edit-teacher/${teacher.id}`)} className="flex-1 md:flex-none px-4 py-2 border border-gray-200 hover:border-gray-300 text-gray-700 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2">
                     <Edit size={16} /> Edit
                 </button>
-                <button className="flex-1 md:flex-none px-4 py-2 bg-[#EB8A33] hover:bg-[#d67b28] text-white rounded-lg text-sm font-medium shadow-sm transition-all flex items-center justify-center gap-2">
+                <button className="flex-1 md:flex-none px-4 py-2 bg-green-600 hover:bg-[#d67b28] text-white rounded-lg text-sm font-medium shadow-sm transition-all flex items-center justify-center gap-2">
                     <Download size={16} /> Download Profile
                 </button>
             </div>

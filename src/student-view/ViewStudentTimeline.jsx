@@ -18,7 +18,7 @@ const ViewStudentTimeline = () => {
 
                 {/* Item 2 */}
                 <div className="relative pl-8">
-                    <span className="absolute -left-[9px] top-0 w-4 h-4 bg-[#EB8A33] rounded-full border-4 border-white shadow-sm"></span>
+                    <span className="absolute -left-[9px] top-0 w-4 h-4 bg-green-600 rounded-full border-4 border-white shadow-sm"></span>
                     <p className="text-xs text-gray-500 font-bold uppercase mb-1">Mar 2025</p>
                     <h4 className="text-sm font-bold text-gray-800">Exam: 1st Term</h4>
                     <p className="text-xs text-gray-500 mt-1">Passed with Grade A (88%)</p>

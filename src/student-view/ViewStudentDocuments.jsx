@@ -21,7 +21,7 @@ const ViewStudentDocuments = ({ documents }) => {
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="font-bold text-gray-800 flex items-center gap-2">
-                        <FileText className="text-[#EB8A33]" size={20} /> Attached Documents
+                        <FileText className="text-green-600" size={20} /> Attached Documents
                     </h3>
                     <button
                         onClick={() => setIsUploadOpen(true)}
@@ -44,7 +44,7 @@ const ViewStudentDocuments = ({ documents }) => {
                                 </div>
                             </div>
                             <div className="flex gap-2">
-                                <button className="text-gray-400 hover:text-[#EB8A33] transition-colors" title="View">
+                                <button className="text-gray-400 hover:text-green-600 transition-colors" title="View">
                                     <Eye size={16} />
                                 </button>
                                 <button className="text-gray-400 hover:text-blue-600 transition-colors" title="Print">

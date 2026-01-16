@@ -100,7 +100,7 @@ const TeacherAttendanceView = ({ stats }) => {
             <div className="lg:col-span-1 space-y-4">
                 <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm text-center">
                     <p className="text-gray-500 text-sm font-medium">Monthly Attendance</p>
-                    <h2 className="text-4xl font-bold text-[#EB8A33] mt-2">
+                    <h2 className="text-4xl font-bold text-green-600 mt-2">
                         {stats ? Math.round((stats.present / stats.total) * 100) : 0}%
                     </h2>
                     <p className="text-xs text-gray-400 mt-1">Total Working Days: {stats?.total || 0}</p>
@@ -133,7 +133,7 @@ const TeacherAttendanceView = ({ stats }) => {
                 {/* Calendar Header with Date Menu */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                     <div className="flex items-center gap-2">
-                        <CalendarIcon className="text-[#EB8A33]" size={20} />
+                        <CalendarIcon className="text-green-600" size={20} />
                         <h3 className="font-bold text-gray-800">Attendance Log</h3>
                     </div>
 
@@ -159,10 +159,10 @@ const TeacherAttendanceView = ({ stats }) => {
                         </select>
 
                         <div className="flex items-center border border-gray-200 rounded-lg bg-gray-50 ml-1">
-                            <button onClick={handlePrevMonth} className="p-2 hover:bg-white hover:text-[#EB8A33] transition-colors border-r border-gray-200 rounded-l-lg">
+                            <button onClick={handlePrevMonth} className="p-2 hover:bg-white hover:text-green-600 transition-colors border-r border-gray-200 rounded-l-lg">
                                 <ChevronLeft size={16} />
                             </button>
-                            <button onClick={handleNextMonth} className="p-2 hover:bg-white hover:text-[#EB8A33] transition-colors rounded-r-lg">
+                            <button onClick={handleNextMonth} className="p-2 hover:bg-white hover:text-green-600 transition-colors rounded-r-lg">
                                 <ChevronRight size={16} />
                             </button>
                         </div>

@@ -42,8 +42,8 @@ const DashboardStats = ({ stats }) => {
                 value={stats.programs}
                 subText="Manage Courses"
                 icon={BookOpen}
-                iconColor="text-orange-600"
-                iconBg="bg-orange-100"
+                iconColor="text-green-600"
+                iconBg="bg-green-100"
                 onClick={() => navigate('/programs')}
             />
             <StatCard

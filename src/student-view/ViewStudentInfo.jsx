@@ -65,7 +65,7 @@ const ViewStudentInfo = ({ student }) => {
                             icon={Mail}
                             label="Email"
                             onClick={() => window.open(`mailto:${student.email}`)}
-                            color="text-orange-600 bg-orange-50 hover:bg-orange-100 border-orange-200"
+                            color="text-green-600 bg-green-50 hover:bg-orange-100 border-green-200"
                         />
                     )}
                 </div>
@@ -98,7 +98,7 @@ const ViewStudentInfo = ({ student }) => {
                     <ActionButton icon={Phone} label="Call" onClick={() => window.open(`tel:${student.guardianPhone}`)} color="text-purple-600 bg-purple-50 hover:bg-purple-100 border-purple-200" />
                     <ActionButton icon={MessageCircle} label="WhatsApp" onClick={() => openWhatsApp(student.guardianPhone)} color="text-green-600 bg-green-50 hover:bg-green-100 border-green-200" />
                     {student.guardianEmail && (
-                        <ActionButton icon={Mail} label="Email" onClick={() => window.open(`mailto:${student.guardianEmail}`)} color="text-orange-600 bg-orange-50 hover:bg-orange-100 border-orange-200" />
+                        <ActionButton icon={Mail} label="Email" onClick={() => window.open(`mailto:${student.guardianEmail}`)} color="text-green-600 bg-green-50 hover:bg-orange-100 border-green-200" />
                     )}
                 </div>
             </SectionCard>
@@ -126,7 +126,7 @@ const ViewStudentInfo = ({ student }) => {
             </SectionCard>
 
             {/* 4. Academic History */}
-            <SectionCard title="Academic History" icon={GraduationCap} color="text-orange-600" bg="bg-orange-50">
+            <SectionCard title="Academic History" icon={GraduationCap} color="text-green-600" bg="bg-green-50">
                 {/* Status & Index */}
                 <div className="pb-4 border-b border-gray-100 mb-4 space-y-3">
                     <div className="flex justify-between items-start">

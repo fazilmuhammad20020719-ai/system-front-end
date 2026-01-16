@@ -66,7 +66,7 @@ const ViewProgram = () => {
                     {/* Back Button */}
                     <button
                         onClick={() => navigate('/programs')}
-                        className="flex items-center gap-2 text-gray-500 hover:text-[#ea8933] font-medium mb-6 transition-colors"
+                        className="flex items-center gap-2 text-gray-500 hover:text-green-600 font-medium mb-6 transition-colors"
                     >
                         <ArrowLeft size={20} /> Back to Programs
                     </button>
@@ -102,13 +102,13 @@ const ViewProgram = () => {
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
                                 className={`px-6 py-3 text-sm font-bold capitalize relative transition-colors whitespace-nowrap ${activeTab === tab
-                                    ? 'text-[#ea8933]'
+                                    ? 'text-green-600'
                                     : 'text-gray-500 hover:text-gray-700'
                                     }`}
                             >
                                 {tab}
                                 {activeTab === tab && (
-                                    <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#ea8933] rounded-t-full"></div>
+                                    <div className="absolute bottom-0 left-0 w-full h-0.5 bg-green-600 rounded-t-full"></div>
                                 )}
                             </button>
                         ))}
@@ -176,7 +176,7 @@ const ViewProgram = () => {
                                                     key={year}
                                                     onClick={() => setSelectedYear(year)}
                                                     className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${selectedYear === year
-                                                        ? 'bg-[#ea8933] text-white shadow-md'
+                                                        ? 'bg-green-600 text-white shadow-md'
                                                         : 'text-gray-500 hover:bg-gray-50'
                                                         }`}
                                                 >
@@ -189,7 +189,7 @@ const ViewProgram = () => {
                                                 setEditingSubject(null);
                                                 setShowSubjectModal(true);
                                             }}
-                                            className="p-2 bg-[#ea8933] text-white rounded-lg hover:bg-[#d97c2a] transition-colors shadow-sm"
+                                            className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm"
                                             title="Add Subject"
                                         >
                                             <Plus size={18} />

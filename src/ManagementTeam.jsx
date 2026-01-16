@@ -61,7 +61,7 @@ const ManagementTeam = () => {
                             <p className="text-sm text-gray-500">Administration & Staff Directory</p>
                         </div>
                     </div>
-                    <button className="bg-[#EB8A33] hover:bg-[#d67b2b] text-white px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 shadow-lg shadow-orange-100 transition-all active:scale-95">
+                    <button className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 shadow-lg shadow-green-100 transition-all active:scale-95">
                         <Plus size={20} /> Add Member
                     </button>
                 </header>
@@ -72,12 +72,12 @@ const ManagementTeam = () => {
                     <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row gap-4 justify-between items-center">
                         <div className="relative w-full md:w-96">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                            <input type="text" placeholder="Search by name or ID..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:border-[#EB8A33] focus:ring-1 focus:ring-[#EB8A33] transition-all" />
+                            <input type="text" placeholder="Search by name or ID..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-all" />
                         </div>
                         <div className="flex gap-3 w-full md:w-auto items-center">
                             <div className="flex items-center bg-gray-100 rounded-lg p-1 border border-gray-200 mr-2">
-                                <button onClick={() => setViewMode('list')} className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-white shadow text-[#EB8A33]' : 'text-gray-500 hover:text-gray-700'}`} title="List View"><List size={18} /></button>
-                                <button onClick={() => setViewMode('grid')} className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white shadow text-[#EB8A33]' : 'text-gray-500 hover:text-gray-700'}`} title="Grid View"><LayoutGrid size={18} /></button>
+                                <button onClick={() => setViewMode('list')} className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-white shadow text-green-600' : 'text-gray-500 hover:text-gray-700'}`} title="List View"><List size={18} /></button>
+                                <button onClick={() => setViewMode('grid')} className={`p-2 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white shadow text-green-600' : 'text-gray-500 hover:text-gray-700'}`} title="Grid View"><LayoutGrid size={18} /></button>
                             </div>
                             <div className="flex items-center gap-2 px-4 py-2.5 border border-gray-200 rounded-lg bg-white">
                                 <Filter size={18} className="text-gray-500" />
@@ -107,7 +107,7 @@ const ManagementTeam = () => {
                                 </thead>
                                 <tbody className="divide-y divide-gray-50">
                                     {filteredMembers.map((member) => (
-                                        <tr key={member.id} className="hover:bg-orange-50/30 transition-colors group">
+                                        <tr key={member.id} className="hover:bg-green-50/30 transition-colors group">
                                             <td className="p-5">
                                                 <div className="flex items-center gap-4">
                                                     <div className="w-11 h-11 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 border-2 border-white shadow-sm">
@@ -121,7 +121,7 @@ const ManagementTeam = () => {
                                             </td>
                                             <td className="p-5">
                                                 <div className="flex flex-col gap-1">
-                                                    <div className="flex items-center gap-2 text-sm font-medium text-gray-700"><Briefcase size={14} className="text-[#EB8A33]" /> {member.position}</div>
+                                                    <div className="flex items-center gap-2 text-sm font-medium text-gray-700"><Briefcase size={14} className="text-green-600" /> {member.position}</div>
                                                     <span className="text-xs text-gray-500 ml-5.5">{member.department}</span>
                                                 </div>
                                             </td>
@@ -172,14 +172,14 @@ const ManagementTeam = () => {
                                         <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
                                             <p className="text-xs text-gray-400 uppercase font-semibold mb-1">Position</p>
                                             <p className="text-sm font-medium text-gray-800">{member.position}</p>
-                                            <p className="text-xs text-[#EB8A33] font-medium">{member.department}</p>
+                                            <p className="text-xs text-green-600 font-medium">{member.department}</p>
                                         </div>
                                         <div className="flex items-center gap-2 text-sm text-gray-600"><Mail size={14} className="text-gray-400" /> <span className="truncate" title={member.email}>{member.email}</span></div>
                                         <div className="flex items-center gap-2 text-sm text-gray-600"><Phone size={14} className="text-gray-400" /> <span>{member.phone}</span></div>
                                     </div>
                                     <div className="grid grid-cols-3 gap-2 border-t border-gray-100 pt-4 mt-auto">
                                         <button className="flex items-center justify-center gap-1 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-blue-50 hover:text-blue-600 rounded-md transition-colors"><Eye size={14} /> View</button>
-                                        <button className="flex items-center justify-center gap-1 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors"><Pencil size={14} /> Edit</button>
+                                        <button className="flex items-center justify-center gap-1 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-blue-50 hover:text-blue-600 rounded-md transition-colors"><Pencil size={14} /> Edit</button>
                                         <button onClick={() => handleDelete(member.id)} className="flex items-center justify-center gap-1 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-red-50 hover:text-red-600 rounded-md transition-colors"><Trash2 size={14} /> Del</button>
                                     </div>
                                 </div>

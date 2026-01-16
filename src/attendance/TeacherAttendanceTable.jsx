@@ -19,7 +19,7 @@ const TeacherAttendanceTable = ({ teachers, onStatusChange }) => {
                     {teachers.length > 0 ? teachers.map((teacher) => (
                         <div key={teacher.id} className="grid grid-cols-12 p-3 items-center hover:bg-gray-50 transition-colors group">
                             <div className="col-span-5 flex items-center gap-3 pl-2">
-                                <div className="w-9 h-9 bg-orange-100 rounded flex items-center justify-center text-[#ea8933] font-bold text-sm lowercase pb-0.5 shrink-0">
+                                <div className="w-9 h-9 bg-green-100 rounded flex items-center justify-center text-green-600 font-bold text-sm lowercase pb-0.5 shrink-0">
                                     {getInitials(teacher.name)}
                                 </div>
                                 <div className="min-w-0">

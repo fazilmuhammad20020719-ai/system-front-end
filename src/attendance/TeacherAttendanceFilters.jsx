@@ -19,7 +19,7 @@ const TeacherAttendanceFilters = ({
                         type="date"
                         value={selectedDate}
                         onChange={(e) => setSelectedDate(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-gray-700 focus:outline-none focus:border-orange-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-gray-700 focus:outline-none focus:border-green-500"
                     />
                 </div>
 
@@ -29,7 +29,7 @@ const TeacherAttendanceFilters = ({
                     <select
                         value={filterProgram}
                         onChange={(e) => setFilterProgram(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-gray-700 focus:outline-none focus:border-orange-500 bg-white"
+                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-gray-700 focus:outline-none focus:border-green-500 bg-white"
                     >
                         <option value="All">All Departments</option>
                         <option value="Hifzul Quran">Hifzul Quran</option>
@@ -45,7 +45,7 @@ const TeacherAttendanceFilters = ({
                     <select
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-gray-700 focus:outline-none focus:border-orange-500 bg-white"
+                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-gray-700 focus:outline-none focus:border-green-500 bg-white"
                     >
                         <option value="All">All Status</option>
                         <option value="Present">Present</option>
@@ -64,7 +64,7 @@ const TeacherAttendanceFilters = ({
                         placeholder="Name or Emp ID..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-gray-700 focus:outline-none focus:border-orange-500 placeholder-gray-400"
+                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-gray-700 focus:outline-none focus:border-green-500 placeholder-gray-400"
                     />
                 </div>
 

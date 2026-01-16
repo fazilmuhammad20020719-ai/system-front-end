@@ -10,7 +10,7 @@ const StudentProfileHeader = ({ student }) => {
                 <div className="relative">
                     <div className="w-24 h-24 rounded-full bg-gray-200 border-4 border-orange-50 overflow-hidden">
                         {/* Student Image Placeholder */}
-                        <div className="w-full h-full flex items-center justify-center bg-orange-100 text-[#EB8A33] text-3xl font-bold">
+                        <div className="w-full h-full flex items-center justify-center bg-orange-100 text-green-600 text-3xl font-bold">
                             {student.firstName?.charAt(0)}
                         </div>
                     </div>
@@ -39,12 +39,12 @@ const StudentProfileHeader = ({ student }) => {
                 {/* EDIT BUTTON CHECK */}
                 <button
                     onClick={() => navigate(`/edit-student/${student.id}`)}
-                    className="flex-1 md:flex-none px-4 py-2 border border-gray-200 hover:border-[#EB8A33] hover:text-[#EB8A33] text-gray-700 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 bg-white"
+                    className="flex-1 md:flex-none px-4 py-2 border border-gray-200 hover:border-green-600 hover:text-green-600 text-gray-700 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 bg-white"
                 >
                     <Edit size={16} /> Edit Profile
                 </button>
 
-                <button className="flex-1 md:flex-none px-4 py-2 bg-[#EB8A33] hover:bg-[#d67b28] text-white rounded-lg text-sm font-medium shadow-sm transition-all flex items-center justify-center gap-2">
+                <button className="flex-1 md:flex-none px-4 py-2 bg-green-600 hover:bg-[#d67b28] text-white rounded-lg text-sm font-medium shadow-sm transition-all flex items-center justify-center gap-2">
                     <Download size={16} /> Download Profile
                 </button>
             </div>

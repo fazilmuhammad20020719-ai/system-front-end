@@ -44,7 +44,7 @@ const Login = () => {
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
 
                 {/* HEADER */}
-                <div className="bg-[#EB8A33] py-10 flex flex-col items-center justify-center text-white relative">
+                <div className="bg-green-600 py-10 flex flex-col items-center justify-center text-white relative">
                     <div className="bg-white rounded-full p-1 mb-4 shadow-sm">
                         <img
                             src="/logo.png"
@@ -81,7 +81,7 @@ const Login = () => {
                                 placeholder="Enter username"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#EB8A33] focus:border-transparent transition-all"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                                 required
                             />
                         </div>
@@ -97,7 +97,7 @@ const Login = () => {
                                     placeholder="Enter password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#EB8A33] focus:border-transparent transition-all pr-12"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all pr-12"
                                     required
                                 />
                                 <button
@@ -111,7 +111,7 @@ const Login = () => {
                             <div className="flex justify-end mt-2">
                                 <Link
                                     to="/forgot-password"
-                                    className="text-sm font-medium text-gray-500 hover:text-[#EB8A33] transition-colors"
+                                    className="text-sm font-medium text-gray-500 hover:text-green-600 transition-colors"
                                 >
                                     Forgot Password?
                                 </Link>
@@ -120,7 +120,7 @@ const Login = () => {
 
                         <button
                             type="submit"
-                            className="w-full bg-[#EB8A33] hover:bg-[#d67b2b] text-white font-bold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-200 flex items-center justify-center gap-2 mt-4"
+                            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition duration-200 flex items-center justify-center gap-2 mt-4"
                         >
                             Access Dashboard
                             <span>&rarr;</span>
@@ -131,7 +131,7 @@ const Login = () => {
                     <div className="mt-6 text-center">
                         <Link
                             to="/create-admin"
-                            className="text-sm text-gray-500 hover:text-[#EB8A33] font-medium transition-colors duration-200"
+                            className="text-sm text-gray-500 hover:text-green-600 font-medium transition-colors duration-200"
                         >
                             Don't have an account? <span className="underline">Create Admin</span>
                         </Link>

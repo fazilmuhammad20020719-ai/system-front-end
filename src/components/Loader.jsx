@@ -4,7 +4,7 @@ const Loader = () => {
     return (
         <div className="fixed inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm z-50">
             <div className="flex flex-col items-center gap-2">
-                <Loader2 className="w-10 h-10 text-[#EB8A33] animate-spin" />
+                <Loader2 className="w-10 h-10 text-green-600 animate-spin" />
                 <p className="text-sm font-medium text-gray-500">Loading...</p>
             </div>
         </div>

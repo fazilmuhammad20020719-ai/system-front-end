@@ -35,7 +35,7 @@ const StudentLocationInfo = ({ formData, handleChange }) => {
         <div className="space-y-4">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
                 <h3 className="text-base font-bold text-gray-800 mb-5 flex items-center gap-2 border-b border-gray-100 pb-3">
-                    <MapPin className="text-[#EB8A33]" size={18} /> Address & Location
+                    <MapPin className="text-green-600" size={18} /> Address & Location
                 </h3>
 
                 {/* Updated Grid - Removed Province Dropdown */}

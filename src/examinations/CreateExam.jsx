@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Save, ArrowLeft, Plus, Trash2, CheckSquare, Square, X, Users, UserCheck } from 'lucide-react';
 import Sidebar from '../Sidebar';
-import { STUDENTS_DATA } from '../data/mockData';
 
 const CreateExam = () => {
     const navigate = useNavigate();
@@ -33,15 +32,12 @@ const CreateExam = () => {
     // --- Derived Data ---
 
     const availablePrograms = useMemo(() => {
-        return [...new Set(STUDENTS_DATA.map(s => s.program))];
+        return [];
     }, []);
 
     const availableYears = useMemo(() => {
         if (!examDetails.program) return [];
-        return [...new Set(STUDENTS_DATA
-            .filter(s => s.program === examDetails.program)
-            .map(s => s.year)
-        )].sort();
+        return [];
     }, [examDetails.program]);
 
     // --- Modal & Selection Logic ---
@@ -71,9 +67,7 @@ const CreateExam = () => {
 
     // Select All / Deselect All for the current modal year
     const handleSelectAllForYear = (selectAll) => {
-        const studentsInYear = STUDENTS_DATA.filter(s =>
-            s.program === examDetails.program && s.year === currentYearForSelection
-        );
+        const studentsInYear = [];
         const studentIdsInYear = studentsInYear.map(s => s.id);
 
         setExamDetails(prev => {
@@ -99,7 +93,7 @@ const CreateExam = () => {
 
         if (isYearCurrentlySelected) {
             // Remove Year: Also remove all students from this year
-            const studentsInYear = STUDENTS_DATA.filter(s => s.program === examDetails.program && s.year === year);
+            const studentsInYear = [];
             const idsToRemove = studentsInYear.map(s => s.id);
 
             setExamDetails(prev => ({
@@ -119,7 +113,7 @@ const CreateExam = () => {
 
             // 2. Auto-select ALL students initially? Or let user choose?
             // Let's auto-select ALL for convenience, then open modal to refine.
-            const studentsInYear = STUDENTS_DATA.filter(s => s.program === examDetails.program && s.year === year);
+            const studentsInYear = [];
             const newIds = studentsInYear.map(s => s.id);
 
             setExamDetails(prev => ({
@@ -135,7 +129,7 @@ const CreateExam = () => {
 
     // Helper to count selected students for a specific year
     const getSelectedCountForYear = (year) => {
-        const studentsInYear = STUDENTS_DATA.filter(s => s.program === examDetails.program && s.year === year);
+        const studentsInYear = [];
         const total = studentsInYear.length;
         const selected = studentsInYear.filter(s => examDetails.studentIds.includes(s.id)).length;
         return { selected, total };
@@ -177,9 +171,7 @@ const CreateExam = () => {
     const renderStudentModal = () => {
         if (!isModalOpen || !currentYearForSelection) return null;
 
-        const studentsInYear = STUDENTS_DATA.filter(s =>
-            s.program === examDetails.program && s.year === currentYearForSelection
-        );
+        const studentsInYear = [];
         const selectedCount = studentsInYear.filter(s => examDetails.studentIds.includes(s.id)).length;
         const isAllSelected = selectedCount === studentsInYear.length && studentsInYear.length > 0;
 

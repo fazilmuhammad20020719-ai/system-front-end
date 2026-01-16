@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { X, BookOpen, User, Calendar, Clock, ArrowLeft, GraduationCap } from 'lucide-react';
-import { TEACHERS_DATA } from '../data/mockData'; // Ensure this path is correct
 
 const ProgramDetails = ({ isOpen, onClose, program, subjects }) => {
     const [selectedYear, setSelectedYear] = useState('Grade 1');
@@ -13,9 +12,7 @@ const ProgramDetails = ({ isOpen, onClose, program, subjects }) => {
     );
 
     // Filter Teachers based on Program Name
-    const programTeachers = TEACHERS_DATA.filter(
-        teacher => teacher.program === program.name
-    );
+    const programTeachers = [];
 
     // Available Years
     const availableYears = ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 5'];

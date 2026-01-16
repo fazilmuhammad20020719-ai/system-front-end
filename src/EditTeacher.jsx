@@ -9,7 +9,6 @@ import TeacherProfessionalInfo from './add-teacher/TeacherProfessionalInfo';
 import TeacherFinancialInfo from './add-teacher/TeacherFinancialInfo';
 import TeacherUploads from './add-teacher/TeacherUploads';
 
-import { TEACHERS_DATA } from './data/mockData';
 
 const EditTeacher = () => {
     const { id } = useParams();
@@ -63,7 +62,7 @@ const EditTeacher = () => {
     // Simulate Fetching Data
     useEffect(() => {
         // Find teacher from mock data
-        const teacher = TEACHERS_DATA.find(t => t.id === parseInt(id));
+        const teacher = null; // Removed mocked TEACHERS_DATA lookup
 
         if (teacher) {
             // Pre-fill form with available mock data
@@ -71,22 +70,7 @@ const EditTeacher = () => {
             // Here we mix mock data w/ placeholders for missing fields.
             setFormData(prev => ({
                 ...prev,
-                fullName: teacher.name,
-                employeeId: teacher.empid,
-                email: teacher.email,
-                phone: teacher.phone,
-                program: teacher.program,
-                subject: teacher.subject,
-                designation: teacher.role,
-                status: teacher.status,
 
-                // Filling placeholders for demo purposes since mock data is limited
-                address: '123, Main Street, Colombo',
-                nic: '123456789V',
-                dob: '1990-01-01',
-                gender: 'Male',
-                basicSalary: '50000',
-                joiningDate: '2023-01-15'
             }));
         }
     }, [id]);

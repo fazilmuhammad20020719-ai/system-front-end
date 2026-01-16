@@ -8,7 +8,6 @@ import ProgramsFilters from './programs/ProgramsFilters';
 import ProgramGrid from './programs/ProgramGrid';
 import ProgramModal from './programs/ProgramModal';
 import SubjectModal from './programs/SubjectModal';
-import { PROGRAMS_DATA } from './data/mockData';
 
 const Programs = () => {
     const navigate = useNavigate(); // HOOK
@@ -33,7 +32,7 @@ const Programs = () => {
 
     // -- DATA STATES --
     // Load from mock data
-    const [programs, setPrograms] = useState(PROGRAMS_DATA);
+    const [programs, setPrograms] = useState([]);
 
     // -- SUBJECTS STATE --
     const [subjects, setSubjects] = useState([]); // (Mock logic, usually fetched in View page)

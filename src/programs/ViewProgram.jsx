@@ -5,7 +5,6 @@ import {
     Award, CheckCircle, GraduationCap, Download, Edit2, Trash2, Plus, MapPin
 } from 'lucide-react';
 import Sidebar from '../Sidebar';
-import { TEACHERS_DATA, PROGRAMS_DATA } from '../data/mockData'; // Import Mock Data
 import SubjectModal from './SubjectModal';
 // ScheduleModal removed
 
@@ -25,20 +24,19 @@ const ViewProgram = () => {
     // SCHEDULE STATE REMOVED
 
     useEffect(() => {
-        // Find program from mock data
-        const foundProgram = PROGRAMS_DATA.find(p => p.id === parseInt(id));
-
-        if (foundProgram) {
-            setProgram({
-                ...foundProgram,
-                duration: "3 Years", // Default or add to mock data if needed
-                description: "A comprehensive program designed for students involved in this course.",
-                students: 120, // Mock
-                fees: "Free", // Mock
-                status: "Active", // Mock
-                startDate: "January 2025" // Mock
-            });
-        }
+        // Mock Program Data (In real app, fetch from API)
+        setProgram({
+            id: parseInt(id),
+            name: "Loading Program...",
+            head: "TBD",
+            color: "bg-blue-100 text-blue-600",
+            duration: "3 Years",
+            description: "Program details will be loaded from the database.",
+            students: 0,
+            fees: "Free",
+            status: "Active",
+            startDate: "January 2025"
+        });
 
 
         setSubjects([
@@ -53,7 +51,7 @@ const ViewProgram = () => {
     if (!program) return <div className="p-10 text-center">Loading Program Details...</div>;
 
     // Filter Logic
-    const programTeachers = TEACHERS_DATA.filter(t => t.program === program.name);
+    const programTeachers = [];
     const currentSubjects = subjects.filter(s => s.year === selectedYear);
     const availableYears = ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 5'];
 

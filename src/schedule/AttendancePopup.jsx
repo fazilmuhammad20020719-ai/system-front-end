@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { X, Check, Clock, User, Ban, Save, Search } from 'lucide-react';
-import { STUDENTS_DATA } from '../data/mockData';
 
 const AttendancePopup = ({ isOpen, onClose, slot, subjects, onSave, onCancel }) => {
     if (!isOpen || !slot) return null;
@@ -16,13 +15,7 @@ const AttendancePopup = ({ isOpen, onClose, slot, subjects, onSave, onCancel }) 
     useEffect(() => {
         if (subject) {
             // Filter Mock Data based on Program and Year/Grade
-            const classStudents = STUDENTS_DATA.filter(student =>
-                (student.program === subject.program) &&
-                (student.year === subject.year)
-            ).map(s => {
-                // Check if existing data is passed (optional optimization for future)
-                return { ...s, status: 'Present' };
-            });
+            const classStudents = [];
 
             setAttendanceList(classStudents);
         }

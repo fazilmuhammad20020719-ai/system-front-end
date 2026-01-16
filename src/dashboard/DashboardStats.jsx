@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
 import { GraduationCap, BookOpen, CalendarCheck, Folder, ArrowRight, Users } from 'lucide-react';
 
 // Component: Individual Stat Card
@@ -24,13 +23,15 @@ const StatCard = ({ title, value, subText, icon: Icon, iconColor, iconBg, onClic
 
 const DashboardStats = ({ stats }) => {
     const navigate = useNavigate();
-    // Using props 'stats' directly
+
+    // Helper to format values safely
+    const formatValue = (val) => val === null || val === undefined ? '-' : val;
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <StatCard
                 title="Total Students"
-                value={stats.students}
+                value={formatValue(stats.students)}
                 subText="View Directory"
                 icon={GraduationCap}
                 iconColor="text-indigo-600"
@@ -39,7 +40,7 @@ const DashboardStats = ({ stats }) => {
             />
             <StatCard
                 title="Programs"
-                value={stats.programs}
+                value={formatValue(stats.programs)}
                 subText="Manage Courses"
                 icon={BookOpen}
                 iconColor="text-orange-600"
@@ -48,8 +49,8 @@ const DashboardStats = ({ stats }) => {
             />
             <StatCard
                 title="Active Students"
-                value={stats.studentAttendance}
-                subText={`${stats.activeStudents || 0} / ${stats.students} Active`}
+                value={formatValue(stats.studentAttendance)}
+                subText={stats.activeStudents !== null ? `${stats.activeStudents} / ${stats.students} Active` : 'Loading...'}
                 icon={CalendarCheck}
                 iconColor="text-green-600"
                 iconBg="bg-green-100"
@@ -57,8 +58,8 @@ const DashboardStats = ({ stats }) => {
             />
             <StatCard
                 title="Active Teachers"
-                value={stats.teacherAttendance}
-                subText={`${stats.activeTeachers || 0} / ${stats.teachers || 0} Active`}
+                value={formatValue(stats.teacherAttendance)}
+                subText={stats.activeTeachers !== null ? `${stats.activeTeachers} / ${stats.teachers} Active` : 'Loading...'}
                 icon={Users}
                 iconColor="text-blue-600"
                 iconBg="bg-blue-100"
@@ -66,7 +67,7 @@ const DashboardStats = ({ stats }) => {
             />
             <StatCard
                 title="Documents"
-                value={stats.documents || 0}
+                value={formatValue(stats.documents)}
                 subText="File Repository"
                 icon={Folder}
                 iconColor="text-purple-600"

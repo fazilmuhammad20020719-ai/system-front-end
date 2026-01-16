@@ -1,8 +1,6 @@
 import { AlertTriangle, Calendar, CreditCard, Bell, Clock } from 'lucide-react';
-import { useState, useEffect } from 'react';
 
 const UpcomingAlerts = ({ alerts = [] }) => {
-
 
     // OPACITY CALCULATION LOGIC
     const getOpacityClass = (days) => {

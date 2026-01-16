@@ -1,15 +1,17 @@
 import { AlertTriangle, Calendar, CreditCard, Bell, Clock } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 const UpcomingAlerts = ({ alerts = [] }) => {
+
 
     // OPACITY CALCULATION LOGIC
     const getOpacityClass = (days) => {
         switch (days) {
             case 0: return "opacity-100 scale-100 shadow-md"; // Today: Full visible, Highlighted
-            case 1: return "opacity-80";  // Tomorrow
-            case 2: return "opacity-60";  // 2 Days left
-            case 3: return "opacity-40 grayscale-[50%]";  // 3 Days left (Faded)
-            default: return "hidden";     // Hide others
+            case 1: return "opacity-90";  // Tomorrow
+            case 2: return "opacity-80";  // 2 Days left
+            case 3: return "opacity-70";  // 3 Days left
+            default: return "opacity-60 grayscale-[30%]"; // Future: Visible but faded
         }
     };
 

@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Menu, Calendar, Bell, Search } from 'lucide-react';
 import { API_URL } from '../config';
 
-// PAGE_ROUTES are static navigation links (Client-side structure)
+
+// MOCK PAGES DATA (Client-side routing only)
 const PAGE_ROUTES = [
     { title: 'Dashboard', path: '/dashboard', type: 'Page' },
     { title: 'Calendar', path: '/calendar', type: 'Page' },
@@ -20,13 +21,15 @@ const DashboardHeader = ({ toggleSidebar, onAlertClick, alertCount = 0 }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showResults, setShowResults] = useState(false);
 
-    // Dynamic Search Results State
+    // Search Results State
     const [searchResults, setSearchResults] = useState({
         pages: [],
         students: [],
         teachers: [],
         documents: []
     });
+
+
 
     useEffect(() => {
         const fetchResults = async () => {
@@ -35,13 +38,13 @@ const DashboardHeader = ({ toggleSidebar, onAlertClick, alertCount = 0 }) => {
                 return;
             }
 
-            // Local Filter for Pages (Navigation)
+            // Local Filter for Pages
             const matchingPages = PAGE_ROUTES.filter(item =>
                 item.title.toLowerCase().includes(searchTerm.toLowerCase())
             );
 
             try {
-                // Backend Search for Data
+                // Backend Search
                 const response = await fetch(`${API_URL}/api/search?q=${encodeURIComponent(searchTerm)}`);
                 if (response.ok) {
                     const data = await response.json();
@@ -169,7 +172,7 @@ const DashboardHeader = ({ toggleSidebar, onAlertClick, alertCount = 0 }) => {
 
             {/* RIGHT: Actions */}
             <div className="flex items-center gap-3 self-end md:self-auto">
-                {/* DATE DISPLAY */}
+                {/* DATE DISPLAY (Hidden on mobile) */}
                 <div className="hidden lg:flex bg-white border border-gray-200 text-gray-600 px-4 py-2 rounded-lg text-sm font-medium items-center gap-2 shadow-sm whitespace-nowrap">
                     <Calendar size={16} />
                     <span>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>

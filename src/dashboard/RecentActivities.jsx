@@ -1,4 +1,5 @@
 import { Clock, UserPlus, FileText, Upload } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 // Component: Activity List Item
 const ActivityItem = ({ icon: Icon, iconBg, iconColor, title, desc, time }) => (
@@ -17,6 +18,7 @@ const ActivityItem = ({ icon: Icon, iconBg, iconColor, title, desc, time }) => (
 );
 
 const RecentActivities = ({ activities = [] }) => {
+
 
     // Helper to map DB icon type to Lucide Icon
     const getIcon = (type) => {
@@ -48,7 +50,10 @@ const RecentActivities = ({ activities = [] }) => {
                     activities.map((act) => {
                         const Icon = getIcon(act.icon_type);
                         const colors = getColors(act.icon_type);
-                        const timeStr = new Date(act.created_at).toLocaleString('en-US', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+                        const dateObj = new Date(act.created_at);
+                        const timeStr = isNaN(dateObj.getTime())
+                            ? 'Just now'
+                            : dateObj.toLocaleString('en-US', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
                         return (
                             <ActivityItem

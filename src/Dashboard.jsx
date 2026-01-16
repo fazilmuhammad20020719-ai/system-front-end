@@ -12,24 +12,19 @@ const Dashboard = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isAlertOpen, setIsAlertOpen] = useState(false);
 
-    // Dynamic Data State
+    // 1. Dynamic Data State
     const [dashboardData, setDashboardData] = useState({
         stats: {
-            students: null,
-            teachers: null,
-            programs: null,
-            documents: null,
-            studentAttendance: null,
-            teacherAttendance: null,
-            activeStudents: null,
-            activeTeachers: null
+            students: 0, teachers: 0, programs: 0, documents: 0,
+            studentAttendance: '0%', teacherAttendance: '0%',
+            activeStudents: 0, activeTeachers: 0
         },
         activities: [],
         alerts: []
     });
     const [loading, setLoading] = useState(true);
 
-    // Fetch Real Data from Backend
+    // 2. Fetch Data
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
@@ -64,7 +59,7 @@ const Dashboard = () => {
                 />
 
                 <main className="p-4 md:p-8 space-y-8 relative">
-                    {/* Pass Dynamic Stats to Component */}
+                    {/* Pass Dynamic Stats */}
                     <DashboardStats stats={dashboardData.stats} />
 
                     <QuickActions />
@@ -83,7 +78,12 @@ const Dashboard = () => {
                 </main>
             </div>
 
-            {/* ALERT MODAL */}
+            {/* ALERT MODAL (Reusing existing modal logic but passing alerts if needed, 
+                though Modal likely fetches its own or we should pass alerts to it? 
+                The user request used `UpcomingAlerts` component in the grid.
+                Our existing `Dashboard.jsx` used `AlertsModal`. 
+                Let's keep `AlertsModal` functionality for the top bar bell.
+            */}
             {isAlertOpen && (
                 <AlertsModal onClose={() => setIsAlertOpen(false)} alerts={dashboardData.alerts} />
             )}

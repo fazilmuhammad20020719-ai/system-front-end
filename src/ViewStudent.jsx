@@ -4,6 +4,7 @@ import {
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import { API_URL } from './config';
 
 // Import Sub-Components
 import StudentProfileHeader from './student-view/StudentProfileHeader';
@@ -20,70 +21,101 @@ const ViewStudent = () => {
     const { id } = useParams();
     const [activeTab, setActiveTab] = useState('personal');
     const [student, setStudent] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-    // Mock Data Fetching (Updated to match Add Student)
     useEffect(() => {
-        const dummyData = {
-            id: id,
-            // Personal
-            firstName: 'Muhammad',
-            lastName: 'Ahmed',
-            image: null, // Placeholder handled in component
-            dob: '2015-05-15',
-            gender: 'Male',
-            nic: '201512345678',
-            email: 'student@example.com',
-            phone: '077 123 4567',
+        const fetchStudentData = async () => {
+            setLoading(true);
+            try {
+                // Fetch basic student info
+                const sRes = await fetch(`${API_URL}/api/students/${id}`);
 
-            // Location (Updated)
-            province: 'Western',
-            district: 'Colombo',
-            dsDivision: 'Colombo Dist', // New
-            gnDivision: 'C-123', // New
-            address: '123, Main Street, Colombo, Sri Lanka',
-            googleMapLink: 'https://maps.google.com',
+                if (!sRes.ok) {
+                    console.error("Student not found");
+                    setLoading(false);
+                    return;
+                }
 
-            // Guardian
-            guardianName: 'Ali Ahmed',
-            guardianRelation: 'Father',
-            guardianPhone: '077 987 6543',
-            guardianEmail: 'ali.ahmed@example.com',
-            guardianOccupation: 'Merchant',
+                const sData = await sRes.json();
 
-            // Academic (Updated)
-            program: 'Hifzul Quran',
-            year: 'Grade 5', // Current Grade/Year
-            session: '2025', // Batch Year
-            admissionDate: '2025-01-10',
-            status: 'Active',
+                // Fetch Attendance for stats
+                // Need to fetch ALL attendance for this student to calc stats
+                const attRes = await fetch(`${API_URL}/api/attendance?studentId=${id}`);
+                const attData = attRes.ok ? await attRes.json() : [];
 
-            // Previous Education (New)
-            previousSchool: 'City High School',
-            lastStudiedGrade: 'Grade 4',
-            previousCollegeName: 'City Madrasa',
-            mediumOfStudy: 'Tamil',
+                // Calculate Attendance Stats
+                const present = attData.filter(a => a.status === 'Present').length;
+                const absent = attData.filter(a => a.status === 'Absent').length;
+                const total = attData.length;
 
-            // Extra Data
-            documents: [
-                { name: 'Birth_Certificate.pdf', size: '1.2 MB', date: '25 Dec 2025' },
-                { name: 'Medical_Report.pdf', size: '2.4 MB', date: '25 Dec 2025' },
-            ],
-            attendanceStats: { present: 140, absent: 10, late: 5, total: 155 },
-            results: [
-                { exam: 'First Term', date: 'Mar 2025', grade: 'A', percentage: '88%', status: 'Passed' },
-                { exam: 'Mid Term', date: 'Jun 2025', grade: 'B+', percentage: '75%', status: 'Passed' },
-            ],
-            fees: {
-                pending: 'Rs. 5,000', paid: 'Rs. 45,000', history: [
-                    { id: 'INV-001', month: 'Jan 2025', amount: 'Rs. 5,000', status: 'Paid' },
-                    { id: 'INV-002', month: 'Feb 2025', amount: 'Rs. 5,000', status: 'Pending' }
-                ]
+                // Fetch Documents (Optional: if we had studentId in docs, simplified here)
+                // We'll leave documents empty or fetch all and filter if feasible, but better to keep it clean.
+                // Assuming documents are general for now or manual upload.
+                const docs = [];
+
+                // Merging Data
+                const fullProfile = {
+                    id: sData.id,
+                    // Personal - Map fields from DB columns
+                    firstName: sData.name ? sData.name.split(' ')[0] : '',
+                    lastName: sData.name ? sData.name.split(' ').slice(1).join(' ') : '',
+                    image: null,
+                    dob: 'N/A', // DB doesn't have dob yet
+                    gender: 'Male', // Default or add col
+                    nic: sData.id, // Using Admission ID as nic/ref
+                    email: sData.contact_field || 'student@example.com', // Need to check schema for email
+                    phone: sData.contact_number,
+
+                    // Location
+                    province: 'Western',
+                    district: 'Colombo',
+                    dsDivision: 'Colombo Dist',
+                    gnDivision: 'C-123',
+                    address: sData.address || 'Address not set',
+                    googleMapLink: '',
+
+                    // Guardian
+                    guardianName: sData.guardian_name,
+                    guardianRelation: 'Father',
+                    guardianPhone: sData.contact_number, // reusing contact
+                    guardianEmail: '',
+                    guardianOccupation: '',
+
+                    // Academic
+                    program: sData.program_name || sData.program,
+                    year: sData.current_year,
+                    session: sData.session_year,
+                    admissionDate: '2025-01-01', // DB Create Date if available
+                    status: sData.status || 'Active',
+
+                    // Extra Data (Mocked or Default until API expanded)
+                    previousSchool: '',
+                    lastStudiedGrade: '',
+                    previousCollegeName: '',
+                    mediumOfStudy: 'Tamil',
+
+                    documents: docs,
+                    attendanceStats: { present, absent, late: 0, total },
+                    results: [], // Results API not implemented yet
+                    fees: {
+                        pending: 'Rs. 0', paid: 'Rs. 0', history: []
+                    }
+                };
+
+                setStudent(fullProfile);
+
+            } catch (err) {
+                console.error("Error fetching student profile:", err);
+            } finally {
+                setLoading(false);
             }
         };
-        setStudent(dummyData);
+
+        if (id) fetchStudentData();
     }, [id]);
 
-    if (!student) return <div className="p-10 text-center">Loading Profile...</div>;
+    if (loading) return <div className="p-10 text-center">Loading Profile...</div>;
+    if (!student) return <div className="p-10 text-center">Student Not Found</div>;
 
     return (
         <div className="min-h-screen bg-[#F3F4F6] font-sans flex">

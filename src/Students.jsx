@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import Sidebar from './Sidebar';
+import { API_URL } from './config';
 
 // IMPORTING COMPONENTS
 import StudentHeader from './students/StudentHeader';
@@ -8,8 +9,6 @@ import StudentFilters from './students/StudentFilters';
 import StudentList from './students/StudentList';
 import StudentGrid from './students/StudentGrid';
 import StudentStats from './students/StudentStats';
-
-import { STUDENTS_DATA } from './data/mockData';
 
 const Students = () => {
     // Responsive sidebar state
@@ -26,7 +25,10 @@ const Students = () => {
     const [selectedProgram, setSelectedProgram] = useState('');
     const [selectedStatus, setSelectedStatus] = useState('');
 
-    // --- DATA CONSISTENCY WITH ADD STUDENT PAGE ---
+    // DATA STATES
+    const [students, setStudents] = useState([]);
+    const [programOptions, setProgramOptions] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     // 1. Batch Years (2026 down to 2002)
     const batchYears = Array.from({ length: 25 }, (_, i) => (2026 - i).toString());
@@ -35,22 +37,42 @@ const Students = () => {
     const academicYears = [
         "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5",
         "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10",
-        "Grade 11", "Grade 12", "Grade 13"
+        "Grade 11", "Grade 12", "Grade 13", "Year 1", "Year 2", "Year 3", "Level 1", "Level 2"
     ];
 
-    // 3. Programs
-    const programs = ['Hifzul Quran', 'Al-Alim (Boys)', 'Al-Alimah (Girls)'];
+    // FETCH DATA
+    useEffect(() => {
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                // Fetch Students
+                const sRes = await fetch(`${API_URL}/api/students`);
+                if (sRes.ok) {
+                    const sData = await sRes.json();
+                    setStudents(sData);
+                }
 
-    // Updated Dummy Data with 'session' (Batch) and 'year' (Grade)
-    const [students] = useState(STUDENTS_DATA);
-
+                // Fetch Programs for Dropdown
+                const pRes = await fetch(`${API_URL}/api/programs`);
+                if (pRes.ok) {
+                    const pData = await pRes.json();
+                    setProgramOptions(pData.map(p => p.name));
+                }
+            } catch (err) {
+                console.error("Error fetching student data:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
 
     // Filter Logic
     const filteredStudents = students.filter(student => {
         const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            student.id.includes(searchTerm);
+            String(student.id).includes(searchTerm);
         const matchesYear = selectedYear ? student.year === selectedYear : true;
-        const matchesBatch = selectedBatch ? student.session === selectedBatch : true; // New Filter
+        const matchesBatch = selectedBatch ? student.session === selectedBatch : true;
         const matchesProgram = selectedProgram ? student.program === selectedProgram : true;
         const matchesStatus = selectedStatus ? student.status === selectedStatus : true;
 
@@ -64,6 +86,8 @@ const Students = () => {
         setSelectedProgram('');
         setSelectedStatus('');
     };
+
+    if (loading) return <div className="p-20 text-center">Loading Students...</div>;
 
     return (
         <div className="min-h-screen bg-[#F3F4F6] font-sans flex">
@@ -88,14 +112,14 @@ const Students = () => {
                     <StudentFilters
                         searchTerm={searchTerm} setSearchTerm={setSearchTerm}
                         selectedYear={selectedYear} setSelectedYear={setSelectedYear}
-                        selectedBatch={selectedBatch} setSelectedBatch={setSelectedBatch} // Pass Batch Props
+                        selectedBatch={selectedBatch} setSelectedBatch={setSelectedBatch}
                         selectedProgram={selectedProgram} setSelectedProgram={setSelectedProgram}
                         selectedStatus={selectedStatus} setSelectedStatus={setSelectedStatus}
                         viewMode={viewMode} setViewMode={setViewMode}
                         cardSize={cardSize} setCardSize={setCardSize}
                         academicYears={academicYears}
-                        batchYears={batchYears} // Pass Batch Data
-                        programs={programs}
+                        batchYears={batchYears}
+                        programs={programOptions}
                         clearFilters={clearFilters}
                     />
 

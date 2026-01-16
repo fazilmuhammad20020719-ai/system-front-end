@@ -16,13 +16,13 @@ export const LoaderProvider = ({ children }) => {
         setIsLoading(true);
         const timer = setTimeout(() => {
             setIsLoading(false);
-        }, 1000); // Minimum 1 second duration
+        }, 500); // Minimum 0.5 second duration
 
         return () => clearTimeout(timer);
     }, [location.pathname]); // Runs on path change
 
     // Function to manually trigger loader for actions
-    const triggerLoading = (duration = 1000) => {
+    const triggerLoading = (duration = 500) => {
         setIsLoading(true);
         setTimeout(() => {
             setIsLoading(false);

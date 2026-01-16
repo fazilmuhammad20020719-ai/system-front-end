@@ -24,7 +24,6 @@ const StatCard = ({ title, value, subText, icon: Icon, iconColor, iconBg, onClic
 
 const DashboardStats = ({ stats }) => {
     const navigate = useNavigate();
-    // Removed internal fetching logic
     // Using props 'stats' directly
 
     return (
@@ -59,7 +58,7 @@ const DashboardStats = ({ stats }) => {
             <StatCard
                 title="Active Teachers"
                 value={stats.teacherAttendance}
-                subText={`${stats.activeTeachers || 0} / ${stats.teachers || 0} Active`} // Fix: teacher count wasn't passed, handled gracefully
+                subText={`${stats.activeTeachers || 0} / ${stats.teachers || 0} Active`}
                 icon={Users}
                 iconColor="text-blue-600"
                 iconBg="bg-blue-100"

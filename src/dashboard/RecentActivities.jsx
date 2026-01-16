@@ -18,7 +18,7 @@ const ActivityItem = ({ icon: Icon, iconBg, iconColor, title, desc, time }) => (
 );
 
 const RecentActivities = ({ activities = [] }) => {
-    // Removed internal fetching logic
+
 
     // Helper to map DB icon type to Lucide Icon
     const getIcon = (type) => {

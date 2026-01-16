@@ -29,7 +29,7 @@ const DashboardHeader = ({ toggleSidebar, onAlertClick, alertCount = 0 }) => {
         documents: []
     });
 
-    // Removed internal alert fetching logic as it is now passed via props
+
 
     useEffect(() => {
         const fetchResults = async () => {

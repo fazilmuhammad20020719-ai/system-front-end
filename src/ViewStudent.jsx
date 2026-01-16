@@ -14,6 +14,7 @@ import ViewStudentAttendance from './student-view/ViewStudentAttendance';
 import ViewStudentResults from './student-view/ViewStudentResults';
 import ViewStudentFees from './student-view/ViewStudentFees';
 import ViewStudentTimeline from './student-view/ViewStudentTimeline';
+import Loader from './components/Loader';
 
 const ViewStudent = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -114,7 +115,7 @@ const ViewStudent = () => {
         if (id) fetchStudentData();
     }, [id]);
 
-    if (loading) return <div className="p-10 text-center">Loading Profile...</div>;
+    if (loading) return <Loader />;
     if (!student) return <div className="p-10 text-center">Student Not Found</div>;
 
     return (

@@ -8,6 +8,7 @@ import TeachersStats from './teachers/TeachersStats';
 import TeachersFilters from './teachers/TeachersFilters';
 import TeacherList from './teachers/TeacherList';
 import TeacherGrid from './teachers/TeacherGrid';
+import Loader from './components/Loader';
 
 const Teachers = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -77,7 +78,7 @@ const Teachers = () => {
         setSelectedStatus("All");
     };
 
-    if (loading) return <div className="p-20 text-center">Loading Teachers...</div>;
+    if (loading) return <Loader />;
 
     return (
         <div className="flex min-h-screen bg-gray-50 font-sans">

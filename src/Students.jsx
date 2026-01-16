@@ -9,6 +9,7 @@ import StudentFilters from './students/StudentFilters';
 import StudentList from './students/StudentList';
 import StudentGrid from './students/StudentGrid';
 import StudentStats from './students/StudentStats';
+import Loader from './components/Loader';
 
 const Students = () => {
     // Responsive sidebar state
@@ -101,7 +102,7 @@ const Students = () => {
         setCurrentPage(1);
     };
 
-    if (loading) return <div className="p-20 text-center">Loading Students...</div>;
+    if (loading) return <Loader />;
 
     return (
         <div className="min-h-screen bg-[#F3F4F6] font-sans flex">

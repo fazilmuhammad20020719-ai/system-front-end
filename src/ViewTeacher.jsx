@@ -4,6 +4,7 @@ import {
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import Loader from './components/Loader';
 
 // Import Components
 import TeacherProfileHeader from './teacher-view/TeacherProfileHeader';
@@ -60,7 +61,7 @@ const ViewTeacher = () => {
         setTeacher(dummyData);
     }, [id]);
 
-    if (!teacher) return <div className="p-10 text-center">Loading Profile...</div>;
+    if (!teacher) return <Loader />;
 
     return (
         <div className="min-h-screen bg-[#F3F4F6] font-sans flex">

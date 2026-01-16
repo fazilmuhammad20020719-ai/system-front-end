@@ -7,6 +7,7 @@ import RecentActivities from './dashboard/RecentActivities';
 import AlertsModal from './dashboard/AlertsModal';
 import UpcomingAlerts from './dashboard/UpcomingAlerts';
 import Sidebar from './Sidebar';
+import Loader from './components/Loader';
 
 const Dashboard = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -42,7 +43,7 @@ const Dashboard = () => {
         fetchDashboardData();
     }, []);
 
-    if (loading) return <div className="p-10 text-center text-gray-500">Loading Dashboard...</div>;
+    if (loading) return <Loader />;
 
     return (
         <div className="min-h-screen bg-[#F3F4F6] font-sans flex">

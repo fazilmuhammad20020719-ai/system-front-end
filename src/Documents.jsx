@@ -9,6 +9,7 @@ import DocumentsFileList from './documents/DocumentsFileList';
 import CreateFolderModal from './documents/CreateFolderModal';
 import UploadModal from './documents/UploadModal';
 import RenameModal from './documents/RenameModal';
+import Loader from './components/Loader';
 
 const Documents = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -191,7 +192,7 @@ const Documents = () => {
         filteredFiles.sort((a, b) => (b.pinned === a.pinned ? 0 : b.pinned ? 1 : -1));
     }
 
-    if (loading) return <div className="p-20 text-center">Loading Documents...</div>;
+    if (loading) return <Loader />;
 
     return (
         <div className="flex min-h-screen bg-[#f3f4f6] font-sans text-slate-800">

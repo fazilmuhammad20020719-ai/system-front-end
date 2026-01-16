@@ -4,6 +4,7 @@ import Sidebar from '../Sidebar';
 import ScheduleModal from './ScheduleModal';
 import AttendancePopup from './AttendancePopup';
 import { API_URL } from '../config';
+import Loader from '../components/Loader';
 
 const Schedule = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
@@ -212,7 +213,7 @@ const Schedule = () => {
         return subjects;
     };
 
-    if (loading) return <div className="p-20 text-center">Loading Schedule...</div>;
+    if (loading) return <Loader />;
 
     return (
         <div className="flex min-h-screen bg-[#f3f4f6] font-sans text-slate-800">

@@ -4,6 +4,7 @@ import {
     User, Calendar, DollarSign, FileText, ArrowLeft, Printer, Download, Layout
 } from 'lucide-react';
 import Sidebar from '../Sidebar'; // Adjust path if needed
+import Loader from '../components/Loader';
 
 const TeacherLayout = () => {
     const { id } = useParams();
@@ -42,7 +43,7 @@ const TeacherLayout = () => {
         });
     }, [id]);
 
-    if (!teacher) return <div className="p-10 text-center">Loading Teacher Profile...</div>;
+    if (!teacher) return <Loader />;
 
     return (
         <div className="flex min-h-screen bg-[#F3F4F6] font-sans text-slate-800">

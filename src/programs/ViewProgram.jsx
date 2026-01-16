@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import Sidebar from '../Sidebar';
 import SubjectModal from './SubjectModal';
+import Loader from '../components/Loader';
 // ScheduleModal removed
 
 const ViewProgram = () => {
@@ -48,7 +49,7 @@ const ViewProgram = () => {
 
     }, [id]);
 
-    if (!program) return <div className="p-10 text-center">Loading Program Details...</div>;
+    if (!program) return <Loader />;
 
     // Filter Logic
     const programTeachers = [];

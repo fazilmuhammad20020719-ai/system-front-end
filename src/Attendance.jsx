@@ -15,6 +15,7 @@ import AttendanceTable from './attendance/AttendanceTable';
 // TEACHER COMPONENTS
 import TeacherAttendanceFilters from './attendance/TeacherAttendanceFilters';
 import TeacherAttendanceTable from './attendance/TeacherAttendanceTable';
+import Loader from './components/Loader';
 
 const Attendance = () => {
     // Default: Open on PC (width >= 768), Closed on Mobile
@@ -242,7 +243,7 @@ const Attendance = () => {
     const currentStats = activeTab === 'students' ? studentStats : teacherStats;
     const currentCount = activeTab === 'students' ? filteredStudents.length : filteredTeachers.length;
 
-    if (loading) return <div className="p-20 text-center">Loading Attendance...</div>;
+    if (loading) return <Loader />;
 
     return (
         <div className="flex min-h-screen bg-[#f3f4f6] font-sans text-slate-800">

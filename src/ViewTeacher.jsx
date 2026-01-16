@@ -10,18 +10,6 @@ import TeacherProfileHeader from './teacher-view/TeacherProfileHeader';
 import TeacherOverview from './teacher-view/TeacherOverview';
 import TeacherSchedule from './teacher-view/TeacherSchedule';
 import TeacherPayroll from './teacher-view/TeacherPayroll';
-import { useState, useEffect } from 'react';
-import {
-    LayoutDashboard, FileText, Calendar, DollarSign, ArrowLeft, CheckCircle
-} from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
-import Sidebar from './Sidebar';
-
-// Import Components
-import TeacherProfileHeader from './teacher-view/TeacherProfileHeader';
-import TeacherOverview from './teacher-view/TeacherOverview';
-import TeacherSchedule from './teacher-view/TeacherSchedule';
-import TeacherPayroll from './teacher-view/TeacherPayroll';
 import TeacherDocuments from './teacher-view/TeacherDocuments';
 import TeacherAttendanceView from './teacher-view/TeacherAttendanceView';
 

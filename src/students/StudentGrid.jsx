@@ -21,18 +21,15 @@ const StudentGrid = ({ students, cardSize, currentPage, totalPages, onPageChange
                 : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
                 }`}>
                 {students.map((student) => (
-                    <div key={student.id} className={`bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all flex flex-col group ${cardSize === 'large' ? 'p-5' : 'p-4'
-                        }`}>
+                    <div key={student.id} className={`bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all flex flex-col group ${cardSize === 'large' ? 'p-5' : 'p-4'}`}>
                         {/* Card Header */}
                         <div className="flex justify-between items-start mb-4">
                             <div className="flex items-center gap-3">
-                                <div className={`rounded-full bg-orange-50 text-[#EB8A33] border border-orange-100 flex items-center justify-center font-bold uppercase ${cardSize === 'large' ? 'w-12 h-12 text-lg' : 'w-10 h-10 text-sm'
-                                    }`}>
+                                <div className={`rounded-full bg-orange-50 text-[#EB8A33] border border-orange-100 flex items-center justify-center font-bold uppercase ${cardSize === 'large' ? 'w-12 h-12 text-lg' : 'w-10 h-10 text-sm'}`}>
                                     {student.name.charAt(0)}
                                 </div>
                                 <div>
-                                    <h3 className={`font-bold text-gray-800 line-clamp-1 group-hover:text-[#EB8A33] transition-colors ${cardSize === 'large' ? 'text-base' : 'text-sm'
-                                        }`}>{student.name}</h3>
+                                    <h3 className={`font-bold text-gray-800 line-clamp-1 group-hover:text-[#EB8A33] transition-colors ${cardSize === 'large' ? 'text-base' : 'text-sm'}`}>{student.name}</h3>
                                     <p className="text-[10px] text-gray-400 font-mono bg-gray-50 px-1.5 py-0.5 rounded w-fit mt-0.5">#{student.id}</p>
                                 </div>
                             </div>
@@ -41,7 +38,7 @@ const StudentGrid = ({ students, cardSize, currentPage, totalPages, onPageChange
                             </span>
                         </div>
 
-                        {/* Card Details (Updated for Batch & Grade) */}
+                        {/* Card Details */}
                         <div className="space-y-3 flex-1 mb-4">
                             <div className={`bg-gray-50/80 rounded-lg border border-gray-100 ${cardSize === 'large' ? 'p-3' : 'p-2.5'}`}>
                                 {/* Program */}
@@ -88,7 +85,12 @@ const StudentGrid = ({ students, cardSize, currentPage, totalPages, onPageChange
                             <button onClick={() => navigate(`/edit-student/${student.id}`)} className="flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold text-gray-500 bg-gray-50 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-colors border border-transparent hover:border-orange-100">
                                 <Edit size={14} /> {cardSize === 'large' && 'Edit'}
                             </button>
-                            <button className="flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold text-gray-500 bg-gray-50 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors border border-transparent hover:border-red-100">
+
+                            {/* DELETE BUTTON FIXED HERE */}
+                            <button
+                                onClick={() => onDelete(student)}
+                                className="flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold text-gray-500 bg-gray-50 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors border border-transparent hover:border-red-100"
+                            >
                                 <Trash2 size={14} /> {cardSize === 'large' && 'Del'}
                             </button>
                         </div>

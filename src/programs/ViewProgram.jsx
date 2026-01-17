@@ -96,8 +96,14 @@ const ViewProgram = () => {
     }
 
     // Filter Logic
+    // Parse duration (e.g., "7 Years" -> 7, or just "7" -> 7)
+    const durationNum = program.duration ? parseInt(program.duration) : 1;
+    const maxYears = isNaN(durationNum) ? 1 : durationNum;
+
+    // Generate years array: ["Grade 1", "Grade 2", ..., "Grade N"]
+    const availableYears = Array.from({ length: maxYears }, (_, i) => `Grade ${i + 1}`);
+
     const currentSubjects = subjects.filter(s => s.year === selectedYear);
-    const availableYears = ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 5'];
 
     return (
         <div className="flex min-h-screen bg-[#f3f4f6] font-sans text-slate-800">

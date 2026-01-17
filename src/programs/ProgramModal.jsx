@@ -1,6 +1,27 @@
 import { X } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 const ProgramModal = ({ isOpen, onClose, onSubmit, isEditing, formData, setFormData }) => {
+
+    const [teachers, setTeachers] = useState([]); // State for teachers
+
+    useEffect(() => {
+        // Fetch teachers for Head of Dept dropdown
+        const fetchTeachers = async () => {
+            try {
+                const response = await fetch('http://localhost:5000/api/teachers');
+                if (response.ok) {
+                    const data = await response.json();
+                    setTeachers(data);
+                }
+            } catch (error) {
+                console.error("Error fetching teachers:", error);
+            }
+        };
+        if (isOpen) {
+            fetchTeachers();
+        }
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
@@ -28,25 +49,49 @@ const ProgramModal = ({ isOpen, onClose, onSubmit, isEditing, formData, setFormD
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-bold text-gray-700 mb-1">Head of Dept</label>
-                            <input
-                                type="text"
-                                required
-                                value={formData.head}
+                            <select
+                                value={formData.head || ""}
                                 onChange={(e) => setFormData({ ...formData, head: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#ea8933]"
-                                placeholder="Teacher Name"
-                            />
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#ea8933] bg-white"
+                            >
+                                <option value="">Select Head (Optional)</option>
+                                {teachers.map((t) => (
+                                    <option key={t.id} value={t.name}>
+                                        {t.name}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-1">Duration</label>
-                            <input
-                                type="text"
-                                required
-                                value={formData.duration}
-                                onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#ea8933]"
-                                placeholder="e.g. 3 Years"
-                            />
+                            <label className="block text-sm font-bold text-gray-700 mb-1">Duration (Years)</label>
+                            <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const current = parseInt(formData.duration) || 1;
+                                        if (current > 1) setFormData({ ...formData, duration: `${current - 1} Years` });
+                                    }}
+                                    className="px-3 py-2 bg-gray-50 hover:bg-gray-100 border-r border-gray-300 text-gray-600 transition-colors font-bold flex-shrink-0"
+                                >
+                                    -
+                                </button>
+                                <input
+                                    type="text"
+                                    readOnly
+                                    value={formData.duration || "1 Years"}
+                                    className="flex-1 min-w-0 text-center py-2 focus:outline-none text-gray-700 font-medium"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const current = parseInt(formData.duration) || 0;
+                                        setFormData({ ...formData, duration: `${current + 1} Years` });
+                                    }}
+                                    className="px-3 py-2 bg-gray-50 hover:bg-gray-100 border-l border-gray-300 text-gray-600 transition-colors font-bold flex-shrink-0"
+                                >
+                                    +
+                                </button>
+                            </div>
                         </div>
                     </div>
 

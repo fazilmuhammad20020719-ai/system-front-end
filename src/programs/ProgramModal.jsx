@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { API_URL } from '../config';
 
 const ProgramModal = ({ isOpen, onClose, onSubmit, isEditing, formData, setFormData }) => {
 
@@ -9,7 +10,7 @@ const ProgramModal = ({ isOpen, onClose, onSubmit, isEditing, formData, setFormD
         // Fetch teachers for Head of Dept dropdown
         const fetchTeachers = async () => {
             try {
-                const response = await fetch('http://localhost:5000/api/teachers');
+                const response = await fetch(`${API_URL}/api/teachers`);
                 if (response.ok) {
                     const data = await response.json();
                     setTeachers(data);

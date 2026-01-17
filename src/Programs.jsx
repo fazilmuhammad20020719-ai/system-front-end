@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'; // Added useEffect
 import { useNavigate } from 'react-router-dom';
+import { API_URL } from './config';
 import Sidebar from './Sidebar';
 import ProgramsHeader from './programs/ProgramsHeader';
 import ProgramsFilters from './programs/ProgramsFilters';
@@ -34,7 +35,7 @@ const Programs = () => {
 
     const fetchPrograms = async () => {
         try {
-            const response = await fetch('http://localhost:5000/api/programs');
+            const response = await fetch(`${API_URL}/api/programs`);
             const data = await response.json();
             // Map database columns to frontend names if needed
             const formattedData = data.map(p => ({
@@ -88,7 +89,7 @@ const Programs = () => {
                 // Add Edit Logic Here later (PUT request)
                 console.log("Edit not implemented yet");
             } else {
-                const response = await fetch('http://localhost:5000/api/programs', {
+                const response = await fetch(`${API_URL}/api/programs`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(formData)

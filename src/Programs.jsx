@@ -1,8 +1,6 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // IMPORT NAVIGATE
+import { useState, useEffect } from 'react'; // Added useEffect
+import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
-
-// IMPORT SUB-COMPONENTS
 import ProgramsHeader from './programs/ProgramsHeader';
 import ProgramsFilters from './programs/ProgramsFilters';
 import ProgramGrid from './programs/ProgramGrid';
@@ -10,7 +8,7 @@ import ProgramModal from './programs/ProgramModal';
 import SubjectModal from './programs/SubjectModal';
 
 const Programs = () => {
-    const navigate = useNavigate(); // HOOK
+    const navigate = useNavigate();
     const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState("All");
@@ -19,10 +17,6 @@ const Programs = () => {
     const [showModal, setShowModal] = useState(false);
     const [showSubjectModal, setShowSubjectModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-
-    // -- VIEW DETAILS STATE (Removed local viewProgram state) --
-    // const [viewProgram, setViewProgram] = useState(null); // REMOVE THIS
-
     const [currentProgram, setCurrentProgram] = useState(null);
 
     // -- FORM STATE --
@@ -30,27 +24,48 @@ const Programs = () => {
         name: "", head: "", duration: "", fee: "", status: "Active"
     });
 
-    // -- DATA STATES --
-    // Load from mock data
-    const [programs, setPrograms] = useState([]);
+    // -- DATA STATE --
+    const [programs, setPrograms] = useState([]); // Empty initially
 
-    // -- SUBJECTS STATE --
-    const [subjects, setSubjects] = useState([]); // (Mock logic, usually fetched in View page)
+    // 1. FETCH DATA FROM SERVER ON LOAD
+    useEffect(() => {
+        fetchPrograms();
+    }, []);
+
+    const fetchPrograms = async () => {
+        try {
+            const response = await fetch('http://localhost:5000/api/programs');
+            const data = await response.json();
+            // Map database columns to frontend names if needed
+            const formattedData = data.map(p => ({
+                ...p,
+                head: p.head_of_program, // Database uses head_of_program
+                fees: p.fees             // Database uses fees
+            }));
+            setPrograms(formattedData);
+        } catch (error) {
+            console.error("Error fetching programs:", error);
+        }
+    };
 
     // -- HANDLERS --
     const filteredPrograms = programs.filter(program => {
-        const matchesSearch = program.name.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesStatus = statusFilter === "All" || program.status === statusFilter;
-        return matchesSearch && matchesStatus;
+        // Safe check for name in case data is missing
+        const nameMatch = program.name ? program.name.toLowerCase().includes(searchQuery.toLowerCase()) : false;
+        const statusMatch = statusFilter === "All" || program.status === statusFilter;
+        return nameMatch && statusMatch;
     });
 
-    // Open Add/Edit Program Modal
     const handleOpenModal = (program = null) => {
         if (program) {
             setIsEditing(true);
             setCurrentProgram(program);
             setFormData({
-                name: program.name, head: program.head, duration: program.duration, fee: program.fees, status: program.status
+                name: program.name,
+                head: program.head || program.head_of_program,
+                duration: program.duration,
+                fee: program.fees,
+                status: program.status
             });
         } else {
             setIsEditing(false);
@@ -60,15 +75,36 @@ const Programs = () => {
         setShowModal(true);
     };
 
-    // HANDLE VIEW CLICK (Navigate to new page)
     const handleView = (program) => {
         navigate(`/view-program/${program.id}`);
     };
 
-    const handleSubmit = (e) => {
+    // 2. SAVE DATA TO SERVER
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // ... (Save logic remains same)
-        setShowModal(false);
+
+        try {
+            if (isEditing) {
+                // Add Edit Logic Here later (PUT request)
+                console.log("Edit not implemented yet");
+            } else {
+                const response = await fetch('http://localhost:5000/api/programs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                if (response.ok) {
+                    fetchPrograms(); // Reload list
+                    setShowModal(false);
+                    setFormData({ name: "", head: "", duration: "", fee: "", status: "Active" });
+                } else {
+                    alert("Failed to save program");
+                }
+            }
+        } catch (error) {
+            console.error("Error saving program:", error);
+        }
     };
 
     return (
@@ -91,13 +127,12 @@ const Programs = () => {
                     <ProgramGrid
                         programs={filteredPrograms}
                         onEdit={handleOpenModal}
-                        onView={handleView} // Passes navigation handler
+                        onView={handleView}
                         onDelete={(id) => setPrograms(programs.filter(p => p.id !== id))}
                     />
                 </main>
             </div>
 
-            {/* Modals (No ProgramDetails modal anymore) */}
             <ProgramModal
                 isOpen={showModal}
                 onClose={() => setShowModal(false)}

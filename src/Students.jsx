@@ -31,12 +31,23 @@ const Students = () => {
     const [programOptions, setProgramOptions] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // 1. Dynamic Filter Data (Derived from Students)
-    const uniqueBatchYears = [...new Set(students.map(s => s.session).filter(Boolean))]
+    // 1. Dynamic Filter Data
+    // Filter batches/years based on selected Program to make it dependent (User Request: "suitable for program filter")
+    const filteredForDropdowns = selectedProgram
+        ? students.filter(s => s.program === selectedProgram)
+        : students;
+
+    const uniqueBatchYears = [...new Set(filteredForDropdowns.map(s => s.session).filter(Boolean))]
         .sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
 
-    const uniqueAcademicYears = [...new Set(students.map(s => s.year).filter(Boolean))]
+    const uniqueAcademicYears = [...new Set(filteredForDropdowns.map(s => s.year).filter(Boolean))]
         .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+
+    // Reset Grade filter when Program changes
+    useEffect(() => {
+        setSelectedYear('');
+        setSelectedBatch(''); // Optional: Reset batch too if we want strict hierarchy
+    }, [selectedProgram]);
 
     // FETCH DATA
     useEffect(() => {
@@ -102,10 +113,53 @@ const Students = () => {
         setCurrentPage(1);
     };
 
+    // DELETE STATE
+    const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null, name: '' });
+    const [successMsg, setSuccessMsg] = useState('');
+
+    const confirmDelete = (student) => {
+        setDeleteModal({ isOpen: true, id: student.id, name: student.name });
+    };
+
+    const executeDelete = async () => {
+        try {
+            await fetch(`${API_URL}/api/students/${deleteModal.id}`, { method: 'DELETE' });
+            setStudents(prev => prev.filter(s => s.id !== deleteModal.id));
+            setSuccessMsg('Student deleted successfully');
+            setTimeout(() => setSuccessMsg(''), 3000);
+        } catch (error) {
+            console.error("Error deleting student:", error);
+            alert("Failed to delete");
+        } finally {
+            setDeleteModal({ isOpen: false, id: null, name: '' });
+        }
+    };
+
     if (loading) return <Loader />;
 
     return (
-        <div className="min-h-screen bg-[#F3F4F6] font-sans flex">
+        <div className="min-h-screen bg-[#F3F4F6] font-sans flex relative">
+            {/* SUCCESS TOAST */}
+            {successMsg && (
+                <div className="fixed top-10 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-full shadow-lg z-50 animate-in fade-in slide-in-from-top-5">
+                    <b>{successMsg}</b>
+                </div>
+            )}
+
+            {/* DELETE MODAL */}
+            {deleteModal.isOpen && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center animate-in zoom-in-95">
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">Delete Student?</h3>
+                        <p className="text-gray-500 mb-6">Are you sure you want to delete <span className="font-bold text-gray-800">"{deleteModal.name}"</span>? This cannot be undone.</p>
+                        <div className="flex gap-3">
+                            <button onClick={() => setDeleteModal({ isOpen: false })} className="flex-1 py-2.5 bg-gray-100 font-bold rounded-xl hover:bg-gray-200">Cancel</button>
+                            <button onClick={executeDelete} className="flex-1 py-2.5 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700">Yes, Delete</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* SIDEBAR */}
             <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
 
@@ -147,6 +201,7 @@ const Students = () => {
                                     currentPage={currentPage}
                                     totalPages={totalPages}
                                     onPageChange={setCurrentPage}
+                                    onDelete={confirmDelete} // Pass Handler
                                 />
                             ) : (
                                 <StudentGrid
@@ -155,6 +210,7 @@ const Students = () => {
                                     currentPage={currentPage}
                                     totalPages={totalPages}
                                     onPageChange={setCurrentPage}
+                                    onDelete={confirmDelete} // Pass Handler
                                 />
                             )}
                         </>

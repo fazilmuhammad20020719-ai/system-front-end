@@ -2,7 +2,7 @@ import { Eye, Edit, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Pagination from './Pagination';
 
-const StudentList = ({ students, currentPage, totalPages, onPageChange }) => {
+const StudentList = ({ students, currentPage, totalPages, onPageChange, onDelete }) => {
     const navigate = useNavigate();
 
     const getStatusColor = (status) => {
@@ -61,7 +61,7 @@ const StudentList = ({ students, currentPage, totalPages, onPageChange }) => {
                                     <div className="flex items-center justify-end gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
                                         <button onClick={() => navigate(`/view-student/${student.id}`)} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"><Eye size={16} /></button>
                                         <button onClick={() => navigate(`/edit-student/${student.id}`)} className="p-1.5 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-md transition-colors"><Edit size={16} /></button>
-                                        <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"><Trash2 size={16} /></button>
+                                        <button onClick={() => onDelete(student)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"><Trash2 size={16} /></button>
                                     </div>
                                 </td>
                             </tr>

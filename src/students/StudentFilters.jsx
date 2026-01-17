@@ -86,6 +86,7 @@ const StudentFilters = ({
                                 <option value="Active">Active</option>
                                 <option value="Inactive">Inactive</option>
                                 <option value="Graduated">Graduated</option>
+                                <option value="Suspended">Suspended</option>
                             </select>
                             <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
                         </div>

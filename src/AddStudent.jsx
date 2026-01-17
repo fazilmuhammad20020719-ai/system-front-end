@@ -48,6 +48,17 @@ const AddStudent = () => {
         setFormData({ ...formData, [name]: type === 'file' ? files[0] : value });
     };
 
+    const [showSuccess, setShowSuccess] = useState(false); // Success Toast State
+
+    // Helper: Show Toast
+    const showToast = () => {
+        setShowSuccess(true);
+        setTimeout(() => {
+            setShowSuccess(false);
+            navigate('/students'); // Navigate after showing toast
+        }, 2000);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
@@ -58,8 +69,7 @@ const AddStudent = () => {
             });
             const data = await response.json();
             if (response.ok) {
-                alert("Student Saved Successfully!");
-                navigate('/students');
+                showToast(); // Show success message
             } else {
                 alert(data.message || "Error saving student");
             }
@@ -70,7 +80,21 @@ const AddStudent = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#F3F4F6] font-sans flex">
+        <div className="min-h-screen bg-[#F3F4F6] font-sans flex relative">
+            {/* SUCCESS TOAST */}
+            {showSuccess && (
+                <div className="fixed top-10 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-8 py-4 rounded-full shadow-2xl z-50 animate-in fade-in slide-in-from-top-5 flex items-center gap-3">
+                    <div className="bg-white/20 p-1 rounded-full">
+                        <ChevronRight size={20} className="text-white rotate-90" />
+                        {/* Using Chevron as Check replacement for simplicity since Check icon wasn't imported initially, or import Check if easy */}
+                    </div>
+                    <div>
+                        <h4 className="font-bold text-lg">Success!</h4>
+                        <p className="text-white/90 text-sm">Student has been added successfully.</p>
+                    </div>
+                </div>
+            )}
+
             <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
             <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "md:ml-64" : "md:ml-20"} ml-0`}>
                 <main className="p-4 md:p-6 max-w-7xl mx-auto w-full">

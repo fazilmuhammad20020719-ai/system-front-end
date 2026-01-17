@@ -16,7 +16,7 @@ const EditStudent = () => {
     const { id } = useParams();
     const [activeTab, setActiveTab] = useState('details');
 
-    const [formData, setFormData] = useState({
+    const initialState = {
         // Basic
         studentPhoto: null, indexNumber: '', firstName: '', lastName: '', dob: '', gender: 'Male', nic: '', email: '', phone: '',
         // Location
@@ -29,56 +29,78 @@ const EditStudent = () => {
         nicFront: null, nicBack: null, studentSignature: null, birthCertificate: null,
         // New Uploads
         medicalReport: null, guardianNic: null, guardianPhoto: null, leavingCertificate: null
-    });
+    };
+
+    const [formData, setFormData] = useState(initialState);
+    const [programs, setPrograms] = useState([]);
+    const [showSuccess, setShowSuccess] = useState(false);
 
     useEffect(() => {
-        // MOCK FETCH DATA BASED ON ID
-        // In a real app, fetch from API. Here we use the dummy structure from ViewStudent.
-        const fetchData = () => {
-            const dummyData = {
-                // Personal
-                firstName: 'Muhammad',
-                lastName: 'Ahmed',
-                dob: '2015-05-15',
-                gender: 'Male',
-                nic: '201512345678',
-                email: 'student@example.com',
-                phone: '077 123 4567',
-                indexNumber: '2025001', // Added mock index
+        // Reset state immediately when ID changes to avoid showing stale data
+        setFormData(initialState);
 
-                // Location
-                province: 'Western',
-                district: 'Colombo',
-                dsDivision: 'Colombo Dist',
-                gnDivision: 'C-123',
-                address: '123, Main Street, Colombo, Sri Lanka',
-                googleMapLink: 'https://maps.google.com',
-                latitude: '6.9271', // Mock
-                longitude: '79.8612', // Mock
-
-                // Guardian
-                guardianName: 'Ali Ahmed',
-                guardianRelation: 'Father',
-                guardianPhone: '077 987 6543',
-                guardianEmail: 'ali.ahmed@example.com',
-                guardianOccupation: 'Merchant',
-
-                // Academic
-                program: 'Hifzul Quran',
-                session: '2025',
-                admissionDate: '2025-01-10',
-                previousSchoolName: 'City High School',
-                lastStudiedGrade: 'Grade 4',
-                previousCollegeName: 'City Madrasa',
-                mediumOfStudy: 'Tamil',
-            };
-
-            setFormData(prev => ({ ...prev, ...dummyData }));
+        const fetchPrograms = async () => {
+            try {
+                const response = await fetch(`${API_URL}/api/programs`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setPrograms(data.map(p => p.name));
+                }
+            } catch (error) {
+                console.error("Error fetching programs:", error);
+            }
         };
 
-        if (id) {
-            fetchData();
-        }
+        const fetchStudent = async () => {
+            try {
+                const response = await fetch(`${API_URL}/api/students/${id}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    const splitName = data.name.split(' ');
+                    const firstName = splitName[0];
+                    const lastName = splitName.slice(1).join(' ');
+
+                    // Merge fetched data into initialState (not prev, to ensure clean slate)
+                    setFormData(prev => ({
+                        ...initialState, // Start fresh
+                        indexNumber: data.id,
+                        firstName: firstName,
+                        lastName: lastName,
+                        program: data.program_name,
+                        currentYear: data.current_year,
+                        status: data.status,
+                        session: data.session_year,
+                        guardianName: data.guardian_name,
+                        phone: data.contact_number,
+
+                        dob: data.dob ? data.dob.split('T')[0] : '',
+                        gender: data.gender || 'Male',
+                        nic: data.nic || '',
+                        email: data.email || '',
+                        address: data.address || '',
+                        city: data.city || '',
+                        district: data.district || '',
+                        province: data.province || '',
+                        guardianRelation: data.guardian_relation || 'Father',
+                        guardianOccupation: data.guardian_occupation || '',
+                        guardianPhone: data.guardian_phone || '',
+
+                        // Academic
+                        admissionDate: data.admission_date ? data.admission_date.split('T')[0] : '',
+                        previousSchoolName: data.previous_school || '',
+                        mediumOfStudy: data.medium_of_study || 'Tamil',
+                        // Note: Backend might not have these yet, so they will default to empty from initialState
+                        lastStudiedGrade: data.last_studied_grade || '',
+                        previousCollegeName: data.previous_college || ''
+                    }));
+                }
+            } catch (error) {
+                console.error("Error fetching student:", error);
+            }
+        };
+
+        fetchPrograms();
+        if (id) fetchStudent();
     }, [id]);
 
     const handleChange = (e) => {
@@ -86,15 +108,40 @@ const EditStudent = () => {
         setFormData({ ...formData, [name]: type === 'file' ? files[0] : value });
     };
 
-    const handleUpdate = (e) => {
+    const handleUpdate = async (e) => {
         e.preventDefault();
-        console.log("Updating:", formData);
-        alert("Student Updated Successfully!");
-        navigate('/students'); // Or navigate back to view
+        try {
+            const response = await fetch(`${API_URL}/api/students/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData),
+            });
+
+            if (response.ok) {
+                setShowSuccess(true);
+                setTimeout(() => {
+                    navigate('/students');
+                }, 1500);
+            } else {
+                alert("Failed to update student");
+            }
+        } catch (error) {
+            console.error("Error updating student:", error);
+            alert("Error updating student");
+        }
     };
 
     return (
-        <div className="min-h-screen bg-[#F3F4F6] font-sans flex">
+        <div className="min-h-screen bg-[#F3F4F6] font-sans flex relative">
+            {/* SUCCESS TOAST */}
+            {showSuccess && (
+                <div className="fixed top-10 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-8 py-4 rounded-full shadow-2xl z-50 animate-in fade-in slide-in-from-top-5 flex items-center gap-3">
+                    <div>
+                        <h4 className="font-bold text-lg">Updated!</h4>
+                        <p className="text-white/90 text-sm">Student details updated successfully.</p>
+                    </div>
+                </div>
+            )}
             <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
 
             <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "md:ml-64" : "md:ml-20"} ml-0`}>

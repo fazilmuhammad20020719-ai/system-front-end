@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-    ArrowLeft, BookOpen, Users, User, Clock, Calendar,
-    Award, CheckCircle, GraduationCap, Download, Edit2, Trash2, Plus, MapPin
+    ArrowLeft, BookOpen, Users, User, Clock,
+    Award, CheckCircle, Download, Plus
 } from 'lucide-react';
 import { API_URL } from '../config'; // Import API_URL
 import Sidebar from '../Sidebar';
@@ -19,7 +19,7 @@ const ViewProgram = () => {
     // DATA STATES
     const [program, setProgram] = useState(null);
     const [subjects, setSubjects] = useState([]);
-    const [teachers, setTeachers] = useState([]); // State for teachers
+    const [teachers, setTeachers] = useState([]);
     const [showSubjectModal, setShowSubjectModal] = useState(false);
     const [editingSubject, setEditingSubject] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -29,7 +29,7 @@ const ViewProgram = () => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                // Fetch Programs, Subjects, and Teachers in parallel
+                // 3 API Calls: Programs, Subjects, Teachers
                 const [progRes, subRes, teachRes] = await Promise.all([
                     fetch(`${API_URL}/api/programs`),
                     fetch(`${API_URL}/api/subjects`),
@@ -46,17 +46,15 @@ const ViewProgram = () => {
                 if (currentProgram) {
                     setProgram({
                         ...currentProgram,
-                        head: currentProgram.head_of_program, // Map DB field to UI
+                        head: currentProgram.head_of_program,
                         fees: currentProgram.fees,
-                        // Add defaults for UI consistency
+                        // Default values for UI
                         color: "bg-blue-100 text-blue-600",
                         description: currentProgram.description || "Program details loaded from system database.",
-                        startDate: currentProgram.created_at ? new Date(currentProgram.created_at).toLocaleDateString() : "Jan 2025"
                     });
                 }
 
                 // 2. Filter Subjects for this Program
-                // Note: If DB doesn't have 'year', we default to 'Grade 1' to ensure they appear
                 const programSubjects = allSubjects
                     .filter(s => s.program_id === parseInt(id))
                     .map(s => ({ ...s, year: s.year || 'Grade 1' }));
@@ -76,33 +74,27 @@ const ViewProgram = () => {
         fetchData();
     }, [id]);
 
-    // 1. Loading State
+    // 1. Loading
     if (loading) return <Loader />;
 
-    // 2. Program Not Found State
+    // 2. Program Not Found
     if (!program) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 text-gray-600">
                 <h2 className="text-2xl font-bold mb-2">Program Not Found</h2>
-                <p>The program you are looking for does not exist or an error occurred.</p>
-                <button
-                    onClick={() => navigate('/programs')}
-                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                >
-                    Back to Programs
-                </button>
+                <button onClick={() => navigate('/programs')} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded">Back</button>
             </div>
         );
     }
 
-    // Filter Logic
-    // Parse duration (e.g., "7 Years" -> 7, or just "7" -> 7)
-    const durationNum = program.duration ? parseInt(program.duration) : 1;
-    const maxYears = isNaN(durationNum) ? 1 : durationNum;
+    // --- DYNAMIC GRADE LOGIC (இதுதான் முக்கியம்!) ---
+    // "7 Years" -> 7, "3 Years" -> 3 என மாற்றுகிறது
+    const durationNum = parseInt(program.duration) || 1;
 
-    // Generate years array: ["Grade 1", "Grade 2", ..., "Grade N"]
-    const availableYears = Array.from({ length: maxYears }, (_, i) => `Grade ${i + 1}`);
+    // அதற்கேற்ப Grade லிஸ்டை உருவாக்குகிறது
+    const availableYears = Array.from({ length: durationNum }, (_, i) => `Grade ${i + 1}`);
 
+    // Filter Subjects based on selected Grade
     const currentSubjects = subjects.filter(s => s.year === selectedYear);
 
     return (
@@ -212,18 +204,19 @@ const ViewProgram = () => {
                             </div>
                         )}
 
-                        {/* 2. CURRICULUM TAB */}
+                        {/* 2. CURRICULUM TAB (Dynamic Grades) */}
                         {activeTab === 'curriculum' && (
                             <div className="bg-white rounded-xl border border-gray-200 shadow-sm animate-in fade-in zoom-in duration-300">
                                 <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4 bg-gray-50/50 rounded-t-xl">
                                     <h3 className="font-bold text-gray-700">Syllabus by Year</h3>
                                     <div className="flex items-center gap-2">
-                                        <div className="flex bg-white border border-gray-200 p-1 rounded-lg shadow-sm">
+                                        <div className="flex bg-white border border-gray-200 p-1 rounded-lg shadow-sm overflow-x-auto">
+                                            {/* DYNAMIC GRADES GENERATION */}
                                             {availableYears.map(year => (
                                                 <button
                                                     key={year}
                                                     onClick={() => setSelectedYear(year)}
-                                                    className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${selectedYear === year
+                                                    className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all whitespace-nowrap ${selectedYear === year
                                                         ? 'bg-green-600 text-white shadow-md'
                                                         : 'text-gray-500 hover:bg-gray-50'
                                                         }`}
@@ -237,7 +230,7 @@ const ViewProgram = () => {
                                                 setEditingSubject(null);
                                                 setShowSubjectModal(true);
                                             }}
-                                            className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm"
+                                            className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm flex-shrink-0"
                                             title="Add Subject"
                                         >
                                             <Plus size={18} />
@@ -258,7 +251,6 @@ const ViewProgram = () => {
                                                             <p className="text-xs text-gray-500">{selectedYear} - Core Module</p>
                                                         </div>
                                                     </div>
-                                                    {/* Edit/Delete Actions could be wired up here */}
                                                 </div>
                                             ))}
                                         </div>
@@ -303,7 +295,6 @@ const ViewProgram = () => {
                     isEditing={!!editingSubject}
                     onSave={async (data) => {
                         try {
-                            // Save to Database
                             const method = editingSubject ? 'PUT' : 'POST';
                             const url = editingSubject
                                 ? `${API_URL}/api/subjects/${editingSubject.id}`
@@ -319,10 +310,9 @@ const ViewProgram = () => {
                             });
 
                             if (response.ok) {
-                                // Refresh Page Data
                                 alert(editingSubject ? "Subject Updated!" : "Subject Added!");
                                 setShowSubjectModal(false);
-                                window.location.reload(); // Simple reload to fetch fresh data
+                                window.location.reload(); // Reload to see changes
                             } else {
                                 alert("Failed to save subject");
                             }

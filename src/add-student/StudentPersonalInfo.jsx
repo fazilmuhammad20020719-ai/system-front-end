@@ -115,6 +115,16 @@ const StudentPersonalInfo = ({ formData, handleChange, handleStatusChange }) => 
                     />
 
                     <InputField
+                        label="Admission Date"
+                        name="admissionDate"
+                        type="date"
+                        value={formData.admissionDate}
+                        onChange={handleChange}
+                        icon={Calendar}
+                        required
+                    />
+
+                    <InputField
                         label="Phone Number"
                         name="phone"
                         value={formData.phone}

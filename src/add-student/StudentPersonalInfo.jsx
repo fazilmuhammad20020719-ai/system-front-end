@@ -37,6 +37,15 @@ const StudentPersonalInfo = ({ formData, handleChange }) => {
                     <InputField label="Date of Birth" name="dob" type="date" value={formData.dob} onChange={handleChange} icon={Calendar} />
                     <InputField label="Email" name="email" type="email" value={formData.email} onChange={handleChange} icon={Mail} />
                     <InputField label="Phone" name="phone" value={formData.phone} onChange={handleChange} icon={Phone} />
+
+                    <SelectField
+                        label="Student Status"
+                        name="status"
+                        value={formData.status}
+                        onChange={handleChange}
+                        options={['Active', 'Inactive', 'Graduated', 'Suspended']}
+                        required
+                    />
                 </div>
             </div>
         </div>

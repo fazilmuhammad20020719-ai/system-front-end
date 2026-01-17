@@ -24,7 +24,7 @@ const AddStudent = () => {
         // Guardian
         guardianName: '', guardianRelation: 'Father', guardianOccupation: '', guardianPhone: '', guardianEmail: '',
         // Academic
-        program: '', session: '2025', admissionDate: '', lastStudiedGrade: '', previousSchoolName: '', previousCollegeName: '', mediumOfStudy: 'Tamil',
+        program: '', session: '2025', currentYear: 'Year 1', status: 'Active', admissionDate: '', lastStudiedGrade: '', previousSchoolName: '', previousCollegeName: '', mediumOfStudy: 'Tamil',
         // Uploads
         nicFront: null, nicBack: null, studentSignature: null, birthCertificate: null,
         // New Uploads

@@ -278,14 +278,34 @@ const ViewProgram = () => {
                     programs={program ? [program] : []}
                     initialData={editingSubject}
                     isEditing={!!editingSubject}
-                    onSave={(data) => {
-                        // Optimistic update - in real app, fetchPrograms() should be called
-                        if (editingSubject) {
-                            setSubjects(subjects.map(s => s.id === editingSubject.id ? { ...s, ...data } : s));
-                        } else {
-                            setSubjects([...subjects, { id: Date.now(), ...data }]);
+                    onSave={async (data) => {
+                        try {
+                            // Save to Database
+                            const method = editingSubject ? 'PUT' : 'POST';
+                            const url = editingSubject
+                                ? `${API_URL}/api/subjects/${editingSubject.id}`
+                                : `${API_URL}/api/subjects`;
+
+                            const response = await fetch(url, {
+                                method: method,
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    ...data,
+                                    programId: program.id // Ensure Program ID is sent
+                                })
+                            });
+
+                            if (response.ok) {
+                                // Refresh Page Data
+                                alert(editingSubject ? "Subject Updated!" : "Subject Added!");
+                                setShowSubjectModal(false);
+                                window.location.reload(); // Simple reload to fetch fresh data
+                            } else {
+                                alert("Failed to save subject");
+                            }
+                        } catch (error) {
+                            console.error("Error saving subject:", error);
                         }
-                        setShowSubjectModal(false);
                     }}
                 />
             </div>

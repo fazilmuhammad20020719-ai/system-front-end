@@ -1,7 +1,7 @@
 import { BookOpen, GraduationCap, School, MapPin } from 'lucide-react';
 import { InputField, SelectField } from './FormComponents';
 
-const StudentAcademicInfo = ({ formData, handleChange }) => {
+const StudentAcademicInfo = ({ formData, handleChange, programs }) => {
     // Generate years dynamically (2026 down to 2002)
     const years = Array.from({ length: 25 }, (_, i) => 2026 - i);
 
@@ -20,7 +20,7 @@ const StudentAcademicInfo = ({ formData, handleChange }) => {
                         name="program"
                         value={formData.program}
                         onChange={handleChange}
-                        options={['Hifzul Quran', 'Al-Alim (Boys)', 'Al-Alimah (Girls)']}
+                        options={programs && programs.length > 0 ? programs : ['Hifzul Quran', 'Al-Alim (Boys)', 'Al-Alimah (Girls)']} // Use dynamic or fallback
                         required
                     />
                     <SelectField

@@ -1,14 +1,25 @@
 import { User, Calendar, Mail, Phone, Hash, CreditCard } from 'lucide-react';
 import { InputField, SelectField, FileUploadField } from './FormComponents';
+import { API_URL } from '../config'; // <--- முக்கியம்: இதை Import செய்ய வேண்டும்
 
 const StudentPersonalInfo = ({ formData, handleChange, handleStatusChange }) => {
 
-    // --- PHOTO PREVIEW LOGIC (முக்கிய மாற்றம்) ---
-    // 1. புதிதாக File தேர்வு செய்யப்பட்டிருந்தால் (New Upload), அதை காட்டவும்.
-    // 2. இல்லையென்றால், Database-ல் உள்ள பழைய போட்டோவை (photoUrl) காட்டவும்.
-    const previewImage = formData.studentPhoto instanceof File
-        ? URL.createObjectURL(formData.studentPhoto)
-        : formData.photoUrl;
+    // --- PHOTO PREVIEW LOGIC (திருத்தப்பட்டது) ---
+    // 1. புதிதாக Upload செய்தால் (File) -> URL.createObjectURL
+    // 2. ஏற்கனவே Database-ல் இருந்தால் (String) -> API_URL + photoUrl
+    const getPreviewImage = () => {
+        if (formData.studentPhoto instanceof File) {
+            return URL.createObjectURL(formData.studentPhoto);
+        }
+        if (formData.photoUrl) {
+            // ஒருவேளை photoUrl ஏற்கனவே முழு Link ஆக இருந்தால் (எ.கா: Cloudinary), அப்படியே காட்டு.
+            // இல்லையென்றால் (எ.கா: /uploads/...), API_URL ஐ முன்னால் சேர்.
+            return formData.photoUrl.startsWith('http')
+                ? formData.photoUrl
+                : `${API_URL}${formData.photoUrl}`;
+        }
+        return null;
+    };
 
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
@@ -24,7 +35,7 @@ const StudentPersonalInfo = ({ formData, handleChange, handleStatusChange }) => 
                         label="Student Photo"
                         name="studentPhoto"
                         onChange={handleChange}
-                        preview={previewImage} // இங்கே மாற்றப்பட்டுள்ளது
+                        preview={getPreviewImage()} // இங்கே Function-ஐ அழைக்கிறோம்
                     />
                 </div>
 
@@ -37,7 +48,7 @@ const StudentPersonalInfo = ({ formData, handleChange, handleStatusChange }) => 
                         onChange={handleChange}
                         placeholder="ST-2024-001"
                         icon={Hash}
-                        required // Index Number முக்கியம், ஆனால் Edit-ல் ReadOnly ஆக இருக்கும் (Parent Component பார்த்துக்கொள்ளும்)
+                        required
                     />
 
                     {/* STATUS FIELD */}

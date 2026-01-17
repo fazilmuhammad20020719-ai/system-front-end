@@ -3,22 +3,31 @@ import { InputField, SelectField } from './FormComponents';
 
 const StudentAcademicInfo = ({ formData, handleChange, programs = [] }) => {
 
-    // 1. Program Names மட்டும் பிரித்து Dropdown-க்கு அனுப்புகிறோம்
+    // 1. Program Names for Dropdown
     const programNames = programs.map(p => p.name);
 
-    // 2. தேர்ந்தெடுக்கப்பட்ட Program-ஐக் கண்டுபிடித்து Duration எடுக்கிறோம்
+    // 2. Find Selected Program Data
     const selectedProgram = programs.find(p => p.name === formData.program);
 
-    // 3. Duration-க்கு ஏற்ப Grade லிஸ்ட் தயார் செய்தல்
-    let yearOptions = ['Select Program First']; // Default Message
+    // 3. Grade Options Logic (Status-ஐப் பொறுத்து மாறுதல்)
+    let yearOptions = [];
+    let isGradeDisabled = false;
 
-    if (selectedProgram) {
-        // "7 Years" -> 7 என மாற்றுகிறது. இல்லையெனில் Default 5.
-        const durationNum = parseInt(selectedProgram.duration) || 5;
-        yearOptions = Array.from({ length: durationNum }, (_, i) => `Grade ${i + 1}`);
+    // Active ஆக இல்லையென்றால் (எ.கா: Graduated), Grade Dropdown-ஐ நிறுத்தவும்
+    if (formData.status && formData.status !== 'Active') {
+        yearOptions = [formData.status]; // Dropdown-ல் Status மட்டுமே தெரியும்
+        isGradeDisabled = true; // Dropdown வேலை செய்யாது (Disabled)
+    } else {
+        // Active என்றால், Program Duration படி Grades வரும்
+        if (selectedProgram) {
+            const durationNum = parseInt(selectedProgram.duration) || 5;
+            yearOptions = Array.from({ length: durationNum }, (_, i) => `Grade ${i + 1}`);
+        } else {
+            yearOptions = ['Select Program First'];
+        }
     }
 
-    // Generate years dynamically (2026 down to 2002)
+    // Generate Batch years (2026 to 2002)
     const sessionYears = Array.from({ length: 25 }, (_, i) => 2026 - i);
 
     return (
@@ -31,7 +40,7 @@ const StudentAcademicInfo = ({ formData, handleChange, programs = [] }) => {
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {/* Program Dropdown (பெயர்கள் மட்டும் வரும்) */}
+                    {/* Program */}
                     <SelectField
                         label="Admission Program"
                         name="program"
@@ -41,7 +50,7 @@ const StudentAcademicInfo = ({ formData, handleChange, programs = [] }) => {
                         required
                     />
 
-                    {/* Session Dropdown */}
+                    {/* Session */}
                     <SelectField
                         label="Session / Batch Year"
                         name="session"
@@ -51,19 +60,23 @@ const StudentAcademicInfo = ({ formData, handleChange, programs = [] }) => {
                         required
                     />
 
-                    {/* DYNAMIC GRADE DROPDOWN (இப்போது Program-க்கு ஏற்ப மாறும்!) */}
+                    {/* STATUS SELECT இங்கே இல்லை - Personal Info-ல் உள்ளது */}
+
+                    {/* Dynamic Grade Field (Status-ஐப் பொறுத்து மாறும்) */}
                     <SelectField
                         label="Current Grade / Year"
                         name="currentYear"
-                        value={formData.currentYear}
+                        // Active இல்லையென்றால் Status-ஐயே Value-ஆகக் காட்டும்
+                        value={formData.status !== 'Active' ? formData.status : formData.currentYear}
                         onChange={handleChange}
-                        options={yearOptions} // Dynamic List Here
+                        options={yearOptions}
+                        disabled={isGradeDisabled} // Lock if not Active
                         required
                     />
                 </div>
             </div>
 
-            {/* Previous Education History (எந்த மாற்றமும் இல்லை) */}
+            {/* Previous Education History (UI அப்படியே உள்ளது) */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
                 <h3 className="text-base font-bold text-gray-800 mb-5 flex items-center gap-2 border-b border-gray-100 pb-3">
                     <GraduationCap className="text-[#EB8A33]" size={18} /> Previous Education

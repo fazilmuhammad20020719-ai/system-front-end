@@ -81,14 +81,30 @@ const Programs = () => {
     };
 
     // 2. SAVE DATA TO SERVER
+    // 2. SAVE DATA TO SERVER (Add & Edit)
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         try {
             if (isEditing) {
-                // Add Edit Logic Here later (PUT request)
-                console.log("Edit not implemented yet");
+                // --- EDIT LOGIC (PUT Request) ---
+                const response = await fetch(`${API_URL}/api/programs/${currentProgram.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                if (response.ok) {
+                    fetchPrograms(); // Reload list
+                    setShowModal(false);
+                    setFormData({ name: "", head: "", duration: "", fee: "", status: "Active" });
+                    setIsEditing(false);
+                    setCurrentProgram(null);
+                } else {
+                    alert("Failed to update program");
+                }
             } else {
+                // --- ADD LOGIC (Existing) ---
                 const response = await fetch(`${API_URL}/api/programs`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -129,7 +145,17 @@ const Programs = () => {
                         programs={filteredPrograms}
                         onEdit={handleOpenModal}
                         onView={handleView}
-                        onDelete={(id) => setPrograms(programs.filter(p => p.id !== id))}
+                        // Delete Logic Updated:
+                        onDelete={async (id) => {
+                            if (confirm("Are you sure you want to delete this program?")) {
+                                try {
+                                    await fetch(`${API_URL}/api/programs/${id}`, { method: 'DELETE' });
+                                    fetchPrograms(); // Refresh list after delete
+                                } catch (error) {
+                                    console.error("Error deleting:", error);
+                                }
+                            }
+                        }}
                     />
                 </main>
             </div>

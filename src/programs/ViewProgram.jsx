@@ -4,10 +4,10 @@ import {
     ArrowLeft, BookOpen, Users, User, Clock, Calendar,
     Award, CheckCircle, GraduationCap, Download, Edit2, Trash2, Plus, MapPin
 } from 'lucide-react';
+import { API_URL } from '../config'; // Import API_URL
 import Sidebar from '../Sidebar';
 import SubjectModal from './SubjectModal';
 import Loader from '../components/Loader';
-// ScheduleModal removed
 
 const ViewProgram = () => {
     const { id } = useParams();
@@ -16,43 +16,69 @@ const ViewProgram = () => {
     const [activeTab, setActiveTab] = useState('overview');
     const [selectedYear, setSelectedYear] = useState('Grade 1');
 
-    // MOCK DATA FETCHING (Simulating API)
+    // DATA STATES
     const [program, setProgram] = useState(null);
     const [subjects, setSubjects] = useState([]);
+    const [teachers, setTeachers] = useState([]); // State for teachers
     const [showSubjectModal, setShowSubjectModal] = useState(false);
     const [editingSubject, setEditingSubject] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-    // SCHEDULE STATE REMOVED
-
+    // FETCH DATA FROM API
     useEffect(() => {
-        // Mock Program Data (In real app, fetch from API)
-        setProgram({
-            id: parseInt(id),
-            name: "Loading Program...",
-            head: "TBD",
-            color: "bg-blue-100 text-blue-600",
-            duration: "3 Years",
-            description: "Program details will be loaded from the database.",
-            students: 0,
-            fees: "Free",
-            status: "Active",
-            startDate: "January 2025"
-        });
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                // Fetch Programs, Subjects, and Teachers in parallel
+                const [progRes, subRes, teachRes] = await Promise.all([
+                    fetch(`${API_URL}/api/programs`),
+                    fetch(`${API_URL}/api/subjects`),
+                    fetch(`${API_URL}/api/teachers`)
+                ]);
 
+                const allPrograms = await progRes.json();
+                const allSubjects = await subRes.json();
+                const allTeachers = await teachRes.json();
 
-        setSubjects([
-            { id: 101, year: 'Grade 1', name: 'Juz 1-5' },
-            { id: 102, year: 'Grade 1', name: 'Tajweed Basics' },
-            { id: 103, year: 'Grade 2', name: 'Juz 6-15' },
-            { id: 104, year: 'Grade 3', name: 'Juz 16-30' },
-        ]);
+                // 1. Find Current Program
+                const currentProgram = allPrograms.find(p => p.id === parseInt(id));
 
+                if (currentProgram) {
+                    setProgram({
+                        ...currentProgram,
+                        head: currentProgram.head_of_program, // Map DB field to UI
+                        fees: currentProgram.fees,
+                        // Add defaults for UI consistency
+                        color: "bg-blue-100 text-blue-600",
+                        description: currentProgram.description || "Program details loaded from system database.",
+                        startDate: currentProgram.created_at ? new Date(currentProgram.created_at).toLocaleDateString() : "Jan 2025"
+                    });
+                }
+
+                // 2. Filter Subjects for this Program
+                // Note: If DB doesn't have 'year', we default to 'Grade 1' to ensure they appear
+                const programSubjects = allSubjects
+                    .filter(s => s.program_id === parseInt(id))
+                    .map(s => ({ ...s, year: s.year || 'Grade 1' }));
+                setSubjects(programSubjects);
+
+                // 3. Filter Teachers for this Program
+                const programTeachers = allTeachers.filter(t => t.program_id === parseInt(id));
+                setTeachers(programTeachers);
+
+            } catch (error) {
+                console.error("Error fetching program details:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
     }, [id]);
 
-    if (!program) return <Loader />;
+    if (loading || !program) return <Loader />;
 
     // Filter Logic
-    const programTeachers = [];
     const currentSubjects = subjects.filter(s => s.year === selectedYear);
     const availableYears = ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 5'];
 
@@ -81,7 +107,7 @@ const ViewProgram = () => {
                                 <div>
                                     <h1 className="text-2xl font-bold text-gray-800">{program.name}</h1>
                                     <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
-                                        <span className="flex items-center gap-1"><User size={14} /> Head: {program.head}</span>
+                                        <span className="flex items-center gap-1"><User size={14} /> Head: {program.head || "Not Assigned"}</span>
                                         <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
                                         <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${program.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                                             {program.status}
@@ -126,20 +152,19 @@ const ViewProgram = () => {
                                         <p className="text-gray-600 leading-relaxed">{program.description}</p>
                                     </div>
 
-
                                     {/* Stats Grid */}
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div className="bg-purple-50 p-5 rounded-xl border border-purple-100">
                                             <div className="flex items-center gap-3 mb-1 text-purple-600">
                                                 <User size={20} /> <span className="font-bold text-xs uppercase">Teachers</span>
                                             </div>
-                                            <p className="text-2xl font-bold text-gray-800">{programTeachers.length}</p>
+                                            <p className="text-2xl font-bold text-gray-800">{teachers.length}</p>
                                         </div>
                                         <div className="bg-green-50 p-5 rounded-xl border border-green-100">
                                             <div className="flex items-center gap-3 mb-1 text-green-600">
-                                                <Award size={20} /> <span className="font-bold text-xs uppercase">Pass Rate</span>
+                                                <Award size={20} /> <span className="font-bold text-xs uppercase">Subjects</span>
                                             </div>
-                                            <p className="text-2xl font-bold text-gray-800">92%</p>
+                                            <p className="text-2xl font-bold text-gray-800">{subjects.length}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -149,15 +174,15 @@ const ViewProgram = () => {
                                     <div className="space-y-4">
                                         <div className="flex justify-between items-center py-2 border-b border-gray-50">
                                             <span className="text-gray-600 flex items-center gap-2"><Clock size={16} /> Duration</span>
-                                            <span className="font-semibold text-gray-800">{program.duration}</span>
+                                            <span className="font-semibold text-gray-800">{program.duration || "N/A"}</span>
                                         </div>
                                         <div className="flex justify-between items-center py-2 border-b border-gray-50">
-                                            <span className="text-gray-600 flex items-center gap-2"><Calendar size={16} /> Start Date</span>
-                                            <span className="font-semibold text-gray-800">{program.startDate}</span>
+                                            <span className="text-gray-600 flex items-center gap-2"><Award size={16} /> Fees</span>
+                                            <span className="font-semibold text-gray-800">{program.fees || "N/A"}</span>
                                         </div>
                                         <div className="flex justify-between items-center py-2 border-b border-gray-50">
                                             <span className="text-gray-600 flex items-center gap-2"><CheckCircle size={16} /> Status</span>
-                                            <span className="text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded text-xs">Active</span>
+                                            <span className="text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded text-xs">{program.status}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -210,29 +235,7 @@ const ViewProgram = () => {
                                                             <p className="text-xs text-gray-500">{selectedYear} - Core Module</p>
                                                         </div>
                                                     </div>
-                                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <button
-                                                            onClick={() => {
-                                                                setEditingSubject(sub);
-                                                                setShowSubjectModal(true);
-                                                            }}
-                                                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                            title="Edit"
-                                                        >
-                                                            <Edit2 size={16} />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => {
-                                                                if (window.confirm('Are you sure you want to delete this subject?')) {
-                                                                    setSubjects(subjects.filter(s => s.id !== sub.id));
-                                                                }
-                                                            }}
-                                                            className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                            title="Delete"
-                                                        >
-                                                            <Trash2 size={16} />
-                                                        </button>
-                                                    </div>
+                                                    {/* Edit/Delete Actions could be wired up here */}
                                                 </div>
                                             ))}
                                         </div>
@@ -249,26 +252,23 @@ const ViewProgram = () => {
                         {/* 3. TEACHERS TAB */}
                         {activeTab === 'teachers' && (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-300">
-                                {programTeachers.map((teacher) => (
+                                {teachers.map((teacher) => (
                                     <div key={teacher.id} className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-start gap-4 hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/view-teacher/${teacher.id}`)}>
                                         <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center text-blue-700 font-bold text-lg">
                                             {teacher.name.charAt(0)}
                                         </div>
                                         <div>
                                             <h4 className="font-bold text-gray-800">{teacher.name}</h4>
-                                            <p className="text-xs text-blue-600 font-medium mb-1">{teacher.role}</p>
+                                            <p className="text-xs text-blue-600 font-medium mb-1">{teacher.role || "Instructor"}</p>
                                             <p className="text-xs text-gray-500 flex items-center gap-1">
-                                                <BookOpen size={12} /> {teacher.subject}
+                                                <BookOpen size={12} /> {teacher.subject || "General"}
                                             </p>
                                         </div>
                                     </div>
                                 ))}
-                                {programTeachers.length === 0 && <p className="col-span-full text-center text-gray-500 py-10">No teachers assigned yet.</p>}
+                                {teachers.length === 0 && <p className="col-span-full text-center text-gray-500 py-10">No teachers assigned to this program yet.</p>}
                             </div>
                         )}
-
-
-
 
                     </div>
                 </main>
@@ -279,6 +279,7 @@ const ViewProgram = () => {
                     initialData={editingSubject}
                     isEditing={!!editingSubject}
                     onSave={(data) => {
+                        // Optimistic update - in real app, fetchPrograms() should be called
                         if (editingSubject) {
                             setSubjects(subjects.map(s => s.id === editingSubject.id ? { ...s, ...data } : s));
                         } else {
@@ -287,8 +288,6 @@ const ViewProgram = () => {
                         setShowSubjectModal(false);
                     }}
                 />
-
-
             </div>
         </div >
     );

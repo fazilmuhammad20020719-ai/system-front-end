@@ -76,7 +76,24 @@ const ViewProgram = () => {
         fetchData();
     }, [id]);
 
-    if (loading || !program) return <Loader />;
+    // 1. Loading State
+    if (loading) return <Loader />;
+
+    // 2. Program Not Found State
+    if (!program) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 text-gray-600">
+                <h2 className="text-2xl font-bold mb-2">Program Not Found</h2>
+                <p>The program you are looking for does not exist or an error occurred.</p>
+                <button
+                    onClick={() => navigate('/programs')}
+                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                    Back to Programs
+                </button>
+            </div>
+        );
+    }
 
     // Filter Logic
     const currentSubjects = subjects.filter(s => s.year === selectedYear);

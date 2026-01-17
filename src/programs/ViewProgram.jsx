@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { jsPDF } from 'jspdf'; // Import jsPDF
 import {
     ArrowLeft, BookOpen, Users, User, Clock,
-    Award, CheckCircle, Download, Plus
+    Award, CheckCircle, Download, Plus, Edit2, Trash2, AlertTriangle, Check
 } from 'lucide-react';
 import { API_URL } from '../config'; // Import API_URL
 import Sidebar from '../Sidebar';
@@ -23,6 +24,16 @@ const ViewProgram = () => {
     const [showSubjectModal, setShowSubjectModal] = useState(false);
     const [editingSubject, setEditingSubject] = useState(null);
     const [loading, setLoading] = useState(true);
+
+    // NEW STATES FOR UI ENHANCEMENTS
+    const [successMsg, setSuccessMsg] = useState(null); // Green Success Toast
+    const [deleteModal, setDeleteModal] = useState({ isOpen: false, subjectId: null, subjectName: '' }); // Custom Delete Modal
+
+    // Helper: Show Success Toast
+    const showSuccess = (msg) => {
+        setSuccessMsg(msg);
+        setTimeout(() => setSuccessMsg(null), 3000);
+    };
 
     // FETCH DATA FROM API
     useEffect(() => {
@@ -74,6 +85,96 @@ const ViewProgram = () => {
         fetchData();
     }, [id]);
 
+    // Handle Delete Subject
+    const handleDeleteSubject = async () => {
+        if (!deleteModal.subjectId) return;
+
+        try {
+            const response = await fetch(`${API_URL}/api/subjects/${deleteModal.subjectId}`, {
+                method: 'DELETE',
+            });
+
+            if (response.ok) {
+                // Update Local State (Remove Item)
+                setSubjects(prev => prev.filter(s => s.id !== deleteModal.subjectId));
+                showSuccess("Subject Deleted Successfully");
+            } else {
+                alert("Failed to delete subject");
+            }
+        } catch (error) {
+            console.error("Error deleting subject:", error);
+        } finally {
+            setDeleteModal({ isOpen: false, subjectId: null, subjectName: '' });
+        }
+    };
+
+    // Generate PDF
+    const handleDownloadSyllabus = () => {
+        const doc = new jsPDF();
+
+        // Title
+        doc.setFontSize(22);
+        doc.setTextColor(40);
+        doc.text(program.name, 20, 20);
+
+        // Subtitle/Info
+        doc.setFontSize(12);
+        doc.setTextColor(100);
+        doc.text(`Head of Program: ${program.head || 'N/A'}`, 20, 30);
+        doc.text(`Duration: ${program.duration || 'N/A'}`, 20, 36);
+        doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 42);
+
+        // Line Divider
+        doc.setLineWidth(0.5);
+        doc.line(20, 48, 190, 48);
+
+        // Content
+        let yPos = 60;
+        const durationNum = parseInt(program.duration) || 1;
+        const years = Array.from({ length: durationNum }, (_, i) => `Grade ${i + 1}`);
+
+        years.forEach((grade) => {
+            // Check page break
+            if (yPos > 270) {
+                doc.addPage();
+                yPos = 20;
+            }
+
+            // Grade Header
+            doc.setFontSize(16);
+            doc.setTextColor(0, 102, 204); // Blue
+            doc.text(grade, 20, yPos);
+            yPos += 10;
+
+            // Filter Subjects for this grade
+            const gradeSubjects = subjects.filter(s => s.year === grade);
+
+            if (gradeSubjects.length > 0) {
+                gradeSubjects.forEach((sub, index) => {
+                    doc.setFontSize(12);
+                    doc.setTextColor(0);
+                    doc.text(`${index + 1}. ${sub.name}`, 30, yPos);
+
+                    // Optional: Add teacher name if available (would need to find in teachers array)
+                    // const teacher = teachers.find(t => t.id === sub.teacher_id);
+                    // if (teacher) doc.text(`   - Instructor: ${teacher.name}`, 30, yPos + 6);
+
+                    yPos += 8; // Spacing
+                });
+            } else {
+                doc.setFontSize(11);
+                doc.setTextColor(150);
+                doc.text("No subjects assigned yet.", 30, yPos);
+                yPos += 8;
+            }
+
+            yPos += 10; // Extra space between grades
+        });
+
+        doc.save(`${program.name.replace(/\s+/g, '_')}_Syllabus.pdf`);
+        showSuccess("Syllabus PDF Downloaded");
+    };
+
     // 1. Loading
     if (loading) return <Loader />;
 
@@ -87,19 +188,56 @@ const ViewProgram = () => {
         );
     }
 
-    // --- DYNAMIC GRADE LOGIC (இதுதான் முக்கியம்!) ---
-    // "7 Years" -> 7, "3 Years" -> 3 என மாற்றுகிறது
+    // --- DYNAMIC GRADE LOGIC ---
+    // "7 Years" -> 7, "3 Years" -> 3 
     const durationNum = parseInt(program.duration) || 1;
-
-    // அதற்கேற்ப Grade லிஸ்டை உருவாக்குகிறது
+    // Generate Grade List
     const availableYears = Array.from({ length: durationNum }, (_, i) => `Grade ${i + 1}`);
-
     // Filter Subjects based on selected Grade
     const currentSubjects = subjects.filter(s => s.year === selectedYear);
 
     return (
-        <div className="flex min-h-screen bg-[#f3f4f6] font-sans text-slate-800">
+        <div className="flex min-h-screen bg-[#f3f4f6] font-sans text-slate-800 relative">
             <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
+
+            {/* Success Toast Notification */}
+            {successMsg && (
+                <div className="fixed top-24 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-full shadow-lg z-50 animate-in fade-in slide-in-from-top-5 flex items-center gap-2">
+                    <Check size={20} className="text-white" />
+                    <span className="font-bold">{successMsg}</span>
+                </div>
+            )}
+
+            {/* Custom Delete Modal */}
+            {deleteModal.isOpen && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden scale-100 animate-in zoom-in-95 duration-200">
+                        <div className="p-6 text-center">
+                            <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <AlertTriangle size={32} />
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">Delete Subject?</h3>
+                            <p className="text-gray-500 mb-6">
+                                Are you sure you want to delete <span className="font-bold text-gray-700">"{deleteModal.subjectName}"</span>? This action cannot be undone.
+                            </p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setDeleteModal({ isOpen: false, subjectId: null })}
+                                    className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleDeleteSubject}
+                                    className="flex-1 px-4 py-2.5 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-colors shadow-red-200"
+                                >
+                                    Yes, Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "md:ml-64" : "md:ml-20"} ml-0`}>
 
@@ -130,7 +268,10 @@ const ViewProgram = () => {
                                     </div>
                                 </div>
                             </div>
-                            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm flex items-center gap-2 shadow-sm transition-colors">
+                            <button
+                                onClick={handleDownloadSyllabus}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm flex items-center gap-2 shadow-sm transition-colors"
+                            >
                                 <Download size={16} /> Download Syllabus
                             </button>
                         </div>
@@ -251,6 +392,27 @@ const ViewProgram = () => {
                                                             <p className="text-xs text-gray-500">{selectedYear} - Core Module</p>
                                                         </div>
                                                     </div>
+
+                                                    {/* EDIT & DELETE ACTIONS (Now Functional) */}
+                                                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <button
+                                                            onClick={() => {
+                                                                setEditingSubject(sub);
+                                                                setShowSubjectModal(true);
+                                                            }}
+                                                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                            title="Edit Subject"
+                                                        >
+                                                            <Edit2 size={16} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setDeleteModal({ isOpen: true, subjectId: sub.id, subjectName: sub.name })}
+                                                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                            title="Delete Subject"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>
@@ -287,13 +449,16 @@ const ViewProgram = () => {
 
                     </div>
                 </main>
+                {/* SUBJECT MODAL */}
                 <SubjectModal
                     isOpen={showSubjectModal}
                     onClose={() => setShowSubjectModal(false)}
                     programs={program ? [program] : []}
+                    teachers={teachers}  // <--- இதை புதிதாக சேர்க்கவும்! (Add this line)
                     initialData={editingSubject}
                     isEditing={!!editingSubject}
                     onSave={async (data) => {
+                        // ... (மீதமுள்ள பழைய Save Code அப்படியே இருக்கட்டும்)
                         try {
                             const method = editingSubject ? 'PUT' : 'POST';
                             const url = editingSubject
@@ -305,14 +470,14 @@ const ViewProgram = () => {
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
                                     ...data,
-                                    programId: program.id // Ensure Program ID is sent
+                                    programId: program.id
                                 })
                             });
 
                             if (response.ok) {
-                                alert(editingSubject ? "Subject Updated!" : "Subject Added!");
                                 setShowSubjectModal(false);
-                                window.location.reload(); // Reload to see changes
+                                showSuccess(editingSubject ? "Subject Updated Successfully" : "Subject Added Successfully");
+                                fetchData();
                             } else {
                                 alert("Failed to save subject");
                             }

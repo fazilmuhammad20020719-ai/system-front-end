@@ -69,7 +69,7 @@ const StudentGrid = ({ students, cardSize, currentPage, totalPages, onPageChange
                                         Batch {student.session}
                                     </span>
                                     <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-orange-50 border border-orange-100 text-[#EB8A33]">
-                                        {student.currentYear}
+                                        {student.year}
                                     </span>
                                 </div>
                             </div>

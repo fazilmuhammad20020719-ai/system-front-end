@@ -189,4 +189,4 @@ const TabItem = ({ icon: Icon, label, active, onClick }) => (
     </button>
 );
 
-export default ViewStudent;
+export default EditStudent;

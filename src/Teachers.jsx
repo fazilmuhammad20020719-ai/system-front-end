@@ -19,7 +19,8 @@ const Teachers = () => {
     // -- FILTERS STATE --
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedProgram, setSelectedProgram] = useState("All");
-    const [selectedSubject, setSelectedSubject] = useState("All");
+    // Subject-க்கு பதில் Category State
+    const [selectedCategory, setSelectedCategory] = useState("All");
     const [selectedStatus, setSelectedStatus] = useState("All");
 
     // -- DATA STATE --
@@ -37,7 +38,8 @@ const Teachers = () => {
                 const transformedData = data.map(t => ({
                     ...t,
                     program: t.program_name || t.program_id, // Use name if available
-                    empid: t.emp_id // Map emp_id to empid
+                    empid: t.emp_id, // Map emp_id to empid
+                    category: t.teacher_category // இதை புதிதாகச் சேர்க்கவும்
                 }));
                 setTeachers(transformedData);
             }
@@ -90,17 +92,27 @@ const Teachers = () => {
 
             // Program matching: Select 'All' or match exact string
             const matchesProgram = selectedProgram === "All" || tProgram === selectedProgram;
-            const matchesSubject = selectedSubject === "All" || teacher.subject === selectedSubject;
+            // Category Filter Logic
+            let matchesCategory = true;
+            if (selectedCategory !== "All") {
+                if (selectedCategory === 'Sharia') {
+                    matchesCategory = (teacher.category === 'Sharia' || teacher.category === 'Both');
+                } else if (selectedCategory === 'Academic') {
+                    matchesCategory = (teacher.category === 'Academic' || teacher.category === 'Both');
+                } else {
+                    matchesCategory = teacher.category === selectedCategory;
+                }
+            }
             const matchesStatus = selectedStatus === "All" || teacher.status === selectedStatus;
 
-            return matchesSearch && matchesProgram && matchesSubject && matchesStatus;
+            return matchesSearch && matchesProgram && matchesCategory && matchesStatus;
         });
-    }, [teachers, searchTerm, selectedProgram, selectedSubject, selectedStatus]);
+    }, [teachers, searchTerm, selectedProgram, selectedCategory, selectedStatus]);
 
     const clearFilters = () => {
         setSearchTerm("");
         setSelectedProgram("All");
-        setSelectedSubject("All");
+        setSelectedCategory("All");
         setSelectedStatus("All");
     };
 
@@ -124,7 +136,8 @@ const Teachers = () => {
                     <TeachersFilters
                         searchTerm={searchTerm} setSearchTerm={setSearchTerm}
                         selectedProgram={selectedProgram} setSelectedProgram={setSelectedProgram}
-                        selectedSubject={selectedSubject} setSelectedSubject={setSelectedSubject}
+                        selectedCategory={selectedCategory}
+                        setSelectedCategory={setSelectedCategory}
                         selectedStatus={selectedStatus} setSelectedStatus={setSelectedStatus}
                         viewMode={viewMode} setViewMode={setViewMode}
                         clearFilters={clearFilters}

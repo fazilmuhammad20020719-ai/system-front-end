@@ -3,7 +3,7 @@ import { Search, Filter, X, List, LayoutGrid } from 'lucide-react';
 const TeachersFilters = ({
     searchTerm, setSearchTerm,
     selectedProgram, setSelectedProgram,
-    selectedSubject, setSelectedSubject,
+    selectedCategory, setSelectedCategory,
     selectedStatus, setSelectedStatus,
     viewMode, setViewMode,
     clearFilters, uniqueSubjects
@@ -42,15 +42,17 @@ const TeachersFilters = ({
                             <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
                         </div>
 
-                        {/* Subject Filter (Dynamic or Static) */}
+                        {/* Category Filter */}
                         <div className="relative min-w-[160px]">
                             <select
-                                value={selectedSubject}
-                                onChange={(e) => setSelectedSubject(e.target.value)}
+                                value={selectedCategory}
+                                onChange={(e) => setSelectedCategory(e.target.value)}
                                 className="w-full pl-4 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm appearance-none focus:outline-none focus:border-[#EB8A33] cursor-pointer text-gray-700"
                             >
-                                <option value="All">All Subjects</option>
-                                {uniqueSubjects.map(sub => <option key={sub} value={sub}>{sub}</option>)}
+                                <option value="All">All Categories</option>
+                                <option value="Sharia">Sharia</option>
+                                <option value="Academic">Academic</option>
+                                <option value="Both">Both</option>
                             </select>
                             <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
                         </div>
@@ -70,7 +72,7 @@ const TeachersFilters = ({
                             </select>
                             <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
                         </div>
-                        {(searchTerm || selectedProgram !== "All" || selectedSubject !== "All" || selectedStatus !== "All") && (
+                        {(searchTerm || selectedProgram !== "All" || selectedCategory !== "All" || selectedStatus !== "All") && (
                             <button onClick={clearFilters} className="px-3 py-2.5 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors" title="Clear Filters">
                                 <X size={18} />
                             </button>

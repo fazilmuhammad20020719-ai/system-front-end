@@ -21,6 +21,9 @@ const Teachers = () => {
     const [selectedProgram, setSelectedProgram] = useState("All");
     // Subject-க்கு பதில் Category State
     const [selectedCategory, setSelectedCategory] = useState("All");
+    const [selectedSubject, setSelectedSubject] = useState("All"); // புதிய Subject Filter
+    const [programs, setPrograms] = useState([]); // Programs List
+    const [subjects, setSubjects] = useState([]); // Subjects List
     const [selectedStatus, setSelectedStatus] = useState("All");
 
     // -- DATA STATE --
@@ -43,6 +46,14 @@ const Teachers = () => {
                 }));
                 setTeachers(transformedData);
             }
+
+            // 2. Fetch Programs
+            const pRes = await fetch(`${API_URL}/api/programs`);
+            if (pRes.ok) setPrograms(await pRes.json());
+
+            // 3. Fetch Subjects
+            const sRes = await fetch(`${API_URL}/api/subjects`);
+            if (sRes.ok) setSubjects(await sRes.json());
         } catch (err) {
             console.error("Error fetching teachers:", err);
         } finally {
@@ -92,6 +103,7 @@ const Teachers = () => {
 
             // Program matching: Select 'All' or match exact string
             const matchesProgram = selectedProgram === "All" || tProgram === selectedProgram;
+            const matchesSubject = selectedSubject === "All" || teacher.subject === selectedSubject;
             // Category Filter Logic
             let matchesCategory = true;
             if (selectedCategory !== "All") {
@@ -105,13 +117,14 @@ const Teachers = () => {
             }
             const matchesStatus = selectedStatus === "All" || teacher.status === selectedStatus;
 
-            return matchesSearch && matchesProgram && matchesCategory && matchesStatus;
+            return matchesSearch && matchesProgram && matchesSubject && matchesCategory && matchesStatus;
         });
-    }, [teachers, searchTerm, selectedProgram, selectedCategory, selectedStatus]);
+    }, [teachers, searchTerm, selectedProgram, selectedSubject, selectedCategory, selectedStatus]);
 
     const clearFilters = () => {
         setSearchTerm("");
         setSelectedProgram("All");
+        setSelectedSubject("All");
         setSelectedCategory("All");
         setSelectedStatus("All");
     };
@@ -136,6 +149,12 @@ const Teachers = () => {
                     <TeachersFilters
                         searchTerm={searchTerm} setSearchTerm={setSearchTerm}
                         selectedProgram={selectedProgram} setSelectedProgram={setSelectedProgram}
+                        programs={programs}
+
+                        // Subjects List & State அனுப்புகிறோம்
+                        selectedSubject={selectedSubject} setSelectedSubject={setSelectedSubject}
+                        subjects={subjects}
+
                         selectedCategory={selectedCategory}
                         setSelectedCategory={setSelectedCategory}
                         selectedStatus={selectedStatus} setSelectedStatus={setSelectedStatus}

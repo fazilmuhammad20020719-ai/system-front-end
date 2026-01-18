@@ -2,12 +2,20 @@ import { Search, Filter, X, List, LayoutGrid } from 'lucide-react';
 
 const TeachersFilters = ({
     searchTerm, setSearchTerm,
-    selectedProgram, setSelectedProgram,
+    selectedProgram, setSelectedProgram, programs = [],
+    selectedSubject, setSelectedSubject, subjects = [],
     selectedCategory, setSelectedCategory,
     selectedStatus, setSelectedStatus,
     viewMode, setViewMode,
-    clearFilters, uniqueSubjects
+    clearFilters
 }) => {
+    // Dynamic Filter Logic (இதை Return-க்கு மேலே சேர்க்கவும்)
+    const filteredSubjects = selectedProgram === "All"
+        ? subjects
+        : subjects.filter(sub => {
+            const progObj = programs.find(p => p.name === selectedProgram);
+            return progObj && sub.program_id === progObj.id;
+        });
     return (
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6">
             <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
@@ -27,18 +35,37 @@ const TeachersFilters = ({
 
                     {/* Filters */}
                     <div className="flex gap-3 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
-                        {/* Program Filter */}
-                        <div className="relative min-w-[160px]">
+                        {/* Program Filter (Dynamic) */}
+                        <div className="relative min-w-[150px]">
                             <select
                                 value={selectedProgram}
-                                onChange={(e) => setSelectedProgram(e.target.value)}
+                                onChange={(e) => {
+                                    setSelectedProgram(e.target.value);
+                                    setSelectedSubject("All"); // Program மாறினால் Subject Reset
+                                }}
                                 className="w-full pl-4 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm appearance-none focus:outline-none focus:border-[#EB8A33] cursor-pointer text-gray-700"
                             >
                                 <option value="All">All Programs</option>
-                                <option value="Hifzul Quran">Hifzul Quran</option>
-                                <option value="Al-Alim (Boys)">Al-Alim (Boys)</option>
-                                <option value="Al-Alimah (Girls)">Al-Alimah (Girls)</option>
+                                {programs.map(prog => (
+                                    <option key={prog.id} value={prog.name}>{prog.name}</option>
+                                ))}
                             </select>
+                            <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
+                        </div>
+
+                        {/* Subject Filter (Dynamic) */}
+                        <div className="relative min-w-[150px]">
+                            <select
+                                value={selectedSubject}
+                                onChange={(e) => setSelectedSubject(e.target.value)}
+                                className="w-full pl-4 pr-8 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm appearance-none focus:outline-none focus:border-[#EB8A33] cursor-pointer text-gray-700"
+                            >
+                                <option value="All">All Subjects</option>
+                                {filteredSubjects.map(sub => (
+                                    <option key={sub.id} value={sub.name}>{sub.name}</option>
+                                ))}
+                            </select>
+                            {/* Book Icon requires import { BookOpen } from 'lucide-react' */}
                             <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
                         </div>
 
@@ -72,7 +99,7 @@ const TeachersFilters = ({
                             </select>
                             <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
                         </div>
-                        {(searchTerm || selectedProgram !== "All" || selectedCategory !== "All" || selectedStatus !== "All") && (
+                        {(searchTerm || selectedProgram !== "All" || selectedSubject !== "All" || selectedCategory !== "All" || selectedStatus !== "All") && (
                             <button onClick={clearFilters} className="px-3 py-2.5 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors" title="Clear Filters">
                                 <X size={18} />
                             </button>

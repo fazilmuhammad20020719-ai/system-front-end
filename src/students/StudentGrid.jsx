@@ -1,5 +1,6 @@
 import { Eye, Edit, Trash2, GraduationCap, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { API_URL } from '../config';
 import Pagination from './Pagination';
 
 const StudentGrid = ({ students, cardSize, currentPage, totalPages, onPageChange, onDelete }) => {
@@ -25,8 +26,18 @@ const StudentGrid = ({ students, cardSize, currentPage, totalPages, onPageChange
                         {/* Card Header */}
                         <div className="flex justify-between items-start mb-4">
                             <div className="flex items-center gap-3">
-                                <div className={`rounded-full bg-orange-50 text-[#EB8A33] border border-orange-100 flex items-center justify-center font-bold uppercase ${cardSize === 'large' ? 'w-12 h-12 text-lg' : 'w-10 h-10 text-sm'}`}>
-                                    {student.name.charAt(0)}
+                                <div className={`relative rounded-full overflow-hidden bg-orange-50 border border-orange-100 flex-shrink-0 ${cardSize === 'large' ? 'w-12 h-12' : 'w-10 h-10'}`}>
+                                    {student.photo_url ? (
+                                        <img
+                                            src={`${API_URL}${student.photo_url}`}
+                                            alt={student.name}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                                        />
+                                    ) : null}
+                                    <div className={`absolute inset-0 flex items-center justify-center font-bold uppercase text-[#EB8A33] ${student.photo_url ? 'hidden' : 'flex'} ${cardSize === 'large' ? 'text-lg' : 'text-sm'}`}>
+                                        {student.name.charAt(0)}
+                                    </div>
                                 </div>
                                 <div>
                                     <h3 className={`font-bold text-gray-800 line-clamp-1 group-hover:text-[#EB8A33] transition-colors ${cardSize === 'large' ? 'text-base' : 'text-sm'}`}>{student.name}</h3>

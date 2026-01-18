@@ -1,7 +1,10 @@
-import { Briefcase, GraduationCap, Building } from 'lucide-react';
+import { Briefcase, GraduationCap, Building, BookOpen } from 'lucide-react';
 import { InputField, SelectField, TextAreaField } from '../add-student/FormComponents';
 
-const TeacherProfessionalInfo = ({ formData, handleChange }) => {
+const TeacherProfessionalInfo = ({ formData, handleChange, programs = [] }) => {
+    // Map programs to simple string array for SelectField, or create custom select
+    const programOptions = programs.map(p => p.name);
+
     return (
         <div className="space-y-4">
             {/* Education Details from Form */}
@@ -27,8 +30,28 @@ const TeacherProfessionalInfo = ({ formData, handleChange }) => {
                     <SelectField label="Teaching Category" name="teachingCategory" value={formData.teachingCategory} onChange={handleChange} options={['Sharia', 'Academic/School', 'Both']} />
                     <SelectField label="Appointment Type" name="appointmentType" value={formData.appointmentType} onChange={handleChange} options={['Full Time', 'Part Time', 'Visiting']} />
 
+                    <div className="flex flex-col gap-1">
+                        <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                            <BookOpen size={16} className="text-[#EB8A33]" /> Program
+                        </label>
+                        <select
+                            name="program"
+                            value={formData.program}
+                            onChange={handleChange}
+                            className="w-full p-2.5 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all text-gray-700 text-sm"
+                        >
+                            <option value="">Select Program</option>
+                            {programs.map((prog) => (
+                                <option key={prog.id} value={prog.name}>
+                                    {prog.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
                     <InputField label="Employee ID" name="employeeId" placeholder="EMP-001" value={formData.employeeId} onChange={handleChange} />
                     <InputField label="Designation" name="designation" value={formData.designation} onChange={handleChange} />
+                    <InputField label="Department" name="department" value={formData.department} onChange={handleChange} />
                     <InputField label="Joining Date" name="joiningDate" type="date" value={formData.joiningDate} onChange={handleChange} />
 
                     <div className="md:col-span-2 lg:col-span-3">

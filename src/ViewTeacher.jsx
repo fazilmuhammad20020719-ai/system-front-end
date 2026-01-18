@@ -5,6 +5,7 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Loader from './components/Loader';
+import { API_URL } from './config';
 
 // Import Components
 import TeacherProfileHeader from './teacher-view/TeacherProfileHeader';
@@ -22,43 +23,62 @@ const ViewTeacher = () => {
     const [activeTab, setActiveTab] = useState('overview');
     const [teacher, setTeacher] = useState(null);
 
-    // Mock Data Fetching (Replaced with Static Placeholder until API is ready)
+    // Fetch Real Data
     useEffect(() => {
-        // Placeholder Data
-        const dummyData = {
-            id: id || 1,
-            firstName: "Loading",
-            lastName: "Teacher",
-            fullName: "Loading Teacher Profile...",
-            image: null,
-            status: "Active",
-            dob: "1900-01-01",
-            gender: "Male",
-            nic: "000000000V",
-            email: "loading@example.com",
-            phone: "+00 00 000 0000",
-            address: "Loading Address",
-            googleMapLink: "https://maps.google.com",
+        const fetchTeacher = async () => {
+            try {
+                const response = await fetch(`${API_URL}/api/teachers/${id}`);
+                if (response.ok) {
+                    const data = await response.json();
 
-            // Professional
-            employeeId: "EMP-000",
-            department: "Loading",
-            designation: "Loading",
-            qualification: "Loading",
-            experience: "0 Years",
-            joiningDate: "2020-01-01",
-            role: "Teacher",
+                    const documents = [
+                        data.cv_url ? { name: 'CV / Resume', url: `${API_URL}${data.cv_url}`, date: 'Uploaded', size: '-' } : null,
+                        data.certificates_url ? { name: 'Certificates', url: `${API_URL}${data.certificates_url}`, date: 'Uploaded', size: '-' } : null,
+                        data.nic_copy_url ? { name: 'NIC Copy', url: `${API_URL}${data.nic_copy_url}`, date: 'Uploaded', size: '-' } : null
+                    ].filter(Boolean);
 
-            // Financial
-            salary: "0.00",
+                    const mappedTeacher = {
+                        id: data.id,
+                        firstName: data.name, // Using full name as firstName
+                        lastName: "",
+                        fullName: data.name,
+                        image: data.photo_url ? `${API_URL}${data.photo_url}` : null,
+                        status: data.status,
+                        dob: data.dob,
+                        gender: data.gender,
+                        nic: data.nic,
+                        email: data.email,
+                        phone: data.phone,
+                        address: data.address,
+                        googleMapLink: data.google_map_link,
 
-            // Arrays for Sub-Components
-            documents: [],
-            schedule: [],
-            attendanceStats: { total: 0, present: 0, absent: 0 },
-            payroll: []
+                        // Professional
+                        employeeId: data.emp_id,
+                        department: data.department,
+                        designation: data.designation,
+                        qualification: data.qualification,
+                        experience: data.previous_experience,
+                        joiningDate: data.joining_date,
+                        role: data.designation, // or type
+
+                        // Financial
+                        salary: data.basic_salary,
+
+                        // Arrays
+                        documents: documents,
+                        schedule: [], // Not implemented yet
+                        attendanceStats: { total: 0, present: 0, absent: 0 }, // Not implemented yet
+                        payroll: [] // Not implemented yet
+                    };
+                    setTeacher(mappedTeacher);
+                } else {
+                    console.error("Failed to fetch teacher");
+                }
+            } catch (err) {
+                console.error("Error fetching teacher:", err);
+            }
         };
-        setTeacher(dummyData);
+        fetchTeacher();
     }, [id]);
 
     if (!teacher) return <Loader />;

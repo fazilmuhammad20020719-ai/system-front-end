@@ -27,23 +27,49 @@ const Teachers = () => {
     const [loading, setLoading] = useState(true);
 
     // FETCH DATA
-    useEffect(() => {
-        const fetchTeachers = async () => {
-            setLoading(true);
-            try {
-                const response = await fetch(`${API_URL}/api/teachers`);
-                if (response.ok) {
-                    const data = await response.json();
-                    setTeachers(data);
-                }
-            } catch (err) {
-                console.error("Error fetching teachers:", err);
-            } finally {
-                setLoading(false);
+    const fetchTeachers = async () => {
+        setLoading(true);
+        try {
+            const response = await fetch(`${API_URL}/api/teachers`);
+            if (response.ok) {
+                const data = await response.json();
+                // Transform data for frontend compatibility
+                const transformedData = data.map(t => ({
+                    ...t,
+                    program: t.program_name || t.program_id, // Use name if available
+                    empid: t.emp_id // Map emp_id to empid
+                }));
+                setTeachers(transformedData);
             }
-        };
+        } catch (err) {
+            console.error("Error fetching teachers:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchTeachers();
     }, []);
+
+    const handleDelete = async (id) => {
+        if (!window.confirm("Are you sure you want to delete this teacher?")) return;
+
+        try {
+            const response = await fetch(`${API_URL}/api/teachers/${id}`, {
+                method: 'DELETE'
+            });
+            if (response.ok) {
+                alert("Teacher deleted successfully");
+                fetchTeachers(); // Refresh list
+            } else {
+                alert("Failed to delete teacher");
+            }
+        } catch (err) {
+            console.error("Error deleting teacher:", err);
+            alert("Error deleting teacher");
+        }
+    };
 
     // Derived Unique Subjects for Filter Dropdown
     const uniqueSubjects = useMemo(() => {
@@ -108,9 +134,9 @@ const Teachers = () => {
                     {/* CONTENT AREA */}
                     {filteredTeachers.length > 0 ? (
                         viewMode === 'list' ? (
-                            <TeacherList teachers={filteredTeachers} />
+                            <TeacherList teachers={filteredTeachers} onDelete={handleDelete} />
                         ) : (
-                            <TeacherGrid teachers={filteredTeachers} totalCount={teachers.length} />
+                            <TeacherGrid teachers={filteredTeachers} totalCount={teachers.length} onDelete={handleDelete} />
                         )
                     ) : (
                         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center text-gray-400 text-sm">

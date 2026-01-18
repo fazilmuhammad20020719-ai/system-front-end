@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Save, X, ChevronRight, Menu } from 'lucide-react';
 import Sidebar from './Sidebar';
+import { API_URL } from './config';
+import Loader from './components/Loader';
 
 // Import sub-components (Reusing from Add functionality)
 import TeacherPersonalInfo from './add-teacher/TeacherPersonalInfo';
@@ -59,33 +61,132 @@ const EditTeacher = () => {
         nicCopy: null
     });
 
-    // Simulate Fetching Data
+    const [programs, setPrograms] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    // Fetch Data
     useEffect(() => {
-        // Find teacher from mock data
-        const teacher = null; // Removed mocked TEACHERS_DATA lookup
+        const fetchData = async () => {
+            try {
+                // Fetch Programs
+                const progRes = await fetch(`${API_URL}/api/programs`);
+                if (progRes.ok) {
+                    setPrograms(await progRes.json());
+                }
 
-        if (teacher) {
-            // Pre-fill form with available mock data
-            // Note: In a real app, you would fetch full details from API. 
-            // Here we mix mock data w/ placeholders for missing fields.
-            setFormData(prev => ({
-                ...prev,
+                // Fetch Teacher Details
+                if (!id) return;
+                const response = await fetch(`${API_URL}/api/teachers/${id}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setFormData({
+                        // Map backend fields to frontend
+                        fullName: data.name || '',
+                        address: data.address || '',
+                        mapLink: data.google_map_link || '', // Assuming standard field naming
+                        dob: data.dob ? data.dob.split('T')[0] : '',
+                        nic: data.nic || '',
+                        phone: data.phone || '',
+                        whatsapp: data.whatsapp || '',
+                        maritalStatus: data.marital_status || 'Single',
+                        email: data.email || '',
+                        gender: data.gender || 'Male',
 
-            }));
-        }
-    }, [id]);
+                        eduQualification: data.qualification || '',
+                        degreeInstitute: data.degree_institute || '',
+                        gradYear: data.grad_year || '',
+                        teachingCategory: data.subject || 'Sharia',
+                        appointmentType: data.appointment_type || 'Full Time',
+                        previousExperience: data.previous_experience || '',
+
+                        employeeId: data.emp_id || '',
+                        designation: data.designation || '',
+                        department: data.department || '',
+                        program: data.program_name || '', // Use name for dropdown
+                        subject: data.subject || '',
+                        joiningDate: data.joining_date ? data.joining_date.split('T')[0] : '',
+                        status: data.status || 'Active',
+
+                        basicSalary: data.basic_salary || '',
+                        bankName: data.bank_name || '',
+                        accountNumber: data.account_number || '',
+
+                        // Allow file updates (null means no change)
+                        profilePhoto: null,
+                        cvFile: null,
+                        certificates: null,
+                        nicCopy: null
+                    });
+                } else {
+                    alert("Teacher not found");
+                    navigate('/teachers');
+                }
+            } catch (err) {
+                console.error("Error fetching data:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, [id, navigate]);
 
     const handleChange = (e) => {
         const { name, value, type, files } = e.target;
         setFormData({ ...formData, [name]: type === 'file' ? files[0] : value });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log("Updated Teacher Data:", formData);
-        alert("Teacher Record Updated Successfully!");
-        navigate('/teachers');
+        try {
+            const data = new FormData();
+            data.append('empId', formData.employeeId);
+            data.append('name', formData.fullName);
+            data.append('program', formData.program);
+            data.append('subject', formData.teachingCategory);
+            data.append('designation', formData.designation);
+            data.append('email', formData.email);
+            data.append('phone', formData.phone);
+            data.append('whatsapp', formData.whatsapp);
+            data.append('address', formData.address);
+            data.append('nic', formData.nic);
+            data.append('dob', formData.dob);
+            data.append('gender', formData.gender);
+            data.append('maritalStatus', formData.maritalStatus);
+            data.append('joiningDate', formData.joiningDate);
+            data.append('qualification', formData.eduQualification);
+            data.append('degreeInstitute', formData.degreeInstitute);
+            data.append('gradYear', formData.gradYear);
+            data.append('appointmentType', formData.appointmentType);
+            data.append('previousExperience', formData.previousExperience);
+            data.append('department', formData.department);
+            data.append('basicSalary', formData.basicSalary);
+            data.append('bankName', formData.bankName);
+            data.append('accountNumber', formData.accountNumber);
+            data.append('status', formData.status);
+
+            if (formData.profilePhoto) data.append('profilePhoto', formData.profilePhoto);
+            if (formData.cvFile) data.append('cvFile', formData.cvFile);
+            if (formData.certificates) data.append('certificates', formData.certificates);
+            if (formData.nicCopy) data.append('nicCopy', formData.nicCopy);
+
+            const response = await fetch(`${API_URL}/api/teachers/${id}`, {
+                method: 'PUT',
+                body: data
+            });
+
+            if (response.ok) {
+                alert("Teacher Record Updated Successfully!");
+                navigate('/teachers');
+            } else {
+                alert("Failed to update teacher.");
+            }
+        } catch (error) {
+            console.error("Error updating teacher:", error);
+            alert("Error updating teacher.");
+        }
     };
+
+    if (loading) return <Loader />;
 
     return (
         <div className="min-h-screen bg-[#F3F4F6] font-sans flex">
@@ -133,7 +234,7 @@ const EditTeacher = () => {
                     {/* Content */}
                     <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                         {activeTab === 'personal' && <TeacherPersonalInfo formData={formData} handleChange={handleChange} />}
-                        {activeTab === 'professional' && <TeacherProfessionalInfo formData={formData} handleChange={handleChange} />}
+                        {activeTab === 'professional' && <TeacherProfessionalInfo formData={formData} handleChange={handleChange} programs={programs} />}
                         {activeTab === 'financial' && <TeacherFinancialInfo formData={formData} handleChange={handleChange} />}
                         {activeTab === 'documents' && <TeacherUploads formData={formData} handleChange={handleChange} />}
                     </div>

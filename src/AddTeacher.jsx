@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Save, X, ChevronRight, Menu } from 'lucide-react';
+import { API_URL } from './config';
 import Sidebar from './Sidebar';
 
 // Import sub-components
@@ -51,19 +52,87 @@ const AddTeacher = () => {
         profilePhoto: null,
         cvFile: null,
         certificates: null,
-        nicCopy: null
+        nicCopy: null,
+
+        // --- New Field ---
+        program: ''
     });
+
+    const [programs, setPrograms] = useState([]); // State for programs
+
+    useEffect(() => {
+        // Fetch programs for dropdown
+        const fetchPrograms = async () => {
+            try {
+                const response = await fetch(`${API_URL}/api/programs`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setPrograms(data);
+                }
+            } catch (error) {
+                console.error("Error fetching programs:", error);
+            }
+        };
+        fetchPrograms();
+    }, []);
 
     const handleChange = (e) => {
         const { name, value, type, files } = e.target;
         setFormData({ ...formData, [name]: type === 'file' ? files[0] : value });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log("Teacher Data Submitted:", formData);
-        alert("Teacher Record Saved!");
-        navigate('/teachers');
+        try {
+            // Prepare data - map frontend fields to backend expected fields if needed
+            // Currently backend expects: empId, name, program, subject, role, email, phone, address, nic, dob, joiningDate, designation, qualification
+            // Frontend: fullName -> name, program (needs logic)
+
+            const data = new FormData();
+            data.append('empId', formData.employeeId);
+            data.append('name', formData.fullName);
+            data.append('program', formData.program);
+            data.append('subject', formData.teachingCategory); // using teachingCategory as subject
+            data.append('designation', formData.designation);
+            data.append('email', formData.email);
+            data.append('phone', formData.phone);
+            data.append('whatsapp', formData.whatsapp);
+            data.append('address', formData.address);
+            data.append('nic', formData.nic);
+            data.append('dob', formData.dob);
+            data.append('gender', formData.gender);
+            data.append('maritalStatus', formData.maritalStatus);
+            data.append('joiningDate', formData.joiningDate);
+            data.append('qualification', formData.eduQualification);
+            data.append('degreeInstitute', formData.degreeInstitute);
+            data.append('gradYear', formData.gradYear);
+            data.append('appointmentType', formData.appointmentType);
+            data.append('previousExperience', formData.previousExperience);
+            data.append('department', formData.department);
+            data.append('basicSalary', formData.basicSalary);
+            data.append('bankName', formData.bankName);
+            data.append('accountNumber', formData.accountNumber);
+            // Append Files
+            if (formData.profilePhoto) data.append('profilePhoto', formData.profilePhoto);
+            if (formData.cvFile) data.append('cvFile', formData.cvFile);
+            if (formData.certificates) data.append('certificates', formData.certificates);
+            if (formData.nicCopy) data.append('nicCopy', formData.nicCopy);
+
+            const response = await fetch(`${API_URL}/api/teachers`, {
+                method: 'POST',
+                body: data
+            });
+
+            if (response.ok) {
+                alert("Teacher Record Saved Successfully!");
+                navigate('/teachers');
+            } else {
+                alert("Failed to save teacher.");
+            }
+        } catch (error) {
+            console.error("Error submitting teacher:", error);
+            alert("Error saving teacher.");
+        }
     };
 
     return (
@@ -111,7 +180,7 @@ const AddTeacher = () => {
                     {/* Content */}
                     <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                         {activeTab === 'personal' && <TeacherPersonalInfo formData={formData} handleChange={handleChange} />}
-                        {activeTab === 'professional' && <TeacherProfessionalInfo formData={formData} handleChange={handleChange} />}
+                        {activeTab === 'professional' && <TeacherProfessionalInfo formData={formData} handleChange={handleChange} programs={programs} />}
                         {activeTab === 'financial' && <TeacherFinancialInfo formData={formData} handleChange={handleChange} />}
                         {activeTab === 'documents' && <TeacherUploads formData={formData} handleChange={handleChange} />}
                     </div>

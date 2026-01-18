@@ -76,9 +76,8 @@ const ViewStudent = () => {
                     // Personal - Map fields from DB columns
                     firstName: sData.name ? sData.name.split(' ')[0] : '',
                     lastName: sData.name ? sData.name.split(' ').slice(1).join(' ') : '',
-                    // Force localhost for images if running locally, otherwise use API_URL
                     image: sData.photo_url
-                        ? (window.location.hostname === 'localhost' ? `http://localhost:5000${sData.photo_url}` : `${API_URL}${sData.photo_url}`)
+                        ? `${API_URL}${sData.photo_url}`
                         : null,
                     dob: sData.dob ? sData.dob.split('T')[0] : 'N/A',
                     gender: sData.gender || 'Male',

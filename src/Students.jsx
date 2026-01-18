@@ -40,7 +40,7 @@ const Students = () => {
     const uniqueBatchYears = [...new Set(filteredForDropdowns.map(s => s.session).filter(Boolean))]
         .sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
 
-    const uniqueAcademicYears = [...new Set(filteredForDropdowns.map(s => s.year).filter(Boolean))]
+    const uniqueAcademicYears = [...new Set(filteredForDropdowns.map(s => s.currentYear).filter(Boolean))]
         .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
 
     // Reset Grade filter when Program changes
@@ -84,7 +84,7 @@ const Students = () => {
     const filteredStudents = students.filter(student => {
         const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             String(student.id).includes(searchTerm);
-        const matchesYear = selectedYear ? student.year === selectedYear : true;
+        const matchesYear = selectedYear ? student.currentYear === selectedYear : true;
         const matchesBatch = selectedBatch ? student.session === selectedBatch : true;
         const matchesProgram = selectedProgram ? student.program === selectedProgram : true;
         const matchesStatus = selectedStatus ? student.status === selectedStatus : true;

@@ -1,5 +1,6 @@
 import { Mail, Phone, Eye, Pencil, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { API_URL } from '../config';
 
 const TeacherGrid = ({ teachers, totalCount, onDelete }) => {
     const navigate = useNavigate();
@@ -11,8 +12,17 @@ const TeacherGrid = ({ teachers, totalCount, onDelete }) => {
                     <div key={teacher.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow flex flex-col">
                         <div className="flex justify-between items-start mb-4">
                             <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 rounded-full bg-orange-100 text-[#EB8A33] flex items-center justify-center text-lg font-bold">
-                                    {teacher.name.charAt(0)}
+                                <div className="w-12 h-12 rounded-full bg-orange-100 text-[#EB8A33] flex items-center justify-center text-lg font-bold overflow-hidden border border-gray-100">
+                                    {teacher.photo_url ? (
+                                        <img
+                                            src={`${API_URL}${teacher.photo_url}`}
+                                            alt={teacher.name}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.innerText = teacher.name.charAt(0) }}
+                                        />
+                                    ) : (
+                                        teacher.name.charAt(0)
+                                    )}
                                 </div>
                                 <div>
                                     <h3 className="font-bold text-gray-800 line-clamp-1">{teacher.name}</h3>

@@ -1,5 +1,6 @@
 import { Mail, Phone, Eye, Pencil, Trash2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { API_URL } from '../config';
 
 const TeacherList = ({ teachers, onDelete }) => {
     const navigate = useNavigate();
@@ -21,8 +22,17 @@ const TeacherList = ({ teachers, onDelete }) => {
                         <tr key={teacher.id} className="hover:bg-orange-50/30 transition-colors group">
                             <td className="p-5">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-[#EB8A33] font-bold text-sm">
-                                        {teacher.name.charAt(0)}
+                                    <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-[#EB8A33] font-bold text-sm overflow-hidden border border-gray-100">
+                                        {teacher.photo_url ? (
+                                            <img
+                                                src={`${API_URL}${teacher.photo_url}`}
+                                                alt={teacher.name}
+                                                className="w-full h-full object-cover"
+                                                onError={(e) => { e.target.style.display = 'none'; e.target.parentElement.innerText = teacher.name.charAt(0) }}
+                                            />
+                                        ) : (
+                                            teacher.name.charAt(0)
+                                        )}
                                     </div>
                                     <div>
                                         <p className="font-bold text-gray-800 text-sm">{teacher.name}</p>

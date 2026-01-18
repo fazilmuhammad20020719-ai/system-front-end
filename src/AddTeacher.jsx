@@ -33,7 +33,7 @@ const AddTeacher = () => {
         eduQualification: '',
         degreeInstitute: '',
         gradYear: '',
-        teachingCategory: 'Sharia',
+        teacherCategory: 'Sharia',
         appointmentType: 'Full Time',
         previousExperience: '',
 
@@ -92,7 +92,7 @@ const AddTeacher = () => {
             data.append('empId', formData.employeeId);
             data.append('name', formData.fullName);
             data.append('program', formData.program);
-            data.append('subject', formData.teachingCategory); // using teachingCategory as subject
+            data.append('teacherCategory', formData.teacherCategory);
             data.append('designation', formData.designation);
             data.append('email', formData.email);
             data.append('phone', formData.phone);

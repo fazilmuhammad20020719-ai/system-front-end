@@ -36,7 +36,7 @@ const EditTeacher = () => {
         eduQualification: '',
         degreeInstitute: '',
         gradYear: '',
-        teachingCategory: 'Sharia',
+        teacherCategory: 'Sharia',
         appointmentType: 'Full Time',
         previousExperience: '',
 
@@ -95,7 +95,7 @@ const EditTeacher = () => {
                         eduQualification: data.qualification || '',
                         degreeInstitute: data.degree_institute || '',
                         gradYear: data.grad_year || '',
-                        teachingCategory: data.subject || 'Sharia',
+                        teacherCategory: data.teacher_category || data.subject || 'Sharia',
                         appointmentType: data.appointment_type || 'Full Time',
                         previousExperience: data.previous_experience || '',
 
@@ -142,7 +142,7 @@ const EditTeacher = () => {
             data.append('empId', formData.employeeId);
             data.append('name', formData.fullName);
             data.append('program', formData.program);
-            data.append('subject', formData.teachingCategory);
+            data.append('teacherCategory', formData.teacherCategory);
             data.append('designation', formData.designation);
             data.append('email', formData.email);
             data.append('phone', formData.phone);

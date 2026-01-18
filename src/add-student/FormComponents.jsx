@@ -39,30 +39,22 @@ export const SelectField = ({ label, name, value, onChange, options, placeholder
     </div>
 );
 
-export const FileUploadCard = ({ label, name, file, onChange, height = "h-32", preview }) => {
-    // Determine image source: File object -> createObjectURL, String (URL) -> use directly
-    const imageSrc = file instanceof File ? URL.createObjectURL(file) : (preview || file);
-
-    return (
-        <div className="p-3 border border-gray-200 rounded-lg hover:border-green-500 transition-colors bg-white shadow-sm">
-            <p className="font-bold text-gray-700 mb-2 text-xs uppercase">{label}</p>
-            <div className={`${height} bg-gray-50 rounded-md border-2 border-dashed border-gray-300 flex flex-col items-center justify-center relative overflow-hidden group hover:bg-green-50/30 transition-colors`}>
-                {imageSrc ? (
-                    <img src={imageSrc} className="w-full h-full object-contain" alt="preview" />
-                ) : (
-                    <>
-                        <ImageIcon className="text-gray-300 mb-1 group-hover:text-green-600 transition-colors" size={24} />
-                        <span className="text-[10px] text-gray-400 font-medium group-hover:text-green-600">Click to upload</span>
-                    </>
-                )}
-                <input type="file" name={name} onChange={onChange} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" />
-            </div>
+export const FileUploadCard = ({ label, name, file, onChange, height = "h-32" }) => (
+    <div className="p-3 border border-gray-200 rounded-lg hover:border-green-500 transition-colors bg-white shadow-sm">
+        <p className="font-bold text-gray-700 mb-2 text-xs uppercase">{label}</p>
+        <div className={`${height} bg-gray-50 rounded-md border-2 border-dashed border-gray-300 flex flex-col items-center justify-center relative overflow-hidden group hover:bg-green-50/30 transition-colors`}>
+            {file ? (
+                <img src={URL.createObjectURL(file)} className="w-full h-full object-contain" alt="preview" />
+            ) : (
+                <>
+                    <ImageIcon className="text-gray-300 mb-1 group-hover:text-green-600 transition-colors" size={24} />
+                    <span className="text-[10px] text-gray-400 font-medium group-hover:text-green-600">Click to upload</span>
+                </>
+            )}
+            <input type="file" name={name} onChange={onChange} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" />
         </div>
-    );
-};
-
-// Create Alias for FileUploadField to match usage in StudentPersonalInfo
-export const FileUploadField = FileUploadCard;
+    </div>
+);
 
 export const TextAreaField = ({ label, name, value, onChange, placeholder, rows = 4, required = false }) => (
     <div className="space-y-1 w-full">

@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Edit, Trash2, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Eye, Edit, Trash2, CheckCircle, X, AlertTriangle } from 'lucide-react';
 import { API_URL } from '../config'; // API_URL முக்கியம்
 
 const StudentList = ({ students }) => {
     const navigate = useNavigate();
 
+    // STATES FOR DELETE MODAL
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [studentToDelete, setStudentToDelete] = useState(null);
     const [successMsg, setSuccessMsg] = useState("");
@@ -32,7 +33,7 @@ const StudentList = ({ students }) => {
             <td className="py-3 px-4">
                 <div className="flex items-center gap-3">
 
-                    {/* --- PHOTO LOGIC IN LIST --- */}
+                    {/* PHOTO LOGIC IN LIST */}
                     <div className="w-9 h-9 relative rounded-full overflow-hidden bg-blue-50 border border-blue-100 flex-shrink-0">
                         {student.photo_url ? (
                             <img
@@ -74,11 +75,13 @@ const StudentList = ({ students }) => {
 
     return (
         <>
+            {/* SUCCESS MSG */}
             {successMsg && (
-                <div className="fixed top-5 right-5 z-50 bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-xl shadow-lg flex items-center gap-3">
+                <div className="fixed top-5 right-5 z-50 bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-xl shadow-lg flex items-center gap-3 animate-bounce-in">
                     <CheckCircle size={24} /> <div><h4 className="font-bold">Success</h4><p className="text-sm">{successMsg}</p></div>
                 </div>
             )}
+
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
@@ -98,15 +101,19 @@ const StudentList = ({ students }) => {
                     </table>
                 </div>
             </div>
+
+            {/* DELETE MODAL */}
             {showDeleteConfirm && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center">
-                        <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mb-4 mx-auto text-red-600"><AlertTriangle size={28} /></div>
-                        <h3 className="text-xl font-bold text-gray-800 mb-2">Are you sure?</h3>
-                        <p className="text-gray-500 mb-6 text-sm">Do you really want to delete <b>{studentToDelete?.name}</b>?</p>
-                        <div className="flex gap-3">
-                            <button onClick={() => setShowDeleteConfirm(false)} className="flex-1 px-4 py-2 bg-gray-100 rounded-xl font-bold text-gray-700">Cancel</button>
-                            <button onClick={confirmDelete} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-xl font-bold">Delete</button>
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
+                        <div className="text-center">
+                            <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mb-4 mx-auto text-red-600"><AlertTriangle size={28} /></div>
+                            <h3 className="text-xl font-bold text-gray-800 mb-2">Are you sure?</h3>
+                            <p className="text-gray-500 mb-6 text-sm">Do you want to delete <b>{studentToDelete?.name}</b>?</p>
+                            <div className="flex gap-3">
+                                <button onClick={() => setShowDeleteConfirm(false)} className="flex-1 px-4 py-2 bg-gray-100 rounded-xl font-bold text-gray-700">Cancel</button>
+                                <button onClick={confirmDelete} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-xl font-bold">Delete</button>
+                            </div>
                         </div>
                     </div>
                 </div>

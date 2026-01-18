@@ -1,8 +1,6 @@
-import React from 'react';
 import { Eye, Edit, Trash2, GraduationCap, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Pagination from './Pagination';
-import { API_URL } from '../config'; // API_URL முக்கியம்
 
 const StudentGrid = ({ students, cardSize, currentPage, totalPages, onPageChange, onDelete }) => {
     const navigate = useNavigate();
@@ -24,34 +22,12 @@ const StudentGrid = ({ students, cardSize, currentPage, totalPages, onPageChange
                 }`}>
                 {students.map((student) => (
                     <div key={student.id} className={`bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-all flex flex-col group ${cardSize === 'large' ? 'p-5' : 'p-4'}`}>
-
-                        {/* HEADER PART */}
+                        {/* Card Header */}
                         <div className="flex justify-between items-start mb-4">
                             <div className="flex items-center gap-3">
-
-                                {/* --- PHOTO LOGIC (இங்கே மாற்றம் செய்யப்பட்டுள்ளது) --- */}
-                                <div className={`relative rounded-full overflow-hidden border border-gray-200 flex items-center justify-center bg-gray-50 ${cardSize === 'large' ? 'w-12 h-12' : 'w-10 h-10'}`}>
-
-                                    {/* 1. போட்டோ இருந்தால் அதை காட்டு */}
-                                    {student.photo_url ? (
-                                        <img
-                                            src={`${API_URL}${student.photo_url}`}
-                                            alt={student.name}
-                                            className="w-full h-full object-cover"
-                                            onError={(e) => {
-                                                // போட்டோ லோட் ஆகவில்லை என்றால், அதை மறைத்து எழுத்தைக் காட்டு
-                                                e.target.style.display = 'none';
-                                                e.target.nextSibling.style.display = 'flex';
-                                            }}
-                                        />
-                                    ) : null}
-
-                                    {/* 2. போட்டோ இல்லை என்றால் எழுத்தைக் காட்டு (Initial) */}
-                                    <div className={`absolute inset-0 flex items-center justify-center font-bold uppercase bg-orange-50 text-[#EB8A33] ${student.photo_url ? 'hidden' : 'flex'}`}>
-                                        {student.name.charAt(0)}
-                                    </div>
+                                <div className={`rounded-full bg-orange-50 text-[#EB8A33] border border-orange-100 flex items-center justify-center font-bold uppercase ${cardSize === 'large' ? 'w-12 h-12 text-lg' : 'w-10 h-10 text-sm'}`}>
+                                    {student.name.charAt(0)}
                                 </div>
-
                                 <div>
                                     <h3 className={`font-bold text-gray-800 line-clamp-1 group-hover:text-[#EB8A33] transition-colors ${cardSize === 'large' ? 'text-base' : 'text-sm'}`}>{student.name}</h3>
                                     <p className="text-[10px] text-gray-400 font-mono bg-gray-50 px-1.5 py-0.5 rounded w-fit mt-0.5">#{student.id}</p>
@@ -62,9 +38,10 @@ const StudentGrid = ({ students, cardSize, currentPage, totalPages, onPageChange
                             </span>
                         </div>
 
-                        {/* DETAILS PART */}
+                        {/* Card Details */}
                         <div className="space-y-3 flex-1 mb-4">
                             <div className={`bg-gray-50/80 rounded-lg border border-gray-100 ${cardSize === 'large' ? 'p-3' : 'p-2.5'}`}>
+                                {/* Program */}
                                 <div className="mb-2">
                                     <p className="text-[10px] text-gray-400 uppercase font-bold flex items-center gap-1">
                                         <GraduationCap size={10} /> Program
@@ -73,27 +50,47 @@ const StudentGrid = ({ students, cardSize, currentPage, totalPages, onPageChange
                                         {student.program}
                                     </p>
                                 </div>
+
+                                {/* Batch & Year Badges */}
                                 <div className="flex items-center gap-2">
                                     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-white border border-gray-200 text-gray-600 shadow-sm">
                                         <Calendar size={10} className="text-gray-400" />
                                         Batch {student.session}
                                     </span>
                                     <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-orange-50 border border-orange-100 text-[#EB8A33]">
-                                        {student.currentYear}
+                                        {student.year}
                                     </span>
                                 </div>
                             </div>
+
+                            {cardSize === 'large' && (
+                                <div className="px-1 space-y-1.5">
+                                    <div className="flex justify-between items-center text-xs">
+                                        <span className="text-gray-500">Guardian:</span>
+                                        <span className="font-medium text-gray-800 truncate max-w-[120px]">{student.guardian}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-xs">
+                                        <span className="text-gray-500">Contact:</span>
+                                        <span className="font-medium text-gray-800">{student.contact}</span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
-                        {/* ACTIONS PART */}
+                        {/* Card Footer */}
                         <div className={`grid grid-cols-3 gap-2 border-t border-gray-100 pt-3 mt-auto`}>
-                            <button onClick={() => navigate(`/view-student/${student.id}`)} className="flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold text-gray-500 bg-gray-50 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors">
+                            <button onClick={() => navigate(`/view-student/${student.id}`)} className="flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold text-gray-500 bg-gray-50 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors border border-transparent hover:border-blue-100">
                                 <Eye size={14} /> {cardSize === 'large' && 'View'}
                             </button>
-                            <button onClick={() => navigate(`/edit-student/${student.id}`)} className="flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold text-gray-500 bg-gray-50 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-colors">
+                            <button onClick={() => navigate(`/edit-student/${student.id}`)} className="flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold text-gray-500 bg-gray-50 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-colors border border-transparent hover:border-orange-100">
                                 <Edit size={14} /> {cardSize === 'large' && 'Edit'}
                             </button>
-                            <button onClick={() => onDelete(student)} className="flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold text-gray-500 bg-gray-50 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors">
+
+                            {/* DELETE BUTTON FIXED HERE */}
+                            <button
+                                onClick={() => onDelete(student)}
+                                className="flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold text-gray-500 bg-gray-50 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors border border-transparent hover:border-red-100"
+                            >
                                 <Trash2 size={14} /> {cardSize === 'large' && 'Del'}
                             </button>
                         </div>

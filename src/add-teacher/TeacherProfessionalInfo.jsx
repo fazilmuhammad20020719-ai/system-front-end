@@ -27,7 +27,7 @@ const TeacherProfessionalInfo = ({ formData, handleChange, programs = [] }) => {
                     <Briefcase className="text-[#EB8A33]" size={18} /> Employment Details
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <SelectField label="Teaching Category" name="teachingCategory" value={formData.teachingCategory} onChange={handleChange} options={['Sharia', 'Academic/School', 'Both']} />
+                    <SelectField label="Teaching Category" name="teacherCategory" value={formData.teacherCategory} onChange={handleChange} options={['Sharia', 'Academic', 'Both']} />
                     <SelectField label="Appointment Type" name="appointmentType" value={formData.appointmentType} onChange={handleChange} options={['Full Time', 'Part Time', 'Visiting']} />
 
                     <div className="flex flex-col gap-1">

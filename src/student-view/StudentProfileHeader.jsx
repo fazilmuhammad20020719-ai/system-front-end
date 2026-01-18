@@ -8,9 +8,17 @@ const StudentProfileHeader = ({ student }) => {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="flex items-center gap-6">
                 <div className="relative">
-                    <div className="w-24 h-24 rounded-full bg-gray-200 border-4 border-orange-50 overflow-hidden">
-                        {/* Student Image Placeholder */}
-                        <div className="w-full h-full flex items-center justify-center bg-orange-100 text-green-600 text-3xl font-bold">
+                    <div className="w-24 h-24 rounded-full bg-gray-200 border-4 border-orange-50 overflow-hidden shadow-sm">
+                        {student.image ? (
+                            <img
+                                src={student.image}
+                                alt={`${student.firstName} ${student.lastName}`}
+                                className="w-full h-full object-cover"
+                                onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                            />
+                        ) : null}
+                        {/* Fallback Placeholder (shown if no image or error) */}
+                        <div className={`w-full h-full flex items-center justify-center bg-orange-100 text-green-600 text-3xl font-bold ${student.image ? 'hidden' : 'flex'}`}>
                             {student.firstName?.charAt(0)}
                         </div>
                     </div>

@@ -44,13 +44,32 @@ const ViewStudentDocuments = ({ documents }) => {
                                 </div>
                             </div>
                             <div className="flex gap-2">
-                                <button className="text-gray-400 hover:text-green-600 transition-colors" title="View">
+                                <button
+                                    onClick={() => window.open(doc.path, '_blank')}
+                                    className="text-gray-400 hover:text-green-600 transition-colors"
+                                    title="View"
+                                >
                                     <Eye size={16} />
                                 </button>
-                                <button className="text-gray-400 hover:text-blue-600 transition-colors" title="Print">
+                                <button
+                                    onClick={() => window.open(doc.path, '_blank')} // Printing triggers browser print usually
+                                    className="text-gray-400 hover:text-blue-600 transition-colors"
+                                    title="Print"
+                                >
                                     <Printer size={16} />
                                 </button>
-                                <button className="text-gray-400 hover:text-green-600 transition-colors" title="Download">
+                                <button
+                                    onClick={() => {
+                                        const link = document.createElement('a');
+                                        link.href = doc.path;
+                                        link.download = doc.name;
+                                        document.body.appendChild(link);
+                                        link.click();
+                                        document.body.removeChild(link);
+                                    }}
+                                    className="text-gray-400 hover:text-green-600 transition-colors"
+                                    title="Download"
+                                >
                                     <Download size={16} />
                                 </button>
                                 <button onClick={() => handleRename(index)} className="text-gray-400 hover:text-gray-800 transition-colors" title="Rename">

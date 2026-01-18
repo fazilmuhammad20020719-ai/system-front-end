@@ -92,7 +92,9 @@ const ViewStudent = () => {
                     dsDivision: 'N/A', // Not in DB yet
                     gnDivision: 'N/A', // Not in DB yet
                     address: sData.address || 'Address not set',
-                    googleMapLink: '',
+                    googleMapLink: sData.google_map_link || '',
+                    latitude: sData.latitude || '',
+                    longitude: sData.longitude || '',
 
                     // Guardian
                     guardianName: sData.guardian_name || 'N/A',

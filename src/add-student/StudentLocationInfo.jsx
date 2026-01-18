@@ -58,6 +58,11 @@ const StudentLocationInfo = ({ formData, handleChange }) => {
                     <InputField label="Home Address" name="address" value={formData.address} onChange={handleChange} icon={MapPin} />
                     <InputField label="Google Map Link" name="googleMapLink" value={formData.googleMapLink} onChange={handleChange} icon={MapPin} placeholder="https://maps.google.com/..." />
                 </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <InputField label="Latitude" name="latitude" value={formData.latitude} onChange={handleChange} placeholder="e.g. 6.9271" />
+                    <InputField label="Longitude" name="longitude" value={formData.longitude} onChange={handleChange} placeholder="e.g. 79.8612" />
+                </div>
             </div>
 
         </div>

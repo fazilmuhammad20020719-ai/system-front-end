@@ -117,10 +117,13 @@ const ViewStudentInfo = ({ student }) => {
                 </div>
 
                 {student.googleMapLink && (
-                    <div className="mt-4 pt-4 border-t border-gray-100">
-                        <button onClick={() => window.open(student.googleMapLink, '_blank')} className="w-full flex items-center justify-center gap-2 py-2 bg-green-50 text-green-700 text-xs font-bold rounded-lg hover:bg-green-100 border border-green-200 transition-colors">
-                            <MapPin size={14} /> Open Location in Google Maps
-                        </button>
+                    <div className="mt-4 pt-4 border-t border-gray-100 flex">
+                        <ActionButton
+                            icon={MapPin}
+                            label="Open Location in Google Maps"
+                            onClick={() => window.open(student.googleMapLink, '_blank')}
+                            color="text-red-600 bg-red-50 hover:bg-red-100 border-red-200 w-full"
+                        />
                     </div>
                 )}
             </SectionCard>

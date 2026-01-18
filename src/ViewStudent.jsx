@@ -40,7 +40,6 @@ const ViewStudent = () => {
                 const sData = await sRes.json();
 
                 // Fetch Attendance for stats
-                // Need to fetch ALL attendance for this student to calc stats
                 const attRes = await fetch(`${API_URL}/api/attendance?studentId=${id}`);
                 const attData = attRes.ok ? await attRes.json() : [];
 
@@ -49,10 +48,27 @@ const ViewStudent = () => {
                 const absent = attData.filter(a => a.status === 'Absent').length;
                 const total = attData.length;
 
-                // Fetch Documents (Optional: if we had studentId in docs, simplified here)
-                // We'll leave documents empty or fetch all and filter if feasible, but better to keep it clean.
-                // Assuming documents are general for now or manual upload.
+                // Helper to check and add document
                 const docs = [];
+                const addDoc = (path, title) => {
+                    if (path) {
+                        docs.push({
+                            name: title,
+                            path: `${API_URL}${path}`, // Ensure full URL if needed, or relative
+                            date: 'N/A', // We don't track upload date per file in this schema
+                            size: 'N/A'
+                        });
+                    }
+                };
+
+                addDoc(sData.nic_front, 'NIC Front');
+                addDoc(sData.nic_back, 'NIC Back');
+                addDoc(sData.student_signature, 'Student Signature');
+                addDoc(sData.birth_certificate, 'Birth Certificate');
+                addDoc(sData.medical_report, 'Medical Report');
+                addDoc(sData.guardian_nic, 'Guardian NIC');
+                addDoc(sData.guardian_photo, 'Guardian Photo');
+                addDoc(sData.leaving_certificate, 'Leaving Certificate');
 
                 // Merging Data
                 const fullProfile = {
@@ -60,44 +76,44 @@ const ViewStudent = () => {
                     // Personal - Map fields from DB columns
                     firstName: sData.name ? sData.name.split(' ')[0] : '',
                     lastName: sData.name ? sData.name.split(' ').slice(1).join(' ') : '',
-                    image: null,
-                    dob: 'N/A', // DB doesn't have dob yet
-                    gender: 'Male', // Default or add col
-                    nic: sData.id, // Using Admission ID as nic/ref
-                    email: sData.contact_field || 'student@example.com', // Need to check schema for email
-                    phone: sData.contact_number,
+                    image: sData.photo_url ? `${API_URL}${sData.photo_url}` : null,
+                    dob: sData.dob ? sData.dob.split('T')[0] : 'N/A',
+                    gender: sData.gender || 'Male',
+                    nic: sData.nic || 'N/A',
+                    email: sData.email || 'N/A',
+                    phone: sData.contact_number || sData.phone || 'N/A',
 
                     // Location
-                    province: 'Western',
-                    district: 'Colombo',
-                    dsDivision: 'Colombo Dist',
-                    gnDivision: 'C-123',
+                    province: sData.province || 'N/A',
+                    district: sData.district || 'N/A',
+                    dsDivision: 'N/A', // Not in DB yet
+                    gnDivision: 'N/A', // Not in DB yet
                     address: sData.address || 'Address not set',
                     googleMapLink: '',
 
                     // Guardian
-                    guardianName: sData.guardian_name,
-                    guardianRelation: 'Father',
-                    guardianPhone: sData.contact_number, // reusing contact
-                    guardianEmail: '',
-                    guardianOccupation: '',
+                    guardianName: sData.guardian_name || 'N/A',
+                    guardianRelation: sData.guardian_relation || 'N/A',
+                    guardianPhone: sData.guardian_phone || 'N/A',
+                    guardianEmail: '', // Not in schema for guardian email specifically if not reused
+                    guardianOccupation: sData.guardian_occupation || 'N/A',
 
                     // Academic
                     program: sData.program_name || sData.program,
                     year: sData.current_year,
                     session: sData.session_year,
-                    admissionDate: '2025-01-01', // DB Create Date if available
+                    admissionDate: sData.admission_date ? sData.admission_date.split('T')[0] : 'N/A',
                     status: sData.status || 'Active',
 
-                    // Extra Data (Mocked or Default until API expanded)
-                    previousSchool: '',
-                    lastStudiedGrade: '',
-                    previousCollegeName: '',
-                    mediumOfStudy: 'Tamil',
+                    // Extra Data
+                    previousSchool: sData.previous_school || 'N/A',
+                    lastStudiedGrade: '', // Not in DB
+                    previousCollegeName: '', // Not in DB
+                    mediumOfStudy: sData.medium_of_study || 'N/A',
 
                     documents: docs,
                     attendanceStats: { present, absent, late: 0, total },
-                    results: [], // Results API not implemented yet
+                    results: [],
                     fees: {
                         pending: 'Rs. 0', paid: 'Rs. 0', history: []
                     }

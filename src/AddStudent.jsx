@@ -15,7 +15,6 @@ const AddStudent = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('details');
 
-    // Programs State (Full Data)
     const [programOptions, setProgramOptions] = useState([]);
 
     const [formData, setFormData] = useState({
@@ -27,14 +26,13 @@ const AddStudent = () => {
         medicalReport: null, guardianNic: null, guardianPhoto: null, leavingCertificate: null
     });
 
-    // Fetch Programs (Full Objects)
     useEffect(() => {
         const fetchPrograms = async () => {
             try {
                 const response = await fetch(`${API_URL}/api/programs`);
                 if (response.ok) {
                     const data = await response.json();
-                    setProgramOptions(data); // Save full data (id, name, duration)
+                    setProgramOptions(data);
                 }
             } catch (error) {
                 console.error("Error fetching programs:", error);
@@ -48,30 +46,44 @@ const AddStudent = () => {
         setFormData({ ...formData, [name]: type === 'file' ? files[0] : value });
     };
 
-    const [showSuccess, setShowSuccess] = useState(false); // Success Toast State
+    const [showSuccess, setShowSuccess] = useState(false);
 
-    // Helper: Show Toast
     const showToast = () => {
         setShowSuccess(true);
         setTimeout(() => {
             setShowSuccess(false);
-            navigate('/students'); // Navigate after showing toast
+            navigate('/students');
         }, 2000);
     };
 
+    // --- திருத்தப்பட்ட SUBMIT FUNCTION (FormData) ---
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // 1. FormData உருவாக்குதல்
+        const data = new FormData();
+
+        // 2. State-ல் உள்ள தரவுகளை இதில் ஏற்றுதல்
+        for (const key in formData) {
+            // ஃபைல் அல்லது எழுத்து இருந்தால் மட்டும் சேர்க்கவும்
+            if (formData[key] !== null && formData[key] !== '') {
+                data.append(key, formData[key]);
+            }
+        }
+
         try {
             const response = await fetch(`${API_URL}/api/students`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData),
+                // Header-ல் 'Content-Type' போடக்கூடாது. Browser பார்த்துக்கொள்ளும்.
+                body: data,
             });
-            const data = await response.json();
+
+            const result = await response.json();
+
             if (response.ok) {
-                showToast(); // Show success message
+                showToast();
             } else {
-                alert(data.message || "Error saving student");
+                alert(result.message || "Error saving student");
             }
         } catch (error) {
             console.error("Error submitting form:", error);
@@ -81,12 +93,10 @@ const AddStudent = () => {
 
     return (
         <div className="min-h-screen bg-[#F3F4F6] font-sans flex relative">
-            {/* SUCCESS TOAST */}
             {showSuccess && (
                 <div className="fixed top-10 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-8 py-4 rounded-full shadow-2xl z-50 animate-in fade-in slide-in-from-top-5 flex items-center gap-3">
                     <div className="bg-white/20 p-1 rounded-full">
                         <ChevronRight size={20} className="text-white rotate-90" />
-                        {/* Using Chevron as Check replacement for simplicity since Check icon wasn't imported initially, or import Check if easy */}
                     </div>
                     <div>
                         <h4 className="font-bold text-lg">Success!</h4>
@@ -98,7 +108,6 @@ const AddStudent = () => {
             <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
             <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "md:ml-64" : "md:ml-20"} ml-0`}>
                 <main className="p-4 md:p-6 max-w-7xl mx-auto w-full">
-                    {/* Header */}
                     <div className="flex flex-col md:flex-row justify-between mb-6 gap-4 items-center">
                         <div className="flex items-center gap-3 w-full md:w-auto">
                             <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 bg-white rounded-lg border text-gray-600 md:hidden"><Menu size={20} /></button>
@@ -115,14 +124,12 @@ const AddStudent = () => {
                         </div>
                     </div>
 
-                    {/* Tabs */}
                     <div className="flex gap-1 mb-6 border-b border-gray-200 overflow-x-auto">
                         {['details', 'guardian', 'academic', 'documents'].map(tab => (
                             <button key={tab} onClick={() => setActiveTab(tab)} className={`px-5 py-2.5 text-sm font-bold rounded-t-lg transition-colors capitalize ${activeTab === tab ? 'bg-white text-green-600 border-t border-x border-gray-200' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}>{tab}</button>
                         ))}
                     </div>
 
-                    {/* Content */}
                     <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
                         {activeTab === 'details' && (
                             <div className="space-y-4">
@@ -131,16 +138,9 @@ const AddStudent = () => {
                             </div>
                         )}
                         {activeTab === 'guardian' && <StudentGuardianInfo formData={formData} handleChange={handleChange} />}
-
-                        {/* PASS FULL PROGRAMS ARRAY */}
                         {activeTab === 'academic' && (
-                            <StudentAcademicInfo
-                                formData={formData}
-                                handleChange={handleChange}
-                                programs={programOptions}
-                            />
+                            <StudentAcademicInfo formData={formData} handleChange={handleChange} programs={programOptions} />
                         )}
-
                         {activeTab === 'documents' && <StudentUploads formData={formData} handleChange={handleChange} />}
                     </div>
                 </main>

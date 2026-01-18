@@ -36,53 +36,53 @@ const ViewProgram = () => {
     };
 
     // FETCH DATA FROM API
-    const fetchData = async () => {
-        try {
-            setLoading(true);
-            // 3 API Calls: Programs, Subjects, Teachers
-            const [progRes, subRes, teachRes] = await Promise.all([
-                fetch(`${API_URL}/api/programs`),
-                fetch(`${API_URL}/api/subjects`),
-                fetch(`${API_URL}/api/teachers`)
-            ]);
-
-            const allPrograms = await progRes.json();
-            const allSubjects = await subRes.json();
-            const allTeachers = await teachRes.json();
-
-            // 1. Find Current Program
-            const currentProgram = allPrograms.find(p => p.id === parseInt(id));
-
-            if (currentProgram) {
-                setProgram({
-                    ...currentProgram,
-                    head: currentProgram.head_of_program,
-                    fees: currentProgram.fees,
-                    // Default values for UI
-                    color: "bg-blue-100 text-blue-600",
-                    description: currentProgram.description || "Program details loaded from system database.",
-                });
-            }
-
-            // 2. Filter Subjects for this Program
-            const programSubjects = allSubjects
-                .filter(s => s.program_id === parseInt(id))
-                .map(s => ({ ...s, year: s.year || 'Grade 1' }));
-            setSubjects(programSubjects);
-
-            // 3. Filter Teachers for this Program
-            const programTeachers = allTeachers.filter(t => t.program_id === parseInt(id));
-            setTeachers(programTeachers);
-
-        } catch (error) {
-            console.error("Error fetching program details:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
     useEffect(() => {
-        if (id) fetchData();
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                // 3 API Calls: Programs, Subjects, Teachers
+                const [progRes, subRes, teachRes] = await Promise.all([
+                    fetch(`${API_URL}/api/programs`),
+                    fetch(`${API_URL}/api/subjects`),
+                    fetch(`${API_URL}/api/teachers`)
+                ]);
+
+                const allPrograms = await progRes.json();
+                const allSubjects = await subRes.json();
+                const allTeachers = await teachRes.json();
+
+                // 1. Find Current Program
+                const currentProgram = allPrograms.find(p => p.id === parseInt(id));
+
+                if (currentProgram) {
+                    setProgram({
+                        ...currentProgram,
+                        head: currentProgram.head_of_program,
+                        fees: currentProgram.fees,
+                        // Default values for UI
+                        color: "bg-blue-100 text-blue-600",
+                        description: currentProgram.description || "Program details loaded from system database.",
+                    });
+                }
+
+                // 2. Filter Subjects for this Program
+                const programSubjects = allSubjects
+                    .filter(s => s.program_id === parseInt(id))
+                    .map(s => ({ ...s, year: s.year || 'Grade 1' }));
+                setSubjects(programSubjects);
+
+                // 3. Filter Teachers for this Program
+                const programTeachers = allTeachers.filter(t => t.program_id === parseInt(id));
+                setTeachers(programTeachers);
+
+            } catch (error) {
+                console.error("Error fetching program details:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
     }, [id]);
 
     // Handle Delete Subject

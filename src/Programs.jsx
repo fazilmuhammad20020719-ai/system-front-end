@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, Check } from 'lucide-react'; // Import Icon
+import { AlertTriangle } from 'lucide-react'; // Import Icon
 import { API_URL } from './config';
 import Sidebar from './Sidebar';
 import ProgramsHeader from './programs/ProgramsHeader';
@@ -35,35 +35,10 @@ const Programs = () => {
 
     // -- DATA STATE --
     const [programs, setPrograms] = useState([]);
-    const [teachers, setTeachers] = useState([]); // New: Teachers State
 
     // 1. FETCH DATA
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // Fetch Programs and Teachers in parallel
-                const [progRes, teachRes] = await Promise.all([
-                    fetch(`${API_URL}/api/programs`),
-                    fetch(`${API_URL}/api/teachers`)
-                ]);
-
-                const progData = await progRes.json();
-                const teachData = await teachRes.json();
-
-                const formattedPrograms = progData.map(p => ({
-                    ...p,
-                    head: p.head_of_program,
-                    fees: p.fees
-                }));
-
-                setPrograms(formattedPrograms);
-                setTeachers(teachData);
-            } catch (error) {
-                console.error("Error fetching data:", error);
-            }
-        };
-
-        fetchData();
+        fetchPrograms();
     }, []);
 
     const fetchPrograms = async () => {
@@ -119,6 +94,7 @@ const Programs = () => {
 
     // -- DELETE HANDLER --
     const handleDelete = (id) => {
+        // Open Modal instead of Window Confirm
         setProgramToDelete(id);
         setShowDeleteModal(true);
     };
@@ -188,26 +164,6 @@ const Programs = () => {
         }
     };
 
-    // Handle Add Subject (Global)
-    const handleSaveSubject = async (subjectData) => {
-        try {
-            const response = await fetch(`${API_URL}/api/subjects`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(subjectData)
-            });
-
-            if (response.ok) {
-                showSuccess("Subject Added Successfully");
-                setShowSubjectModal(false);
-            } else {
-                alert("Failed to add subject");
-            }
-        } catch (error) {
-            console.error("Error adding subject:", error);
-        }
-    };
-
     return (
         <div className="flex min-h-screen bg-[#f3f4f6] font-sans text-slate-800">
             <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
@@ -223,9 +179,8 @@ const Programs = () => {
                 <main className="p-4 md:p-6 lg:p-8">
                     {/* Success Message Display */}
                     {successMsg && (
-                        <div className="fixed top-24 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-full shadow-lg z-50 animate-in fade-in slide-in-from-top-5 flex items-center gap-2">
-                            <Check size={20} className="text-white" />
-                            <span className="font-bold">{successMsg}</span>
+                        <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg font-bold text-center animate-in fade-in slide-in-from-top-2">
+                            {successMsg}
                         </div>
                     )}
 
@@ -237,7 +192,7 @@ const Programs = () => {
                         programs={filteredPrograms}
                         onEdit={handleOpenModal}
                         onView={handleView}
-                        onDelete={handleDelete}
+                        onDelete={handleDelete} // Using the new handler
                     />
                 </main>
             </div>
@@ -251,13 +206,11 @@ const Programs = () => {
                 setFormData={setFormData}
             />
 
-            {/* Subject Modal with actual logic */}
             <SubjectModal
                 isOpen={showSubjectModal}
                 onClose={() => setShowSubjectModal(false)}
                 programs={programs}
-                teachers={teachers} // Pass teachers
-                onSave={handleSaveSubject} // Pass save handler
+                onSave={(data) => console.log(data)}
             />
 
             {/* Custom Delete Confirmation Modal */}

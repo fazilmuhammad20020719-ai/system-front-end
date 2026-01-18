@@ -44,8 +44,9 @@ const EditTeacher = () => {
         employeeId: '',
         designation: '',
         department: '',
-        program: '', // Added to support new structure
-        subject: '', // Added to support new structure
+        program: '',
+        assignedPrograms: [], // Added for multi-select support
+        subject: '',
         joiningDate: '',
         status: 'Active',
 
@@ -102,7 +103,8 @@ const EditTeacher = () => {
                         employeeId: data.emp_id || '',
                         designation: data.designation || '',
                         department: data.department || '',
-                        program: data.program_name || '', // Use name for dropdown
+                        program: data.program_name || '',
+                        assignedPrograms: data.assigned_programs ? data.assigned_programs.split(', ') : [], // Parse string to array
                         subject: data.subject || '',
                         joiningDate: data.joining_date ? data.joining_date.split('T')[0] : '',
                         status: data.status || 'Active',
@@ -142,6 +144,7 @@ const EditTeacher = () => {
             data.append('empId', formData.employeeId);
             data.append('name', formData.fullName);
             data.append('program', formData.program);
+            data.append('assignedPrograms', formData.assignedPrograms);
             data.append('teacherCategory', formData.teacherCategory);
             data.append('designation', formData.designation);
             data.append('email', formData.email);

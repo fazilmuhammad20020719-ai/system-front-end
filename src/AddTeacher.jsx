@@ -55,7 +55,8 @@ const AddTeacher = () => {
         nicCopy: null,
 
         // --- New Field ---
-        program: ''
+        program: '',
+        assignedPrograms: []
     });
 
     const [programs, setPrograms] = useState([]); // State for programs
@@ -91,7 +92,8 @@ const AddTeacher = () => {
             const data = new FormData();
             data.append('empId', formData.employeeId);
             data.append('name', formData.fullName);
-            data.append('program', formData.program);
+            data.append('program', formData.program); // Optional legacy field
+            data.append('assignedPrograms', formData.assignedPrograms); // New Array Field
             data.append('teacherCategory', formData.teacherCategory);
             data.append('designation', formData.designation);
             data.append('email', formData.email);

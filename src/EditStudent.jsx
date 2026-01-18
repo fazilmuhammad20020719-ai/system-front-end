@@ -1,192 +1,198 @@
 import { useState, useEffect } from 'react';
-import {
-    User, FileText, Clock, Award, CreditCard, Activity, ArrowLeft
-} from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
-import Sidebar from './Sidebar';
 import { API_URL } from './config';
+import { Save, X, ChevronRight, Menu, CheckCircle } from 'lucide-react';
+import Sidebar from './Sidebar';
 
-// Import Sub-Components
-import StudentProfileHeader from './student-view/StudentProfileHeader';
-import ViewStudentInfo from './student-view/ViewStudentInfo';
-import ViewStudentDocuments from './student-view/ViewStudentDocuments';
-import ViewStudentAttendance from './student-view/ViewStudentAttendance';
-import ViewStudentResults from './student-view/ViewStudentResults';
-import ViewStudentFees from './student-view/ViewStudentFees';
-import ViewStudentTimeline from './student-view/ViewStudentTimeline';
-import Loader from './components/Loader';
+import StudentPersonalInfo from './add-student/StudentPersonalInfo';
+import StudentLocationInfo from './add-student/StudentLocationInfo';
+import StudentGuardianInfo from './add-student/StudentGuardianInfo';
+import StudentAcademicInfo from './add-student/StudentAcademicInfo';
+import StudentUploads from './add-student/StudentUploads';
 
-const ViewStudent = () => {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-    const navigate = useNavigate();
+const EditStudent = () => {
     const { id } = useParams();
-    const [activeTab, setActiveTab] = useState('personal');
-    const [student, setStudent] = useState(null);
+    const navigate = useNavigate();
+    const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
+    const [activeTab, setActiveTab] = useState('details');
+    const [programOptions, setProgramOptions] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [successMsg, setSuccessMsg] = useState("");
+
+    const [formData, setFormData] = useState({
+        studentPhoto: null, indexNumber: '', firstName: '', lastName: '', dob: '', gender: 'Male', nic: '', email: '', phone: '',
+        status: 'Active',
+        province: '', district: '', dsDivision: '', gnDivision: '', address: '', googleMapLink: '', latitude: '', longitude: '',
+        guardianName: '', guardianRelation: 'Father', guardianOccupation: '', guardianPhone: '', guardianEmail: '',
+        program: '', session: '', currentYear: '', admissionDate: '', lastStudiedGrade: '', previousSchoolName: '', previousCollegeName: '', mediumOfStudy: 'Tamil',
+        nicFront: null, nicBack: null, studentSignature: null, birthCertificate: null,
+        medicalReport: null, guardianNic: null, guardianPhoto: null, leavingCertificate: null
+    });
 
     useEffect(() => {
-        const fetchStudentData = async () => {
-            setLoading(true);
+        const fetchData = async () => {
             try {
-                // Fetch basic student info
-                const sRes = await fetch(`${API_URL}/api/students/${id}`);
+                const progRes = await fetch(`${API_URL}/api/programs`);
+                const progData = await progRes.json();
+                setProgramOptions(progData);
 
-                if (!sRes.ok) {
-                    console.error("Student not found");
-                    setLoading(false);
-                    return;
+                const studentRes = await fetch(`${API_URL}/api/students/${id}`);
+
+                if (studentRes.ok) {
+                    const data = await studentRes.json();
+
+                    const nameParts = data.name ? data.name.split(' ') : ['', ''];
+                    const fName = nameParts[0];
+                    const lName = nameParts.slice(1).join(' ');
+
+                    setFormData({
+                        indexNumber: data.id,
+                        firstName: fName,
+                        lastName: lName,
+                        dob: data.dob ? data.dob.split('T')[0] : '',
+                        gender: data.gender || 'Male',
+                        nic: data.nic || '',
+                        email: data.email || '',
+                        phone: data.contact_number || '',
+                        status: data.status || 'Active',
+                        address: data.address || '',
+                        city: data.city || '',
+                        district: data.district || '',
+                        province: data.province || '',
+                        guardianName: data.guardian_name || '',
+                        guardianRelation: data.guardian_relation || 'Father',
+                        guardianOccupation: data.guardian_occupation || '',
+                        guardianPhone: data.guardian_phone || '',
+                        program: data.program_name || '',
+                        session: data.session_year || '',
+                        currentYear: data.current_year || '',
+                        admissionDate: data.admission_date ? data.admission_date.split('T')[0] : '',
+                        previousSchoolName: data.previous_school || '',
+                        mediumOfStudy: data.medium_of_study || 'Tamil',
+                        studentPhoto: null,
+                        photoUrl: data.photo_url || null // Set existing photo URL for preview
+                    });
+                } else {
+                    alert("Student not found!");
+                    navigate('/students');
                 }
-
-                const sData = await sRes.json();
-
-                // Fetch Attendance for stats
-                const attRes = await fetch(`${API_URL}/api/attendance?studentId=${id}`);
-                const attData = attRes.ok ? await attRes.json() : [];
-
-                // Calculate Attendance Stats
-                const present = attData.filter(a => a.status === 'Present').length;
-                const absent = attData.filter(a => a.status === 'Absent').length;
-                const total = attData.length;
-
-                // Helper to check and add document
-                const docs = [];
-                const addDoc = (path, title) => {
-                    if (path) {
-                        docs.push({
-                            name: title,
-                            path: `${API_URL}${path}`, // Ensure full URL if needed, or relative
-                            date: 'N/A', // We don't track upload date per file in this schema
-                            size: 'N/A'
-                        });
-                    }
-                };
-
-                addDoc(sData.nic_front, 'NIC Front');
-                addDoc(sData.nic_back, 'NIC Back');
-                addDoc(sData.student_signature, 'Student Signature');
-                addDoc(sData.birth_certificate, 'Birth Certificate');
-                addDoc(sData.medical_report, 'Medical Report');
-                addDoc(sData.guardian_nic, 'Guardian NIC');
-                addDoc(sData.guardian_photo, 'Guardian Photo');
-                addDoc(sData.leaving_certificate, 'Leaving Certificate');
-
-                // Merging Data
-                const fullProfile = {
-                    id: sData.id,
-                    // Personal - Map fields from DB columns
-                    firstName: sData.name ? sData.name.split(' ')[0] : '',
-                    lastName: sData.name ? sData.name.split(' ').slice(1).join(' ') : '',
-                    image: sData.photo_url ? `${API_URL}${sData.photo_url}` : null,
-                    dob: sData.dob ? sData.dob.split('T')[0] : 'N/A',
-                    gender: sData.gender || 'Male',
-                    nic: sData.nic || 'N/A',
-                    email: sData.email || 'N/A',
-                    phone: sData.contact_number || sData.phone || 'N/A',
-
-                    // Location
-                    province: sData.province || 'N/A',
-                    district: sData.district || 'N/A',
-                    dsDivision: 'N/A', // Not in DB yet
-                    gnDivision: 'N/A', // Not in DB yet
-                    address: sData.address || 'Address not set',
-                    googleMapLink: '',
-
-                    // Guardian
-                    guardianName: sData.guardian_name || 'N/A',
-                    guardianRelation: sData.guardian_relation || 'N/A',
-                    guardianPhone: sData.guardian_phone || 'N/A',
-                    guardianEmail: '', // Not in schema for guardian email specifically if not reused
-                    guardianOccupation: sData.guardian_occupation || 'N/A',
-
-                    // Academic
-                    program: sData.program_name || sData.program,
-                    year: sData.current_year,
-                    session: sData.session_year,
-                    admissionDate: sData.admission_date ? sData.admission_date.split('T')[0] : 'N/A',
-                    status: sData.status || 'Active',
-
-                    // Extra Data
-                    previousSchool: sData.previous_school || 'N/A',
-                    lastStudiedGrade: '', // Not in DB
-                    previousCollegeName: '', // Not in DB
-                    mediumOfStudy: sData.medium_of_study || 'N/A',
-
-                    documents: docs,
-                    attendanceStats: { present, absent, late: 0, total },
-                    results: [],
-                    fees: {
-                        pending: 'Rs. 0', paid: 'Rs. 0', history: []
-                    }
-                };
-
-                setStudent(fullProfile);
-
-            } catch (err) {
-                console.error("Error fetching student profile:", err);
+            } catch (error) {
+                console.error("Error fetching data:", error);
             } finally {
                 setLoading(false);
             }
         };
 
-        if (id) fetchStudentData();
-    }, [id]);
+        fetchData();
+    }, [id, navigate]);
 
-    if (loading) return <Loader />;
-    if (!student) return <div className="p-10 text-center">Student Not Found</div>;
+    const handleChange = (e) => {
+        const { name, value, type, files } = e.target;
+        setFormData({ ...formData, [name]: type === 'file' ? files[0] : value });
+    };
+
+    const handleStatusChange = (e) => {
+        const newStatus = e.target.value;
+        const newGrade = newStatus === 'Active' ? 'Grade 1' : newStatus;
+        setFormData(prev => ({ ...prev, status: newStatus, currentYear: newGrade }));
+    };
+
+    // --- திருத்தப்பட்ட SUBMIT FUNCTION (FormData) ---
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        // 1. FormData உருவாக்குதல்
+        const data = new FormData();
+
+        // 2. State-ல் உள்ள தரவுகளை இதில் ஏற்றுதல்
+        for (const key in formData) {
+            if (formData[key] !== null && formData[key] !== '') {
+                data.append(key, formData[key]);
+            }
+        }
+
+        try {
+            const response = await fetch(`${API_URL}/api/students`, {
+                method: 'POST',
+                body: data, // JSON-க்கு பதிலாக FormData அனுப்புகிறோம்
+            });
+
+            if (response.ok) {
+                setSuccessMsg("Student Edited Successfully");
+                setTimeout(() => {
+                    navigate('/students');
+                }, 1500);
+            } else {
+                const errData = await response.json();
+                alert(errData.message || "Error updating student");
+            }
+        } catch (error) {
+            console.error("Error updating:", error);
+            alert("Network error.");
+        }
+    };
+
+    if (loading) return <div className="flex justify-center items-center h-screen">Loading Student Data...</div>;
 
     return (
         <div className="min-h-screen bg-[#F3F4F6] font-sans flex">
             <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
 
-            <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "ml-64" : "ml-20"}`}>
-                <main className="p-8">
-                    {/* Back Button */}
-                    <button
-                        onClick={() => navigate('/students')}
-                        className="mb-6 flex items-center gap-2 text-gray-500 hover:text-green-600 transition-colors font-medium"
-                    >
-                        <ArrowLeft size={18} /> Back to Directory
-                    </button>
+            {successMsg && (
+                <div className="fixed top-5 right-5 z-50 bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-xl shadow-lg flex items-center gap-3 animate-bounce-in">
+                    <CheckCircle size={24} className="text-green-600" />
+                    <div>
+                        <h4 className="font-bold">Success!</h4>
+                        <p className="text-sm">{successMsg}</p>
+                    </div>
+                </div>
+            )}
 
-                    {/* 1. Header Component */}
-                    <StudentProfileHeader student={student} />
-
-                    {/* 2. Navigation Tabs */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6 sticky top-0 z-10 overflow-x-auto scrollbar-hide">
-                        <div className="flex min-w-max">
-                            <TabItem icon={User} label="Personal Info" active={activeTab === 'personal'} onClick={() => setActiveTab('personal')} />
-                            <TabItem icon={FileText} label="Documents" active={activeTab === 'documents'} onClick={() => setActiveTab('documents')} />
-                            <TabItem icon={Clock} label="Attendance" active={activeTab === 'attendance'} onClick={() => setActiveTab('attendance')} />
-                            <TabItem icon={Award} label="Results" active={activeTab === 'results'} onClick={() => setActiveTab('results')} />
-                            <TabItem icon={CreditCard} label="Fees" active={activeTab === 'fees'} onClick={() => setActiveTab('fees')} />
-                            <TabItem icon={Activity} label="Timeline" active={activeTab === 'timeline'} onClick={() => setActiveTab('timeline')} />
+            <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "md:ml-64" : "md:ml-20"} ml-0`}>
+                <main className="p-4 md:p-6 max-w-7xl mx-auto w-full">
+                    <div className="flex flex-col md:flex-row justify-between mb-6 gap-4 items-center">
+                        <div className="flex items-center gap-3 w-full md:w-auto">
+                            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 bg-white rounded-lg border text-gray-600 md:hidden"><Menu size={20} /></button>
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-800">Edit Student</h2>
+                                <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                                    <span className="font-mono bg-blue-50 text-blue-600 px-2 py-0.5 rounded">{formData.indexNumber}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex gap-2 w-full md:w-auto">
+                            <button onClick={() => navigate(-1)} className="flex-1 md:flex-none px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-600 text-sm font-bold hover:bg-gray-50 flex items-center justify-center gap-2"><X size={16} /> Cancel</button>
+                            <button onClick={handleSubmit} className="flex-1 md:flex-none px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold shadow-sm flex items-center justify-center gap-2"><Save size={16} /> Update</button>
                         </div>
                     </div>
 
-                    {/* 3. Tab Content Render */}
-                    <div className="space-y-6">
-                        {activeTab === 'personal' && <ViewStudentInfo student={student} />}
-                        {activeTab === 'documents' && <ViewStudentDocuments documents={student.documents} />}
-                        {activeTab === 'attendance' && <ViewStudentAttendance stats={student.attendanceStats} />}
-                        {activeTab === 'results' && <ViewStudentResults results={student.results} />}
-                        {activeTab === 'fees' && <ViewStudentFees fees={student.fees} />}
-                        {activeTab === 'timeline' && <ViewStudentTimeline />}
+                    <div className="flex gap-1 mb-6 border-b border-gray-200 overflow-x-auto">
+                        {['details', 'guardian', 'academic', 'documents'].map(tab => (
+                            <button key={tab} onClick={() => setActiveTab(tab)} className={`px-5 py-2.5 text-sm font-bold rounded-t-lg transition-colors capitalize ${activeTab === tab ? 'bg-white text-blue-600 border-t border-x border-gray-200' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}>{tab}</button>
+                        ))}
                     </div>
+
+                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        {activeTab === 'details' && (
+                            <div className="space-y-4">
+                                <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg text-sm text-yellow-800 mb-4">
+                                    Note: You cannot change the <b>Index Number</b> here.
+                                </div>
+                                <StudentPersonalInfo formData={formData} handleChange={handleChange} handleStatusChange={handleStatusChange} />
+                                <StudentLocationInfo formData={formData} handleChange={handleChange} />
+                            </div>
+                        )}
+                        {activeTab === 'guardian' && <StudentGuardianInfo formData={formData} handleChange={handleChange} />}
+                        {activeTab === 'academic' && (
+                            <StudentAcademicInfo formData={formData} handleChange={handleChange} programs={programOptions} />
+                        )}
+                        {activeTab === 'documents' && <StudentUploads formData={formData} handleChange={handleChange} />}
+                    </div>
+
                 </main>
             </div>
         </div>
     );
 };
-
-// Helper: Tab Button Component
-const TabItem = ({ icon: Icon, label, active, onClick }) => (
-    <button
-        onClick={onClick}
-        className={`flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all border-b-2 whitespace-nowrap ${active ? "border-green-600 text-green-600 bg-green-50/30" : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-            }`}
-    >
-        <Icon size={18} /> {label}
-    </button>
-);
 
 export default EditStudent;

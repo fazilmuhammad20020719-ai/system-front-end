@@ -10,11 +10,11 @@ const RenameModal = ({ isOpen, onClose, renameValue, setRenameValue, onSave }) =
                     autoFocus
                     value={renameValue}
                     onChange={(e) => setRenameValue(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg mb-6 focus:outline-none focus:border-[#ea8933]"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg mb-6 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500"
                 />
                 <div className="flex gap-3">
                     <button onClick={onClose} className="flex-1 py-2 rounded-lg border border-gray-300 font-bold text-gray-600 hover:bg-gray-50 text-sm">Cancel</button>
-                    <button onClick={onSave} className="flex-1 py-2 rounded-lg bg-[#ea8933] text-white font-bold hover:bg-[#d97c2a] text-sm">Save</button>
+                    <button onClick={onSave} className="flex-1 py-2 rounded-lg bg-green-600 text-white font-bold hover:bg-green-700 text-sm">Save</button>
                 </div>
             </div>
         </div>

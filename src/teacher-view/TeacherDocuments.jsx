@@ -1,10 +1,16 @@
 import { useState, useRef } from 'react';
-import { FileText, Download, Printer, Eye, Trash2, Plus, UploadCloud, X } from 'lucide-react';
+import { FileText, Download, Printer, Eye, Trash2, Plus, UploadCloud, X, FilePenLine } from 'lucide-react';
 import { API_URL } from '../config';
+import RenameModal from '../documents/RenameModal';
 
 const TeacherDocuments = ({ documents = [], teacherId, refreshTeacher }) => {
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef(null);
+
+    // Rename Modal State
+    const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
+    const [currentRenameDoc, setCurrentRenameDoc] = useState(null);
+    const [renameValue, setRenameValue] = useState("");
 
     // File Upload Handler
     const handleFileChange = async (event) => {
@@ -13,7 +19,7 @@ const TeacherDocuments = ({ documents = [], teacherId, refreshTeacher }) => {
 
         const formData = new FormData();
         formData.append('document', file);
-        formData.append('name', file.name); // Optional: Allow renaming before upload if needed
+        formData.append('name', file.name); // Optional: Allow renaming before upload
 
         try {
             setIsUploading(true);
@@ -34,6 +40,38 @@ const TeacherDocuments = ({ documents = [], teacherId, refreshTeacher }) => {
         } finally {
             setIsUploading(false);
             if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+    };
+
+    // Open Rename Modal
+    const openRenameModal = (doc) => {
+        setCurrentRenameDoc(doc);
+        setRenameValue(doc.name);
+        setIsRenameModalOpen(true);
+    };
+
+    // Save Rename
+    const handleSaveRename = async () => {
+        if (!renameValue || !currentRenameDoc || renameValue === currentRenameDoc.name) {
+            setIsRenameModalOpen(false);
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_URL}/api/teachers/${teacherId}/documents/${currentRenameDoc.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: renameValue }),
+            });
+
+            if (response.ok) {
+                refreshTeacher();
+                setIsRenameModalOpen(false);
+            } else {
+                alert('Rename failed');
+            }
+        } catch (error) {
+            console.error('Rename Error:', error);
         }
     };
 
@@ -84,7 +122,10 @@ const TeacherDocuments = ({ documents = [], teacherId, refreshTeacher }) => {
                             <a href={doc.url} download target="_blank" rel="noreferrer" className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded" title="Download"><Download size={18} /></a>
 
                             {!doc.isProfileDoc && (
-                                <button onClick={() => handleDelete(doc.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded" title="Delete"><Trash2 size={18} /></button>
+                                <>
+                                    <button onClick={() => openRenameModal(doc)} className="p-1.5 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded" title="Rename"><FilePenLine size={18} /></button>
+                                    <button onClick={() => handleDelete(doc.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded" title="Delete"><Trash2 size={18} /></button>
+                                </>
                             )}
                         </div>
                     </div>
@@ -115,6 +156,14 @@ const TeacherDocuments = ({ documents = [], teacherId, refreshTeacher }) => {
                     )}
                 </div>
             </div>
+
+            <RenameModal
+                isOpen={isRenameModalOpen}
+                onClose={() => setIsRenameModalOpen(false)}
+                renameValue={renameValue}
+                setRenameValue={setRenameValue}
+                onSave={handleSaveRename}
+            />
         </div>
     );
 };

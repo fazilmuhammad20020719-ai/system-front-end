@@ -1,6 +1,6 @@
 import { User, Mail, Phone, MapPin, Calendar, Briefcase, GraduationCap, Layout, MessageCircle } from 'lucide-react';
 
-const TeacherOverview = ({ teacher }) => {
+const TeacherOverview = ({ teacher, stats }) => {
 
     // Helper: Date Formatter (Same as Student)
     const formatDate = (dateString) => {
@@ -77,12 +77,12 @@ const TeacherOverview = ({ teacher }) => {
                 </div>
             </SectionCard>
 
-            {/* 3. Teaching Stats (Optional - Keeping original concept but restyled) */}
+            {/* 3. Teaching Stats */}
             <div className="md:col-span-2">
                 <div className="grid grid-cols-3 gap-4">
-                    <StatCard label="Classes Assigned" value="5" color="text-indigo-600" />
-                    <StatCard label="Total Students" value="120" color="text-pink-600" />
-                    <StatCard label="Avg Attendance" value="98%" color="text-green-600" />
+                    <StatCard label="Classes Assigned" value={stats?.classesAssigned || 0} color="text-indigo-600" />
+                    <StatCard label="Total Students" value={stats?.totalStudents || 0} color="text-pink-600" />
+                    <StatCard label="Avg Attendance" value={stats?.avgAttendance || "0%"} color="text-green-600" />
                 </div>
             </div>
 

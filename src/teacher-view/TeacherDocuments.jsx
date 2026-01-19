@@ -1,58 +1,122 @@
-import { useState } from 'react';
-import { FileText, Download, Printer, Eye, FilePenLine } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { FileText, Download, Printer, Eye, Trash2, Plus, UploadCloud, X } from 'lucide-react';
+import { API_URL } from '../config';
 
-const TeacherDocuments = ({ documents }) => {
-    // Local state to allow rename for demo purposes
-    const [docs, setDocs] = useState(documents);
+const TeacherDocuments = ({ documents = [], teacherId, refreshTeacher }) => {
+    const [isUploading, setIsUploading] = useState(false);
+    const fileInputRef = useRef(null);
 
-    const handleRename = (index) => {
-        const currentName = docs[index].name;
-        const newName = window.prompt("Rename file:", currentName);
-        if (newName && newName !== currentName) {
-            const updatedDocs = [...docs];
-            updatedDocs[index] = { ...updatedDocs[index], name: newName };
-            setDocs(updatedDocs);
+    // File Upload Handler
+    const handleFileChange = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('document', file);
+        formData.append('name', file.name); // Optional: Allow renaming before upload if needed
+
+        try {
+            setIsUploading(true);
+            const response = await fetch(`${API_URL}/api/teachers/${teacherId}/documents`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (response.ok) {
+                // Success
+                refreshTeacher(); // Refresh parent to get new list
+            } else {
+                alert('Upload failed');
+            }
+        } catch (error) {
+            console.error('Upload Error:', error);
+            alert('Upload error occurred');
+        } finally {
+            setIsUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = "";
         }
+    };
+
+    // Delete Handler
+    const handleDelete = async (docId) => {
+        if (!window.confirm("Are you sure you want to delete this document?")) return;
+
+        try {
+            const response = await fetch(`${API_URL}/api/teachers/${teacherId}/documents/${docId}`, {
+                method: 'DELETE',
+            });
+
+            if (response.ok) {
+                refreshTeacher();
+            } else {
+                alert('Delete failed');
+            }
+        } catch (error) {
+            console.error('Delete Error:', error);
+        }
+    };
+
+    // Helper: Open Document
+    const openDocument = (url) => {
+        window.open(url, '_blank');
     };
 
     return (
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-            <h3 className="font-bold text-gray-800 mb-4">Uploaded Documents</h3>
+            <div className="flex justify-between items-center mb-6">
+                <h3 className="font-bold text-gray-800">Uploaded Documents</h3>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {docs.map((doc, i) => (
-                    <div key={i} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-orange-300 transition-colors">
-                        <div className="flex items-center gap-3">
-                            <div className="bg-orange-50 text-green-600 p-2 rounded"><FileText size={20} /></div>
-                            <div>
-                                <p className="text-sm font-bold text-gray-700">{doc.name}</p>
+                {documents.map((doc, i) => (
+                    <div key={i} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-green-300 transition-colors group">
+                        <div className="flex items-center gap-3 overflow-hidden">
+                            <div className="bg-green-50 text-green-600 p-2.5 rounded-lg shrink-0">
+                                <FileText size={20} />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-sm font-bold text-gray-700 truncate" title={doc.name}>{doc.name}</p>
                                 <p className="text-xs text-gray-400">{doc.size} • {doc.date}</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-1">
-                            <button className="p-1.5 text-gray-400 hover:text-orange-600" title="View"><Eye size={18} /></button>
-                            <button className="p-1.5 text-gray-400 hover:text-blue-600" title="Print"><Printer size={18} /></button>
-                            <button className="p-1.5 text-gray-400 hover:text-green-600" title="Download"><Download size={18} /></button>
-                            <button onClick={() => handleRename(i)} className="p-1.5 text-gray-400 hover:text-gray-800" title="Rename"><FilePenLine size={18} /></button>
+                        <div className="flex items-center gap-1 shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => openDocument(doc.url)} className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded" title="View"><Eye size={18} /></button>
+                            <a href={doc.url} download target="_blank" rel="noreferrer" className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded" title="Download"><Download size={18} /></a>
+
+                            {!doc.isProfileDoc && (
+                                <button onClick={() => handleDelete(doc.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded" title="Delete"><Trash2 size={18} /></button>
+                            )}
                         </div>
                     </div>
                 ))}
 
                 {/* Upload Button */}
-                <div className="border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center justify-center p-6 text-gray-400 cursor-pointer hover:border-orange-300 hover:bg-orange-50 transition-colors">
-                    <PlusIcon size={24} className="mb-2" />
-                    <span className="text-xs font-bold">Upload New Document</span>
+                <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`border-2 border-dashed border-gray-200 rounded-lg flex flex-col items-center justify-center p-6 cursor-pointer hover:border-green-400 hover:bg-green-50/50 transition-all group ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}
+                >
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        className="hidden"
+                        onChange={handleFileChange}
+                    />
+
+                    {isUploading ? (
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mb-2"></div>
+                    ) : (
+                        <>
+                            <div className="bg-gray-50 text-gray-400 p-3 rounded-full mb-3 group-hover:bg-green-100 group-hover:text-green-600 transition-colors">
+                                <UploadCloud size={24} />
+                            </div>
+                            <span className="text-sm font-bold text-gray-500 group-hover:text-green-700">Click to Upload Document</span>
+                            <span className="text-xs text-gray-400 mt-1">PDF, DOC, JPG (Max 5MB)</span>
+                        </>
+                    )}
                 </div>
             </div>
         </div>
     );
 };
-
-// Helper SVG Icon
-const PlusIcon = ({ size, className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <line x1="12" y1="5" x2="12" y2="19"></line>
-        <line x1="5" y1="12" x2="19" y2="12"></line>
-    </svg>
-);
 
 export default TeacherDocuments;

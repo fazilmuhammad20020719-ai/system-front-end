@@ -27,19 +27,40 @@ const ViewTeacher = () => {
     useEffect(() => {
         const fetchTeacher = async () => {
             try {
+                // 1. Fetch Basic Info
                 const response = await fetch(`${API_URL}/api/teachers/${id}`);
+                const data = await response.json();
+
+                // 2. Fetch Stats
+                const statsRes = await fetch(`${API_URL}/api/teachers/${id}/stats`);
+                const statsData = await statsRes.json();
+
+                // 3. Fetch Documents (Uploaded via Documents Tab)
+                const docsRes = await fetch(`${API_URL}/api/teachers/${id}/documents`);
+                const filesData = await docsRes.json();
+
+                // Combine Profile Docs (Static fields) with Uploaded Docs (Dynamic table)
+                const profileDocs = [
+                    data.cv_url ? { id: 'cv', name: 'CV / Resume', url: `${API_URL}${data.cv_url}`, date: 'Profile', size: '-', isProfileDoc: true } : null,
+                    data.certificates_url ? { id: 'cert', name: 'Certificates', url: `${API_URL}${data.certificates_url}`, date: 'Profile', size: '-', isProfileDoc: true } : null,
+                    data.nic_copy_url ? { id: 'nic', name: 'NIC Copy', url: `${API_URL}${data.nic_copy_url}`, date: 'Profile', size: '-', isProfileDoc: true } : null
+                ].filter(Boolean);
+
+                const uploadedDocs = filesData.map(doc => ({
+                    id: doc.id,
+                    name: doc.name,
+                    url: `${API_URL}${doc.file_url}`,
+                    date: new Date(doc.created_at).toLocaleDateString(),
+                    size: doc.file_size,
+                    isProfileDoc: false
+                }));
+
+                const allDocuments = [...profileDocs, ...uploadedDocs];
+
                 if (response.ok) {
-                    const data = await response.json();
-
-                    const documents = [
-                        data.cv_url ? { name: 'CV / Resume', url: `${API_URL}${data.cv_url}`, date: 'Uploaded', size: '-' } : null,
-                        data.certificates_url ? { name: 'Certificates', url: `${API_URL}${data.certificates_url}`, date: 'Uploaded', size: '-' } : null,
-                        data.nic_copy_url ? { name: 'NIC Copy', url: `${API_URL}${data.nic_copy_url}`, date: 'Uploaded', size: '-' } : null
-                    ].filter(Boolean);
-
                     const mappedTeacher = {
                         id: data.id,
-                        firstName: data.name, // Using full name as firstName
+                        firstName: data.name,
                         lastName: "",
                         fullName: data.name,
                         image: data.photo_url ? `${API_URL}${data.photo_url}` : null,
@@ -59,16 +80,17 @@ const ViewTeacher = () => {
                         qualification: data.qualification,
                         experience: data.previous_experience,
                         joiningDate: data.joining_date,
-                        role: data.designation, // or type
+                        role: data.designation,
 
                         // Financial
                         salary: data.basic_salary,
 
-                        // Arrays
-                        documents: documents,
-                        schedule: [], // Not implemented yet
-                        attendanceStats: { total: 0, present: 0, absent: 0 }, // Not implemented yet
-                        payroll: [] // Not implemented yet
+                        // Arrays & Objects
+                        documents: allDocuments,
+                        stats: statsData, // Passing stats here
+                        schedule: [],
+                        attendanceStats: { total: 0, present: 0, absent: 0 },
+                        payroll: []
                     };
                     setTeacher(mappedTeacher);
                 } else {
@@ -113,12 +135,12 @@ const ViewTeacher = () => {
 
                     {/* 3. Tab Content Render */}
                     <div className="space-y-6">
-                        {activeTab === 'overview' && <TeacherOverview teacher={teacher} />}
+                        {activeTab === 'overview' && <TeacherOverview teacher={teacher} stats={teacher.stats} />}
                         {activeTab === 'schedule' && <TeacherSchedule schedule={teacher.schedule} />}
                         {activeTab === 'attendance' && <TeacherAttendanceView stats={teacher.attendanceStats} />}
                         {activeTab === 'schedule' && <TeacherSchedule schedule={teacher.schedule} />}
                         {activeTab === 'payroll' && <TeacherPayroll teacher={teacher} />}
-                        {activeTab === 'documents' && <TeacherDocuments documents={teacher.documents} />}
+                        {activeTab === 'documents' && <TeacherDocuments documents={teacher.documents} teacherId={teacher.id} refreshTeacher={() => navigate(0)} />}
                     </div>
                 </main>
             </div>

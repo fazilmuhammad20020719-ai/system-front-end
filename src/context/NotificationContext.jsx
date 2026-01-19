@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback } from 'react';
 import DashboardAlert from '../dashboard/DashboardAlert';
 
 const NotificationContext = createContext();
@@ -14,7 +14,6 @@ export const useNotification = () => {
 export const NotificationProvider = ({ children }) => {
     const [notifications, setNotifications] = useState([]);
 
-    // Notification Function
     const notify = useCallback((type, message, title = '') => {
         const id = Date.now();
         setNotifications(prev => [...prev, { id, type, message, title }]);
@@ -32,17 +31,15 @@ export const NotificationProvider = ({ children }) => {
     return (
         <NotificationContext.Provider value={{ notify }}>
             {children}
-            {/* Notification Display Area (Top Right) */}
-            <div className="fixed top-5 right-5 z-[100] flex flex-col gap-2 w-full max-w-sm pointer-events-none">
+            <div className="fixed top-5 right-5 z-50 flex flex-col gap-2">
                 {notifications.map(n => (
-                    <div key={n.id} className="pointer-events-auto animate-in slide-in-from-right-5 fade-in duration-300">
-                        <DashboardAlert
-                            type={n.type}
-                            title={n.title}
-                            message={n.message}
-                            onClose={() => removeNotification(n.id)}
-                        />
-                    </div>
+                    <DashboardAlert
+                        key={n.id}
+                        type={n.type}
+                        title={n.title}
+                        message={n.message}
+                        onClose={() => removeNotification(n.id)}
+                    />
                 ))}
             </div>
         </NotificationContext.Provider>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { API_URL } from './config';
 import { Save, X, ChevronRight, Menu } from 'lucide-react';
 import Sidebar from './Sidebar';
+import { useNotification } from './context/NotificationContext'; // Import Hook
 
 import StudentPersonalInfo from './add-student/StudentPersonalInfo';
 import StudentLocationInfo from './add-student/StudentLocationInfo';
@@ -14,6 +15,7 @@ const AddStudent = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('details');
+    const { notify } = useNotification(); // Initialize Hook
 
     const [programOptions, setProgramOptions] = useState([]);
 
@@ -46,26 +48,11 @@ const AddStudent = () => {
         setFormData({ ...formData, [name]: type === 'file' ? files[0] : value });
     };
 
-    const [showSuccess, setShowSuccess] = useState(false);
-
-    const showToast = () => {
-        setShowSuccess(true);
-        setTimeout(() => {
-            setShowSuccess(false);
-            navigate('/students');
-        }, 2000);
-    };
-
-    // --- திருத்தப்பட்ட SUBMIT FUNCTION (FormData) ---
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // 1. FormData உருவாக்குதல்
         const data = new FormData();
-
-        // 2. State-ல் உள்ள தரவுகளை இதில் ஏற்றுதல்
         for (const key in formData) {
-            // ஃபைல் அல்லது எழுத்து இருந்தால் மட்டும் சேர்க்கவும்
             if (formData[key] !== null && formData[key] !== '') {
                 data.append(key, formData[key]);
             }
@@ -74,37 +61,28 @@ const AddStudent = () => {
         try {
             const response = await fetch(`${API_URL}/api/students`, {
                 method: 'POST',
-                // Header-ல் 'Content-Type' போடக்கூடாது. Browser பார்த்துக்கொள்ளும்.
                 body: data,
             });
 
             const result = await response.json();
 
             if (response.ok) {
-                showToast();
+                // Success Notification
+                notify('success', 'Student added successfully!', 'Success');
+                setTimeout(() => navigate('/students'), 2000);
             } else {
-                alert(result.message || "Error saving student");
+                // Error Notification
+                notify('error', result.message || "Error saving student", 'Failed');
             }
         } catch (error) {
             console.error("Error submitting form:", error);
-            alert("Network error. Please try again.");
+            // Network Error Notification
+            notify('error', "Network error. Please try again.", 'Error');
         }
     };
 
     return (
         <div className="min-h-screen bg-[#F3F4F6] font-sans flex relative">
-            {showSuccess && (
-                <div className="fixed top-10 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-8 py-4 rounded-full shadow-2xl z-50 animate-in fade-in slide-in-from-top-5 flex items-center gap-3">
-                    <div className="bg-white/20 p-1 rounded-full">
-                        <ChevronRight size={20} className="text-white rotate-90" />
-                    </div>
-                    <div>
-                        <h4 className="font-bold text-lg">Success!</h4>
-                        <p className="text-white/90 text-sm">Student has been added successfully.</p>
-                    </div>
-                </div>
-            )}
-
             <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
             <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "md:ml-64" : "md:ml-20"} ml-0`}>
                 <main className="p-4 md:p-6 max-w-7xl mx-auto w-full">

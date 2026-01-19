@@ -4,6 +4,8 @@ import { API_URL } from './config';
 import { Save, X, ChevronRight, Menu, CheckCircle } from 'lucide-react';
 import Sidebar from './Sidebar';
 
+import { useNotification } from './context/NotificationContext';
+
 import StudentPersonalInfo from './add-student/StudentPersonalInfo';
 import StudentLocationInfo from './add-student/StudentLocationInfo';
 import StudentGuardianInfo from './add-student/StudentGuardianInfo';
@@ -17,7 +19,7 @@ const EditStudent = () => {
     const [activeTab, setActiveTab] = useState('details');
     const [programOptions, setProgramOptions] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [successMsg, setSuccessMsg] = useState("");
+    const { notify } = useNotification();
 
     const [formData, setFormData] = useState({
         studentPhoto: null, indexNumber: '', firstName: '', lastName: '', dob: '', gender: 'Male', nic: '', email: '', phone: '',
@@ -76,7 +78,7 @@ const EditStudent = () => {
                         photoUrl: data.photo_url || null // Set existing photo URL for preview
                     });
                 } else {
-                    alert("Student not found!");
+                    notify('error', "Student not found!", 'Error');
                     navigate('/students');
                 }
             } catch (error) {
@@ -121,17 +123,17 @@ const EditStudent = () => {
             });
 
             if (response.ok) {
-                setSuccessMsg("Student Edited Successfully");
+                notify('success', "Student Updated Successfully", 'Success');
                 setTimeout(() => {
                     navigate('/students');
                 }, 1500);
             } else {
                 const errData = await response.json();
-                alert(errData.message || "Error updating student");
+                notify('error', errData.message || "Error updating student", 'Update Failed');
             }
         } catch (error) {
             console.error("Error updating:", error);
-            alert("Network error.");
+            notify('error', "Network error.", 'Network Error');
         }
     };
 
@@ -140,16 +142,6 @@ const EditStudent = () => {
     return (
         <div className="min-h-screen bg-[#F3F4F6] font-sans flex">
             <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
-
-            {successMsg && (
-                <div className="fixed top-5 right-5 z-50 bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-xl shadow-lg flex items-center gap-3 animate-bounce-in">
-                    <CheckCircle size={24} className="text-green-600" />
-                    <div>
-                        <h4 className="font-bold">Success!</h4>
-                        <p className="text-sm">{successMsg}</p>
-                    </div>
-                </div>
-            )}
 
             <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "md:ml-64" : "md:ml-20"} ml-0`}>
                 <main className="p-4 md:p-6 max-w-7xl mx-auto w-full">

@@ -10,6 +10,7 @@ import StudentList from './students/StudentList';
 import StudentGrid from './students/StudentGrid';
 import StudentStats from './students/StudentStats';
 import Loader from './components/Loader';
+import { useNotification } from './context/NotificationContext';
 
 const Students = () => {
     // Responsive sidebar state
@@ -130,7 +131,7 @@ const Students = () => {
 
     // DELETE STATE
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null, name: '' });
-    const [successMsg, setSuccessMsg] = useState('');
+    const { notify } = useNotification();
 
     const confirmDelete = (student) => {
         setDeleteModal({ isOpen: true, id: student.id, name: student.name });
@@ -140,11 +141,10 @@ const Students = () => {
         try {
             await fetch(`${API_URL}/api/students/${deleteModal.id}`, { method: 'DELETE' });
             setStudents(prev => prev.filter(s => s.id !== deleteModal.id));
-            setSuccessMsg('Student deleted successfully');
-            setTimeout(() => setSuccessMsg(''), 3000);
+            notify('success', 'Student deleted successfully', 'Success');
         } catch (error) {
             console.error("Error deleting student:", error);
-            alert("Failed to delete");
+            notify('error', "Failed to delete student", 'Delete Failed');
         } finally {
             setDeleteModal({ isOpen: false, id: null, name: '' });
         }
@@ -154,13 +154,6 @@ const Students = () => {
 
     return (
         <div className="min-h-screen bg-[#F3F4F6] font-sans flex relative">
-            {/* SUCCESS TOAST */}
-            {successMsg && (
-                <div className="fixed top-10 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-full shadow-lg z-50 animate-in fade-in slide-in-from-top-5">
-                    <b>{successMsg}</b>
-                </div>
-            )}
-
             {/* DELETE MODAL */}
             {deleteModal.isOpen && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">

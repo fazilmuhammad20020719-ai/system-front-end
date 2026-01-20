@@ -11,7 +11,7 @@ const TeacherList = ({ teachers, onDelete }) => {
                 <thead className="bg-gray-50/50 border-b border-gray-200">
                     <tr>
                         <th className="p-5 text-xs font-bold text-gray-500 uppercase tracking-wider">Teacher Profile</th>
-                        <th className="p-5 text-xs font-bold text-gray-500 uppercase tracking-wider">Program & Subject</th>
+                        <th className="p-5 text-xs font-bold text-gray-500 uppercase tracking-wider w-[30%]">Programs & Role</th>
                         <th className="p-5 text-xs font-bold text-gray-500 uppercase tracking-wider hidden md:table-cell">Contact Info</th>
                         <th className="p-5 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">Status</th>
                         <th className="p-5 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Actions</th>
@@ -41,9 +41,22 @@ const TeacherList = ({ teachers, onDelete }) => {
                                 </div>
                             </td>
                             <td className="p-5">
-                                <div className="flex flex-col gap-1">
-                                    <span className="text-sm font-medium text-gray-700">{teacher.program}</span>
-                                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded w-fit">{teacher.subject}</span>
+                                <div className="flex flex-col gap-2">
+                                    <div className="flex items-center gap-2">
+                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border w-fit ${(teacher.teacher_category === 'Sharia' || teacher.category === 'Sharia') ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                            (teacher.teacher_category === 'Academic' || teacher.category === 'Academic' || teacher.teacher_category === 'School' || teacher.category === 'School') ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                                'bg-gray-100 text-gray-600 border-gray-200'
+                                            }`}>
+                                            {teacher.teacher_category || teacher.category || 'General'}
+                                        </span>
+                                    </div>
+                                    {(teacher.assigned_programs || teacher.program_name || teacher.program) ? (
+                                        <p className="text-[11px] font-semibold text-gray-700 truncate max-w-[150px]" title={[...new Set((teacher.assigned_programs || teacher.program_name || teacher.program || '').split(',').map(p => p.trim()).filter(Boolean))].join(', ')}>
+                                            {[...new Set((teacher.assigned_programs || teacher.program_name || teacher.program || '').split(',').map(p => p.trim()).filter(Boolean))].join(', ')}
+                                        </p>
+                                    ) : (
+                                        <span className="text-xs italic text-gray-400">No programs</span>
+                                    )}
                                 </div>
                             </td>
                             <td className="p-5 hidden md:table-cell">

@@ -58,7 +58,8 @@ const AddTeacher = () => {
 
         // --- New Field ---
         program: '',
-        assignedPrograms: []
+        assignedPrograms: [],
+        status: 'Active' // Default status
     });
 
     const [programs, setPrograms] = useState([]); // State for programs
@@ -116,6 +117,7 @@ const AddTeacher = () => {
             data.append('basicSalary', formData.basicSalary);
             data.append('bankName', formData.bankName);
             data.append('accountNumber', formData.accountNumber);
+            data.append('status', formData.status);
             // Append Files
             if (formData.profilePhoto) data.append('profilePhoto', formData.profilePhoto);
             if (formData.cvFile) data.append('cvFile', formData.cvFile);

@@ -256,33 +256,14 @@ const Attendance = () => {
                 <AttendanceHeader
                     toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
                     selectedDate={selectedDate}
+                    activeTab={activeTab}
+                    setActiveTab={setActiveTab}
                 />
 
                 <main className="p-4 md:p-8 pb-32">
 
                     {/* --- TOGGLE TABS --- */}
-                    <div className="flex justify-center mb-6">
-                        <div className="bg-white p-1 rounded-lg border border-gray-200 shadow-sm inline-flex">
-                            <button
-                                onClick={() => setActiveTab('students')}
-                                className={`px-6 py-2 rounded-md text-sm font-bold transition-all ${activeTab === 'students'
-                                    ? 'bg-orange-500 text-white shadow-sm'
-                                    : 'text-gray-500 hover:bg-gray-50'
-                                    }`}
-                            >
-                                Students
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('teachers')}
-                                className={`px-6 py-2 rounded-md text-sm font-bold transition-all ${activeTab === 'teachers'
-                                    ? 'bg-orange-500 text-white shadow-sm'
-                                    : 'text-gray-500 hover:bg-gray-50'
-                                    }`}
-                            >
-                                Teachers
-                            </button>
-                        </div>
-                    </div>
+
 
                     {/* STATS (Reused for both) */}
                     <AttendanceStats

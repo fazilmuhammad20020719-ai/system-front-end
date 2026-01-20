@@ -1,217 +1,84 @@
-import { User, GraduationCap, Users, MapPin, School, Phone, MessageCircle, Mail, Calendar } from 'lucide-react';
+import { User, MapPin, Phone, BookOpen, Users, Calendar } from 'lucide-react';
+
+const InfoItem = ({ label, value, icon: Icon }) => (
+    <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+        {Icon && <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><Icon size={18} /></div>}
+        <div>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-0.5">{label}</p>
+            <p className="font-medium text-gray-800">{value || '-'}</p>
+        </div>
+    </div>
+);
 
 const ViewStudentInfo = ({ student }) => {
-
-    // Helper: Date Formatter
-    const formatDate = (dateString) => {
-        if (!dateString) return "—";
-        return new Date(dateString).toLocaleDateString('en-GB', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric'
-        });
-    };
-
-    // Helper: Age Calculator
-    const getAge = (dateString) => {
-        if (!dateString) return "";
-        const today = new Date();
-        const birthDate = new Date(dateString);
-        let age = today.getFullYear() - birthDate.getFullYear();
-        const m = today.getMonth() - birthDate.getMonth();
-        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-            age--;
-        }
-        return `${age} Years`;
-    };
-
-    // Helper: Open WhatsApp
-    const openWhatsApp = (number) => {
-        if (!number) return;
-        window.open(`https://wa.me/${number.replace(/\D/g, '')}`, '_blank');
-    };
-
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-6">
 
-            {/* 1. Personal Details */}
-            <SectionCard title="Personal Details" icon={User} color="text-blue-600" bg="bg-blue-50">
-                <div className="space-y-0.5">
-                    <DetailRow label="Full Name" value={`${student.firstName} ${student.lastName}`} highlight />
+            {/* Personal Details */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2 border-b pb-2">
+                    <User className="text-blue-600" size={20} />
+                    Personal Details
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <InfoItem label="Full Name" value={student.name} />
+                    <InfoItem label="Date of Birth" value={student.dob ? new Date(student.dob).toLocaleDateString() : ''} icon={Calendar} />
+                    <InfoItem label="Gender" value={student.gender} />
+                    <InfoItem label="NIC Number" value={student.nic} />
+                    <InfoItem label="Email" value={student.email} />
+                    <InfoItem label="Mobile" value={student.contact_number} icon={Phone} />
+                </div>
+            </div>
 
-                    {/* Date of Birth with Age */}
-                    <div className="flex justify-between items-center py-2.5 border-b border-gray-50 last:border-0">
-                        <span className="text-sm text-gray-500 font-medium">Date of Birth</span>
-                        <div className="text-right">
-                            <span className="text-sm font-semibold text-gray-700 block">{formatDate(student.dob)}</span>
-                            <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">{getAge(student.dob)}</span>
-                        </div>
+            {/* Address */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2 border-b pb-2">
+                    <MapPin className="text-red-600" size={20} />
+                    Address & Location
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="md:col-span-2">
+                        <InfoItem label="Permanent Address" value={student.address} />
                     </div>
-
-                    <DetailRow label="Gender" value={student.gender} />
-                    <DetailRow label="NIC / B-Form" value={student.nic} />
-                    <DetailRow label="Email" value={student.email} />
-                    <DetailRow label="Phone" value={student.phone} />
+                    <InfoItem label="City" value={student.city} />
+                    <InfoItem label="District" value={student.district} />
+                    <InfoItem label="Province" value={student.province} />
                 </div>
+            </div>
 
-                {/* Student Actions (ADDED EMAIL BUTTON HERE) */}
-                <div className="mt-5 pt-4 border-t border-gray-100 flex flex-wrap gap-2">
-                    <ActionButton icon={Phone} label="Call" onClick={() => window.open(`tel:${student.phone}`)} color="text-blue-600 bg-blue-50 hover:bg-blue-100 border-blue-200" />
-                    <ActionButton icon={MessageCircle} label="WhatsApp" onClick={() => openWhatsApp(student.phone)} color="text-green-600 bg-green-50 hover:bg-green-100 border-green-200" />
-
-                    {/* New Email Button for Student */}
-                    {student.email && (
-                        <ActionButton
-                            icon={Mail}
-                            label="Email"
-                            onClick={() => window.open(`mailto:${student.email}`)}
-                            color="text-green-600 bg-green-50 hover:bg-orange-100 border-green-200"
-                        />
-                    )}
+            {/* Academic Info */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2 border-b pb-2">
+                    <BookOpen className="text-purple-600" size={20} />
+                    Academic Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* FIX: student.program -> student.program_name */}
+                    <InfoItem label="Program" value={student.program_name || student.program} />
+                    <InfoItem label="Current Year" value={student.current_year} />
+                    <InfoItem label="Session / Batch" value={student.session_year} />
+                    <InfoItem label="Admission Date" value={student.admission_date ? new Date(student.admission_date).toLocaleDateString() : ''} />
+                    <InfoItem label="Previous School" value={student.previous_school} />
+                    <InfoItem label="Medium" value={student.medium_of_study} />
                 </div>
-            </SectionCard>
+            </div>
 
-            {/* 2. Guardian Information */}
-            <SectionCard title="Guardian Information" icon={Users} color="text-purple-600" bg="bg-purple-50">
-                <div className="flex items-start gap-4 mb-4">
-                    <div className="w-16 h-16 rounded-full bg-gray-100 border-2 border-white shadow-sm flex items-center justify-center overflow-hidden flex-shrink-0 text-gray-400">
-                        {student.guardianPhoto ? (
-                            <img src={student.guardianPhoto} alt="Guardian" className="w-full h-full object-cover" />
-                        ) : (
-                            <User size={32} />
-                        )}
-                    </div>
-                    <div className="flex-1 space-y-0.5">
-                        <DetailRow label="Guardian Name" value={student.guardianName} highlight />
-                        <DetailRow label="Relationship" value={student.guardianRelation} />
-                        <DetailRow label="Occupation" value={student.guardianOccupation || "—"} />
-                    </div>
+            {/* Guardian Info */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2 border-b pb-2">
+                    <Users className="text-green-600" size={20} />
+                    Guardian Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <InfoItem label="Guardian Name" value={student.guardian_name} />
+                    <InfoItem label="Relationship" value={student.guardian_relation} />
+                    <InfoItem label="Occupation" value={student.guardian_occupation} />
+                    <InfoItem label="Phone" value={student.guardian_phone} icon={Phone} />
                 </div>
-
-                <div className="space-y-0.5">
-                    <DetailRow label="Contact Number" value={student.guardianPhone} />
-                    <DetailRow label="Email Address" value={student.guardianEmail || "—"} />
-                </div>
-
-                {/* Guardian Actions */}
-                <div className="mt-5 pt-4 border-t border-gray-100 flex flex-wrap gap-2">
-                    <ActionButton icon={Phone} label="Call" onClick={() => window.open(`tel:${student.guardianPhone}`)} color="text-purple-600 bg-purple-50 hover:bg-purple-100 border-purple-200" />
-                    <ActionButton icon={MessageCircle} label="WhatsApp" onClick={() => openWhatsApp(student.guardianPhone)} color="text-green-600 bg-green-50 hover:bg-green-100 border-green-200" />
-                    {student.guardianEmail && (
-                        <ActionButton icon={Mail} label="Email" onClick={() => window.open(`mailto:${student.guardianEmail}`)} color="text-green-600 bg-green-50 hover:bg-orange-100 border-green-200" />
-                    )}
-                </div>
-            </SectionCard>
-
-            {/* 3. Address & Location */}
-            <SectionCard title="Address & Location" icon={MapPin} color="text-green-600" bg="bg-green-50">
-                <div className="mb-4">
-                    <p className="text-xs font-bold text-gray-400 uppercase mb-1">Home Address</p>
-                    <p className="text-sm font-medium text-gray-800 leading-relaxed">{student.address}</p>
-                </div>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 mb-2">
-                    <DetailRow label="Province" value={student.province} />
-                    <DetailRow label="District" value={student.district} />
-                    <DetailRow label="DS Division" value={student.dsDivision} />
-                    <DetailRow label="GN Division" value={student.gnDivision} />
-                </div>
-
-                {student.googleMapLink && (
-                    <div className="mt-4 pt-4 border-t border-gray-100 flex">
-                        <ActionButton
-                            icon={MapPin}
-                            label="Open Location in Google Maps"
-                            onClick={() => window.open(student.googleMapLink, '_blank')}
-                            color="text-red-600 bg-red-50 hover:bg-red-100 border-red-200 w-full"
-                        />
-                    </div>
-                )}
-            </SectionCard>
-
-            {/* 4. Academic History */}
-            <SectionCard title="Academic History" icon={GraduationCap} color="text-green-600" bg="bg-green-50">
-                {/* Status & Index */}
-                <div className="pb-4 border-b border-gray-100 mb-4 space-y-3">
-                    <div className="flex justify-between items-start">
-                        <div>
-                            <p className="text-xs text-gray-500 mb-0.5">Program</p>
-                            <p className="font-bold text-gray-800 text-base">{student.program}</p>
-                        </div>
-                        <span className={`px-2.5 py-1 rounded-md text-xs font-bold ${student.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                            {student.status}
-                        </span>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <p className="text-xs text-gray-500 mb-0.5">Index Number</p>
-                            <p className="font-bold text-gray-800">{student.indexNumber || "—"}</p>
-                        </div>
-                        <div>
-                            <p className="text-xs text-gray-500 mb-0.5">Admission Date</p>
-                            <p className="font-bold text-gray-800">{formatDate(student.admissionDate)}</p>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <p className="text-xs text-gray-500 mb-0.5">Batch / Session</p>
-                            <p className="text-sm font-semibold text-gray-700">{student.session}</p>
-                        </div>
-                        <div>
-                            <p className="text-xs text-gray-500 mb-0.5">Current Grade</p>
-                            <p className="text-sm font-semibold text-gray-700">{student.year}</p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Previous Education */}
-                <div>
-                    <h4 className="flex items-center gap-2 text-xs font-bold text-gray-800 uppercase mb-3">
-                        <School size={14} className="text-gray-400" /> Previous Education
-                    </h4>
-                    <div className="space-y-0.5">
-                        <DetailRow label="Prev. School" value={student.previousSchool} />
-                        <DetailRow label="Last Grade" value={student.lastStudiedGrade} />
-                        <DetailRow label="Prev. Madrasa" value={student.previousCollegeName} />
-                        <DetailRow label="Medium" value={student.mediumOfStudy} />
-                    </div>
-                </div>
-            </SectionCard>
+            </div>
 
         </div>
     );
 };
-
-// --- Styled Components ---
-
-const SectionCard = ({ title, icon: Icon, color, bg, children }) => (
-    <div className="bg-white rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-gray-100 overflow-hidden flex flex-col h-full hover:border-gray-200 transition-colors">
-        <div className="px-6 py-4 border-b border-gray-50 flex items-center gap-3">
-            <div className={`p-2 rounded-lg ${bg} ${color}`}>
-                <Icon size={18} />
-            </div>
-            <h3 className="font-bold text-gray-800 text-[15px]">{title}</h3>
-        </div>
-        <div className="p-6 flex-1 flex flex-col">
-            {children}
-        </div>
-    </div>
-);
-
-const DetailRow = ({ label, value, highlight = false }) => (
-    <div className="flex justify-between items-center py-2.5 border-b border-gray-50 last:border-0">
-        <span className="text-sm text-gray-500 font-medium">{label}</span>
-        <div className={`text-sm text-right max-w-[60%] truncate ${highlight ? 'font-bold text-gray-900' : 'font-semibold text-gray-700'}`}>
-            {value || "—"}
-        </div>
-    </div>
-);
-
-const ActionButton = ({ icon: Icon, label, onClick, color }) => (
-    <button onClick={onClick} className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold transition-all border ${color}`}>
-        <Icon size={14} /> {label}
-    </button>
-);
 
 export default ViewStudentInfo;

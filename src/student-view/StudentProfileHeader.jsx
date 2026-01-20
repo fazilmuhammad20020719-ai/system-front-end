@@ -1,60 +1,57 @@
-import { GraduationCap, Edit, Download } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { MapPin, BookOpen, Calendar, Phone } from 'lucide-react';
+import { API_URL } from '../config';
 
 const StudentProfileHeader = ({ student }) => {
-    const navigate = useNavigate();
-
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            <div className="flex items-center gap-6">
-                <div className="relative">
-                    <div className="w-24 h-24 rounded-full bg-gray-200 border-4 border-orange-50 overflow-hidden shadow-sm">
-                        {student.image ? (
-                            <img
-                                src={student.image}
-                                alt={`${student.firstName} ${student.lastName}`}
-                                className="w-full h-full object-cover"
-                                onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
-                            />
-                        ) : null}
-                        {/* Fallback Placeholder (shown if no image or error) */}
-                        <div className={`w-full h-full flex items-center justify-center bg-orange-100 text-green-600 text-3xl font-bold ${student.image ? 'hidden' : 'flex'}`}>
-                            {student.firstName?.charAt(0)}
+        <div className="bg-gradient-to-r from-blue-900 to-blue-700 text-white pt-8 pb-16 px-8 relative overflow-hidden">
+            <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-8 relative z-10">
+                {/* Profile Photo */}
+                <div className="w-32 h-32 rounded-full border-4 border-white/30 shadow-2xl overflow-hidden bg-white/10 backdrop-blur-sm">
+                    {student.photo_url ? (
+                        <img src={`${API_URL}${student.photo_url}`} alt="Student" className="w-full h-full object-cover" />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-white/50">
+                            {student.name?.charAt(0)}
                         </div>
-                    </div>
-                    <span className={`absolute bottom-1 right-1 w-5 h-5 border-2 border-white rounded-full ${student.status === 'Active' ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                    )}
                 </div>
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-800">{student.firstName} {student.lastName}</h1>
-                    <div className="flex items-center gap-3 text-gray-500 mt-1">
-                        <span className="flex items-center gap-1.5 text-sm"><GraduationCap size={16} /> {student.program}</span>
 
-                        <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                        <span className="text-sm font-medium text-gray-700">{student.year}</span>
-
-                        <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-bold uppercase ${student.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                {/* Details */}
+                <div className="text-center md:text-left flex-1">
+                    <div className="flex flex-col md:flex-row items-center gap-4 mb-2">
+                        <h1 className="text-3xl font-bold">{student.name}</h1>
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${student.status === 'Active' ? 'bg-green-500/20 border-green-400 text-green-100' : 'bg-red-500/20 border-red-400 text-red-100'}`}>
                             {student.status}
                         </span>
+                    </div>
 
-                        <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                        <span className="text-sm">#{student.id}</span>
+                    <p className="text-blue-100 font-mono text-lg mb-4">{student.indexNumber || student.id}</p>
+
+                    <div className="flex flex-wrap justify-center md:justify-start gap-x-6 gap-y-2 text-sm text-blue-100/90">
+                        {/* FIX: student.program -> student.program_name */}
+                        <div className="flex items-center gap-2">
+                            <BookOpen size={16} />
+                            <span>{student.program_name || student.program || 'No Program'}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Calendar size={16} />
+                            <span>Batch: {student.session_year}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <MapPin size={16} />
+                            <span>{student.city || 'Unknown City'}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Phone size={16} />
+                            <span>{student.contact_number}</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div className="flex gap-3 w-full md:w-auto">
-                {/* EDIT BUTTON CHECK */}
-                <button
-                    onClick={() => navigate(`/edit-student/${student.id}`)}
-                    className="flex-1 md:flex-none px-4 py-2 border border-gray-200 hover:border-green-600 hover:text-green-600 text-gray-700 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 bg-white"
-                >
-                    <Edit size={16} /> Edit Profile
-                </button>
-
-                <button className="flex-1 md:flex-none px-4 py-2 bg-green-600 hover:bg-[#d67b28] text-white rounded-lg text-sm font-medium shadow-sm transition-all flex items-center justify-center gap-2">
-                    <Download size={16} /> Download Profile
-                </button>
+            {/* Background Pattern */}
+            <div className="absolute top-0 right-0 p-10 opacity-10">
+                <BookOpen size={300} />
             </div>
         </div>
     );

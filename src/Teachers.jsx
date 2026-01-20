@@ -44,7 +44,9 @@ const Teachers = () => {
                     ...t,
                     program: t.program_name || t.program_id, // Use name if available
                     empid: t.emp_id, // Map emp_id to empid
-                    category: t.teacher_category // இதை புதிதாகச் சேர்க்கவும்
+                    category: t.teacher_category, // For filter logic
+                    teacher_category: t.teacher_category, // For display in TeacherGrid/List
+                    assigned_programs: t.assigned_programs // Ensure assigned_programs is preserved
                 }));
                 setTeachers(transformedData);
             }

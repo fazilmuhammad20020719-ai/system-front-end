@@ -19,73 +19,85 @@ const TeacherOverview = ({ teacher, stats }) => {
     };
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-            {/* 1. Contact Info */}
-            <SectionCard title="Contact Information" icon={User} color="text-blue-600" bg="bg-blue-50">
-                <div className="space-y-0.5">
-                    <DetailRow label="Full Name" value={`${teacher.firstName} ${teacher.lastName}`} highlight />
-                    <DetailRow label="Email" value={teacher.email} />
-                    <DetailRow label="Phone" value={teacher.phone} />
-                    <DetailRow label="Address" value={teacher.address} />
-                    <DetailRow label="Date of Birth" value={formatDate(teacher.dob)} />
-                    <DetailRow label="Gender" value={teacher.gender} />
-                    <DetailRow label="NIC No" value={teacher.nic} />
-                </div>
-
-                {/* Google Maps Link */}
-                {teacher.googleMapLink && (
-                    <div className="mt-4 pt-4 border-t border-gray-100">
-                        <button onClick={() => window.open(teacher.googleMapLink, '_blank')} className="w-full flex items-center justify-center gap-2 py-2 bg-green-50 text-green-700 text-xs font-bold rounded-lg hover:bg-green-100 border border-green-200 transition-colors">
-                            <MapPin size={14} /> Open Location in Google Maps
-                        </button>
-                    </div>
+        <div className="space-y-6">
+            {/* Top Actions */}
+            <div className="flex flex-wrap gap-2">
+                <ActionButton
+                    icon={Phone}
+                    label="Call"
+                    onClick={() => window.open(`tel:${teacher.phone}`)}
+                    color="text-gray-600 bg-gray-50 hover:bg-blue-50 hover:text-blue-600"
+                />
+                <ActionButton
+                    icon={MessageCircle}
+                    label="WhatsApp"
+                    onClick={() => openWhatsApp(teacher.phone)}
+                    color="text-gray-600 bg-gray-50 hover:bg-green-50 hover:text-green-600"
+                />
+                {teacher.email && (
+                    <ActionButton
+                        icon={Mail}
+                        label="Email"
+                        onClick={() => window.open(`mailto:${teacher.email}`)}
+                        color="text-gray-600 bg-gray-50 hover:bg-orange-50 hover:text-orange-600"
+                    />
                 )}
-
-                {/* Actions */}
-                <div className="mt-5 pt-4 border-t border-gray-100 flex flex-wrap gap-2">
-                    <ActionButton icon={Phone} label="Call" onClick={() => window.open(`tel:${teacher.phone}`)} color="text-blue-600 bg-blue-50 hover:bg-blue-100 border-blue-200" />
-                    <ActionButton icon={MessageCircle} label="WhatsApp" onClick={() => openWhatsApp(teacher.phone)} color="text-green-600 bg-green-50 hover:bg-green-100 border-green-200" />
-                    {teacher.email && (
-                        <ActionButton
-                            icon={Mail}
-                            label="Email"
-                            onClick={() => window.open(`mailto:${teacher.email}`)}
-                            color="text-green-600 bg-green-50 hover:bg-orange-100 border-green-200"
-                        />
-                    )}
-                </div>
-            </SectionCard>
-
-            {/* 2. Professional Details */}
-            <SectionCard title="Professional Details" icon={Briefcase} color="text-purple-600" bg="bg-purple-50">
-                <div className="space-y-0.5">
-                    <DetailRow label="Employee ID" value={teacher.employeeId} highlight />
-                    <DetailRow label="Designation" value={teacher.designation} />
-                    <DetailRow label="Department" value={teacher.department} />
-                    <DetailRow label="Qualification" value={teacher.qualification} />
-                    <DetailRow label="Experience" value={teacher.experience} />
-                    <DetailRow label="Joining Date" value={formatDate(teacher.joiningDate)} />
-                    <div className="flex justify-between items-center py-2.5 border-b border-gray-50 last:border-0">
-                        <span className="text-sm text-gray-500 font-medium">Status</span>
-                        <div className="text-right">
-                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${teacher.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                {teacher.status}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </SectionCard>
-
-            {/* 3. Teaching Stats */}
-            <div className="md:col-span-2">
-                <div className="grid grid-cols-3 gap-4">
-                    <StatCard label="Classes Assigned" value={stats?.classesAssigned || 0} color="text-indigo-600" />
-                    <StatCard label="Total Students" value={stats?.totalStudents || 0} color="text-pink-600" />
-                    <StatCard label="Avg Attendance" value={stats?.avgAttendance || "0%"} color="text-green-600" />
-                </div>
+                {teacher.googleMapLink && (
+                    <ActionButton
+                        icon={MapPin}
+                        label="Location"
+                        onClick={() => window.open(teacher.googleMapLink, '_blank')}
+                        color="text-gray-600 bg-gray-50 hover:bg-emerald-50 hover:text-emerald-600"
+                    />
+                )}
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                {/* 1. Contact Info */}
+                <SectionCard title="Contact Information" icon={User} color="text-blue-600" bg="bg-blue-50">
+                    <div className="space-y-0.5">
+                        <DetailRow label="Full Name" value={`${teacher.firstName} ${teacher.lastName}`} highlight />
+                        <DetailRow label="Email" value={teacher.email} />
+                        <DetailRow label="Phone" value={teacher.phone} />
+                        <DetailRow label="Address" value={teacher.address} />
+                        <DetailRow label="Date of Birth" value={formatDate(teacher.dob)} />
+                        <DetailRow label="Gender" value={teacher.gender} />
+                        <DetailRow label="NIC No" value={teacher.nic} />
+                    </div>
+
+                </SectionCard>
+
+                {/* 2. Professional Details */}
+                <SectionCard title="Professional Details" icon={Briefcase} color="text-purple-600" bg="bg-purple-50">
+                    <div className="space-y-0.5">
+                        <DetailRow label="Employee ID" value={teacher.employeeId} highlight />
+                        <DetailRow label="Designation" value={teacher.designation} />
+                        <DetailRow label="Department" value={teacher.department} />
+                        <DetailRow label="Qualification" value={teacher.qualification} />
+                        <DetailRow label="Experience" value={teacher.experience} />
+                        <DetailRow label="Joining Date" value={formatDate(teacher.joiningDate)} />
+                        <div className="flex justify-between items-center py-2.5 border-b border-gray-50 last:border-0">
+                            <span className="text-sm text-gray-500 font-medium">Status</span>
+                            <div className="text-right">
+                                <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${teacher.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                    {teacher.status}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </SectionCard>
+
+                {/* 3. Teaching Stats */}
+                <div className="md:col-span-2">
+                    <div className="grid grid-cols-3 gap-4">
+                        <StatCard label="Classes Assigned" value={stats?.classesAssigned || 0} color="text-indigo-600" />
+                        <StatCard label="Total Students" value={stats?.totalStudents || 0} color="text-pink-600" />
+                        <StatCard label="Avg Attendance" value={stats?.avgAttendance || "0%"} color="text-green-600" />
+                    </div>
+                </div>
+
+            </div>
         </div>
     );
 };
@@ -116,8 +128,8 @@ const DetailRow = ({ label, value, highlight = false }) => (
 );
 
 const ActionButton = ({ icon: Icon, label, onClick, color }) => (
-    <button onClick={onClick} className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold transition-all border ${color}`}>
-        <Icon size={14} /> {label}
+    <button onClick={onClick} className={`flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-xs font-semibold transition-all ${color}`}>
+        <Icon size={16} /> {label}
     </button>
 );
 

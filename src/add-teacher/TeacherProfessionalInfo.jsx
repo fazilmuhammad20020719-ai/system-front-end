@@ -1,38 +1,68 @@
+import { useEffect, useState } from 'react';
 import { Briefcase, GraduationCap, Building, BookOpen, Layers, CheckSquare } from 'lucide-react';
 import { InputField, SelectField, TextAreaField } from '../add-student/FormComponents';
 
 const TeacherProfessionalInfo = ({ formData, handleChange, programs = [], subjects = [] }) => {
 
+    // Checkbox-களுக்கான State
+    const [selectedPrograms, setSelectedPrograms] = useState([]);
+
+    // --- FIX: டேட்டா வந்ததும், அதை Array-ஆக மாற்றி State-ல் வைப்பது ---
+    useEffect(() => {
+        if (formData.assignedPrograms) {
+            // String-ஆக இருந்தால் (,) வைத்துப் பிரிக்கவும்
+            if (typeof formData.assignedPrograms === 'string') {
+                const loadedPrograms = formData.assignedPrograms.split(',').map(item => item.trim());
+                setSelectedPrograms(loadedPrograms);
+            }
+            // ஏற்கனவே Array-ஆக இருந்தால் அப்படியே பயன்படுத்தவும்
+            else if (Array.isArray(formData.assignedPrograms)) {
+                setSelectedPrograms(formData.assignedPrograms);
+            }
+        } else {
+            setSelectedPrograms([]);
+        }
+    }, [formData.assignedPrograms]);
+
+    // --- MERGE HARDCODED PROGRAMS ---
+    // Ensure "Al Muballihah" is available for Sharia
+    const processedPrograms = [...programs];
+    if (!processedPrograms.some(p => p.name === 'Al Muballihah')) {
+        processedPrograms.push({ id: 'auto-muballihah', name: 'Al Muballihah', category: 'Sharia' });
+    }
+
     // --- 1. FILTERING LOGIC ---
     // டீச்சர் வகையைப் பொறுத்து ப்ரோக்ராம்களை வடிகட்டுதல்
-    const filteredPrograms = programs.filter(prog => {
+    const filteredPrograms = processedPrograms.filter(prog => {
         // 'Both' அல்லது எதுவுமே தேர்ந்தெடுக்கப்படவில்லை என்றால் எல்லாவற்றையும் காட்டு
         if (!formData.teacherCategory || formData.teacherCategory === 'Both') return true;
 
-        // இல்லையென்றால், அந்த வகையை மட்டும் காட்டு (Sharia or Academic)
-        return prog.category === formData.teacherCategory;
+        // இல்லையென்றால், அந்த வகையை மட்டும் காட்டு (Sharia or Academic) + Both இருப்பவற்றையும் காட்டு
+        // Match 'School' selection to 'Academic' programs
+        const targetCategory = formData.teacherCategory === 'School' ? 'Academic' : formData.teacherCategory;
+        return prog.category === targetCategory || prog.category === 'Both';
     });
 
     // --- 2. CHECKBOX CHANGE HANDLER ---
     const handleProgramCheckboxChange = (e) => {
-        const { value, checked } = e.target;
+        const { value } = e.target; // checked is handled logic below using state
 
-        // ஏற்கனவே உள்ள லிஸ்ட்டை எடுக்கவும் (அல்லது புதிய லிஸ்ட்)
-        let currentPrograms = formData.assignedPrograms ? [...formData.assignedPrograms] : [];
-
-        if (checked) {
-            // டிக் செய்தால் சேர்க்கவும்
-            currentPrograms.push(value);
+        let newSelection;
+        if (selectedPrograms.includes(value)) {
+            // ஏற்கனவே இருந்தால் நீக்கு (Uncheck)
+            newSelection = selectedPrograms.filter(p => p !== value);
         } else {
-            // டிக் எடுத்தால் நீக்கவும்
-            currentPrograms = currentPrograms.filter(item => item !== value);
+            // இல்லையென்றால் சேர் (Check)
+            newSelection = [...selectedPrograms, value];
         }
 
-        // Parent Component-க்கு அனுப்பவும்
+        setSelectedPrograms(newSelection);
+
+        // Parent Component-க்கு அனுப்பவும் (Array -> String)
         handleChange({
             target: {
                 name: 'assignedPrograms',
-                value: currentPrograms
+                value: newSelection.join(', ')
             }
         });
     };
@@ -66,7 +96,7 @@ const TeacherProfessionalInfo = ({ formData, handleChange, programs = [], subjec
                         name="teacherCategory"
                         value={formData.teacherCategory}
                         onChange={handleChange}
-                        options={['Sharia', 'Academic', 'Both']}
+                        options={['Sharia', 'School', 'Both']}
                     />
 
                     {/* --- NEW: CHECKBOXES FOR PROGRAMS --- */}
@@ -82,7 +112,7 @@ const TeacherProfessionalInfo = ({ formData, handleChange, programs = [], subjec
                                         <input
                                             type="checkbox"
                                             value={prog.name}
-                                            checked={formData.assignedPrograms?.includes(prog.name)}
+                                            checked={selectedPrograms.includes(prog.name)}
                                             onChange={handleProgramCheckboxChange}
                                             className="w-4 h-4 text-green-600 rounded focus:ring-green-500 border-gray-300"
                                         />
@@ -102,6 +132,15 @@ const TeacherProfessionalInfo = ({ formData, handleChange, programs = [], subjec
                     <InputField label="Designation" name="designation" value={formData.designation} onChange={handleChange} />
                     <InputField label="Department" name="department" value={formData.department} onChange={handleChange} />
                     <InputField label="Joining Date" name="joiningDate" type="date" value={formData.joiningDate} onChange={handleChange} />
+
+                    {/* Status Dropdown */}
+                    <SelectField
+                        label="Status"
+                        name="status"
+                        value={formData.status || 'Active'}
+                        onChange={handleChange}
+                        options={['Active', 'Inactive']}
+                    />
 
                     <div className="md:col-span-2 lg:col-span-3">
                         <TextAreaField label="Previous Experience / Colleges" name="previousExperience" value={formData.previousExperience} onChange={handleChange} rows={3} />

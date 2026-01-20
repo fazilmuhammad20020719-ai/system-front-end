@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Save, X, ChevronRight, Menu } from 'lucide-react';
 import { API_URL } from './config';
 import Sidebar from './Sidebar';
+import { useNotification } from './context/NotificationContext';
 
 // Import sub-components
 import TeacherPersonalInfo from './add-teacher/TeacherPersonalInfo';
@@ -14,6 +15,7 @@ const AddTeacher = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('personal');
+    const { notify } = useNotification();
 
     const [formData, setFormData] = useState({
         // --- From Image (Personal) ---
@@ -126,14 +128,14 @@ const AddTeacher = () => {
             });
 
             if (response.ok) {
-                alert("Teacher Record Saved Successfully!");
+                notify('success', 'Teacher added successfully!', 'Success');
                 navigate('/teachers');
             } else {
-                alert("Failed to save teacher.");
+                notify('error', 'Failed to save teacher.', 'Error');
             }
         } catch (error) {
             console.error("Error submitting teacher:", error);
-            alert("Error saving teacher.");
+            notify('error', 'Error saving teacher.', 'Error');
         }
     };
 

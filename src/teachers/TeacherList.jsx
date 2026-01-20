@@ -59,7 +59,7 @@ const TeacherList = ({ teachers, onDelete }) => {
                                 <div className="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-all">
                                     <button onClick={() => navigate(`/view-teacher/${teacher.id}`)} className="p-1.5 hover:bg-blue-50 text-gray-400 hover:text-blue-600 rounded-lg transition-colors" title="View Profile"><Eye size={18} /></button>
                                     <Link to={`/edit-teacher/${teacher.id}`}><button className="p-1.5 hover:bg-orange-50 text-gray-400 hover:text-orange-600 rounded-lg transition-colors" title="Edit"><Pencil size={18} /></button></Link>
-                                    <button onClick={() => onDelete(teacher.id)} className="p-1.5 hover:bg-red-50 text-gray-400 hover:text-red-600 rounded-lg transition-colors" title="Delete"><Trash2 size={18} /></button>
+                                    <button onClick={() => onDelete(teacher)} className="p-1.5 hover:bg-red-50 text-gray-400 hover:text-red-600 rounded-lg transition-colors" title="Delete"><Trash2 size={18} /></button>
                                 </div>
                             </td>
                         </tr>

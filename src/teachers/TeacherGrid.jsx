@@ -51,7 +51,7 @@ const TeacherGrid = ({ teachers, totalCount, onDelete }) => {
                         <div className="grid grid-cols-3 gap-2 border-t border-gray-100 pt-4 mt-auto">
                             <button onClick={() => navigate(`/view-teacher/${teacher.id}`)} className="flex items-center justify-center gap-1 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-blue-50 hover:text-blue-600 rounded-md transition-colors"><Eye size={14} /> View</button>
                             <Link to={`/edit-teacher/${teacher.id}`} className="w-full"><button className="w-full flex items-center justify-center gap-1 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-orange-50 hover:text-orange-600 rounded-md transition-colors"><Pencil size={14} /> Edit</button></Link>
-                            <button onClick={() => onDelete(teacher.id)} className="flex items-center justify-center gap-1 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-red-50 hover:text-red-600 rounded-md transition-colors"><Trash2 size={14} /> Del</button>
+                            <button onClick={() => onDelete(teacher)} className="flex items-center justify-center gap-1 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-red-50 hover:text-red-600 rounded-md transition-colors"><Trash2 size={14} /> Del</button>
                         </div>
                     </div>
                 ))}

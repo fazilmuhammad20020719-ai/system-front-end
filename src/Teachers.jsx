@@ -9,9 +9,11 @@ import TeachersFilters from './teachers/TeachersFilters';
 import TeacherList from './teachers/TeacherList';
 import TeacherGrid from './teachers/TeacherGrid';
 import Loader from './components/Loader';
+import { useNotification } from './context/NotificationContext';
 
 const Teachers = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const { notify } = useNotification();
 
     // -- VIEW MODE STATE --
     const [viewMode, setViewMode] = useState('grid');
@@ -65,22 +67,29 @@ const Teachers = () => {
         fetchTeachers();
     }, []);
 
-    const handleDelete = async (id) => {
-        if (!window.confirm("Are you sure you want to delete this teacher?")) return;
+    // DELETE STATE
+    const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null, name: '' });
 
+    const handleDelete = (teacher) => {
+        setDeleteModal({ isOpen: true, id: teacher.id, name: teacher.name });
+    };
+
+    const executeDelete = async () => {
         try {
-            const response = await fetch(`${API_URL}/api/teachers/${id}`, {
+            const response = await fetch(`${API_URL}/api/teachers/${deleteModal.id}`, {
                 method: 'DELETE'
             });
             if (response.ok) {
-                alert("Teacher deleted successfully");
-                fetchTeachers(); // Refresh list
+                notify('success', 'Teacher deleted successfully', 'Success');
+                fetchTeachers();
             } else {
-                alert("Failed to delete teacher");
+                notify('error', 'Failed to delete teacher', 'Error');
             }
         } catch (err) {
             console.error("Error deleting teacher:", err);
-            alert("Error deleting teacher");
+            notify('error', 'Error deleting teacher', 'Error');
+        } finally {
+            setDeleteModal({ isOpen: false, id: null, name: '' });
         }
     };
 
@@ -133,6 +142,20 @@ const Teachers = () => {
 
     return (
         <div className="flex min-h-screen bg-gray-50 font-sans">
+            {/* DELETE MODAL */}
+            {deleteModal.isOpen && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center animate-in zoom-in-95">
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">Delete Teacher?</h3>
+                        <p className="text-gray-500 mb-6">Are you sure you want to delete <span className="font-bold text-gray-800">"{deleteModal.name}"</span>? This cannot be undone.</p>
+                        <div className="flex gap-3">
+                            <button onClick={() => setDeleteModal({ isOpen: false })} className="flex-1 py-2.5 bg-gray-100 font-bold rounded-xl hover:bg-gray-200">Cancel</button>
+                            <button onClick={executeDelete} className="flex-1 py-2.5 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700">Yes, Delete</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
 
             <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "md:ml-64" : "md:ml-20"} ml-0`}>

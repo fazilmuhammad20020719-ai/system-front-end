@@ -4,6 +4,7 @@ import { Save, X, ChevronRight, Menu } from 'lucide-react';
 import Sidebar from './Sidebar';
 import { API_URL } from './config';
 import Loader from './components/Loader';
+import { useNotification } from './context/NotificationContext';
 
 // Import sub-components (Reusing from Add functionality)
 import TeacherPersonalInfo from './add-teacher/TeacherPersonalInfo';
@@ -17,6 +18,7 @@ const EditTeacher = () => {
     const navigate = useNavigate();
     const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
     const [activeTab, setActiveTab] = useState('personal');
+    const { notify } = useNotification();
 
     // Initial Form State
     const [formData, setFormData] = useState({
@@ -120,7 +122,7 @@ const EditTeacher = () => {
                         nicCopy: null
                     });
                 } else {
-                    alert("Teacher not found");
+                    notify('error', 'Teacher not found', 'Error');
                     navigate('/teachers');
                 }
             } catch (err) {
@@ -178,14 +180,14 @@ const EditTeacher = () => {
             });
 
             if (response.ok) {
-                alert("Teacher Record Updated Successfully!");
+                notify('success', 'Teacher updated successfully!', 'Success');
                 navigate('/teachers');
             } else {
-                alert("Failed to update teacher.");
+                notify('error', 'Failed to update teacher.', 'Error');
             }
         } catch (error) {
             console.error("Error updating teacher:", error);
-            alert("Error updating teacher.");
+            notify('error', 'Error updating teacher.', 'Error');
         }
     };
 

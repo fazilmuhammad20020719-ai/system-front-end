@@ -9,12 +9,12 @@ const TeacherAttendanceTable = ({ teachers, onStatusChange, isEditing }) => {
             {/* Table Header */}
             <div className="grid grid-cols-12 bg-[#f8fafc] p-4 border-b border-gray-200 text-[10px] font-bold text-gray-500 uppercase tracking-wider min-w-[600px]">
                 <div className="col-span-5 pl-2">Teacher</div>
-                <div className="col-span-4">Position Info</div>
+                <div className="col-span-4 pl-2">Program</div>
                 <div className="col-span-3 text-left">Status</div>
             </div>
 
             {/* Table Body */}
-            <div className="divide-y divide-gray-100 overflow-x-auto max-h-[calc(100vh-280px)] overflow-y-auto pb-4 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+            <div className="divide-y divide-gray-100 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
                 <div className="min-w-[600px]">
                     {teachers.length > 0 ? teachers.map((teacher) => (
                         <div key={teacher.id} className="grid grid-cols-12 p-3 items-center hover:bg-gray-50 transition-colors group">
@@ -28,12 +28,17 @@ const TeacherAttendanceTable = ({ teachers, onStatusChange, isEditing }) => {
                                 </div>
                             </div>
 
-                            <div className="col-span-4">
-                                <div className="flex flex-col gap-1">
-                                    <span className="text-xs font-bold text-gray-600 truncate">{teacher.role}</span>
-                                    <span className="inline-block bg-[#f3f4f6] text-gray-500 text-[10px] px-2 py-0.5 rounded border border-gray-200 w-fit truncate max-w-full">
-                                        {teacher.subject}
-                                    </span>
+                            <div className="col-span-4 pl-2">
+                                <div className="flex flex-wrap gap-1.5 align-middle h-full items-center">
+                                    {(teacher.assigned_programs || teacher.program_name) ? (
+                                        (teacher.assigned_programs || teacher.program_name).toString().split(',').map((prog, idx) => (
+                                            <span key={idx} className="inline-flex items-center bg-blue-50 text-blue-700 text-[10px] font-medium px-2 py-0.5 rounded border border-blue-100 truncate max-w-[150px]">
+                                                {prog.trim()}
+                                            </span>
+                                        ))
+                                    ) : (
+                                        <span className="text-xs text-gray-400 italic">General</span>
+                                    )}
                                 </div>
                             </div>
 

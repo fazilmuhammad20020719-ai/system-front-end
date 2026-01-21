@@ -12,6 +12,7 @@ const Schedule = () => {
 
     // Dynamic Data State
     const [schedules, setSchedules] = useState([]);
+    const [titlePrograms, setTitlePrograms] = useState([]); // Store fetched programs
     const [subjects, setSubjects] = useState([]);
     const [teachers, setTeachers] = useState([]);
 
@@ -20,40 +21,72 @@ const Schedule = () => {
     const [selectedSlotForAttendance, setSelectedSlotForAttendance] = useState(null);
     const [editingSchedule, setEditingSchedule] = useState(null);
     const [selectedProgramForAdd, setSelectedProgramForAdd] = useState(null);
+    const [selectedDayForAdd, setSelectedDayForAdd] = useState('Monday');
 
     // State for Per-Program Filters
     const [programFilters, setProgramFilters] = useState({});
 
     // Fetch All Data
+    // --- Fetch All Data (Updated & Robust) ---
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             try {
-                const [schRes, subRes, teaRes] = await Promise.all([
-                    fetch(`${API_URL}/api/schedule`),
-                    fetch(`${API_URL}/api/subjects`),
-                    fetch(`${API_URL}/api/teachers`)
+                console.log("Fetching data from:", API_URL);
+
+                // 1. Fetch Requests (Handled Separately)
+                const fetchSchedules = fetch(`${API_URL}/api/schedules`)
+                    .then(res => {
+                        if (!res.ok) console.error("Schedules API Error:", res.status);
+                        return res.ok ? res.json() : [];
+                    })
+                    .catch(err => { console.error("Schedules Fetch Failed:", err); return []; });
+
+                const fetchSubjects = fetch(`${API_URL}/api/subjects`)
+                    .then(res => {
+                        if (!res.ok) console.error("Subjects API Error:", res.status);
+                        return res.ok ? res.json() : [];
+                    })
+                    .catch(err => { console.error("Subjects Fetch Failed:", err); return []; });
+
+                const fetchTeachers = fetch(`${API_URL}/api/teachers`)
+                    .then(res => {
+                        if (!res.ok) console.error("Teachers API Error:", res.status);
+                        return res.ok ? res.json() : [];
+                    })
+                    .catch(err => { console.error("Teachers Fetch Failed:", err); return []; });
+
+                const fetchPrograms = fetch(`${API_URL}/api/programs`)
+                    .then(res => {
+                        if (!res.ok) console.error("Programs API Error:", res.status);
+                        return res.ok ? res.json() : [];
+                    })
+                    .catch(err => { console.error("Programs Fetch Failed:", err); return []; });
+
+                // 2. Wait for all to finish (Success or Fail)
+                const [schData, subData, teaData, progData] = await Promise.all([
+                    fetchSchedules, fetchSubjects, fetchTeachers, fetchPrograms
                 ]);
 
-                if (schRes.ok && subRes.ok && teaRes.ok) {
-                    const schData = await schRes.json();
-                    const subData = await subRes.json(); // Expected: {id, name, program, year (grade)} etc.
-                    const teaData = await teaRes.json();
+                console.log("Loaded Programs:", progData); // Debug log
 
-                    setSchedules(schData);
-                    setSubjects(subData);
-                    setTeachers(teaData);
+                // 3. Set State
+                setSchedules(schData);
+                setSubjects(subData);
+                setTeachers(teaData);
+                setTitlePrograms(progData); // Correct state setter used here
 
-                    // Initialize filters based on fetched subjects
-                    const uniquePrograms = [...new Set(subData.map(s => s.program))].filter(Boolean);
+                // 4. Initialize Filters
+                if (progData.length > 0) {
                     const initialFilters = {};
-                    uniquePrograms.forEach(p => {
-                        initialFilters[p] = { grade: 'All', subjectId: 'All' };
+                    progData.forEach(p => {
+                        initialFilters[p.name] = { grade: 'All', subjectId: 'All' }; // Using p.name as key based on existing component logic
                     });
                     setProgramFilters(initialFilters);
                 }
+
             } catch (err) {
-                console.error("Error fetching schedule data:", err);
+                console.error("Global Fetch Error:", err);
             } finally {
                 setLoading(false);
             }
@@ -79,7 +112,7 @@ const Schedule = () => {
 
     // Derived State
     const preferredOrder = ['Hifzul Quran', 'Al-Alim (Boys)', 'Al-Alimah (Girls)', 'O/L', 'A/L', 'Grade 8-10'];
-    const availablePrograms = [...new Set(subjects.map(s => s.program))].filter(Boolean);
+    const availablePrograms = titlePrograms.map(p => p.name).filter(Boolean);
     // Sort available programs by preference or alphabetically
     const programs = availablePrograms.sort((a, b) => {
         const idxA = preferredOrder.indexOf(a);
@@ -114,9 +147,10 @@ const Schedule = () => {
     };
 
     // --- Handlers ---
-    const handleAddClick = (program) => {
+    const handleAddClick = (program, day) => {
         setEditingSchedule(null);
         setSelectedProgramForAdd(program);
+        setSelectedDayForAdd(day);
         setShowScheduleModal(true);
     };
 
@@ -230,6 +264,15 @@ const Schedule = () => {
                     </div>
 
                     <div className="space-y-8">
+                        {(!programs || programs.length === 0) && !loading && (
+                            <div className="text-center py-12 bg-white rounded-2xl border border-dashed border-gray-300">
+                                <p className="text-gray-500 font-medium mb-2">No programs found.</p>
+                                <p className="text-gray-400 text-sm mb-4">You need to create programs before you can manage their schedules.</p>
+                                <a href="/programs" className="px-4 py-2 bg-[#ea8933] text-white rounded-lg text-sm font-bold shadow-sm hover:bg-[#d97c2a] transition-colors">
+                                    Go to Programs
+                                </a>
+                            </div>
+                        )}
                         {programs.map(program => {
                             // Get filters for this program
                             const pFilters = programFilters[program] || { grade: 'All', subjectId: 'All' };
@@ -392,16 +435,15 @@ const Schedule = () => {
                                                                 );
                                                             })}
 
-                                                            {daySlots.length === 0 && (
-                                                                <div className="h-full flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                                                                    <button
-                                                                        onClick={() => handleAddClick(program)}
-                                                                        className="w-8 h-8 rounded-full bg-white border border-gray-200 text-gray-400 hover:text-[#ea8933] hover:border-[#ea8933] flex items-center justify-center shadow-sm"
-                                                                    >
-                                                                        <Plus size={14} />
-                                                                    </button>
-                                                                </div>
-                                                            )}
+                                                            <div className="mt-auto pt-2 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                <button
+                                                                    onClick={() => handleAddClick(program, day)}
+                                                                    title="Add class"
+                                                                    className="w-full py-1 rounded-lg border border-dashed border-gray-300 text-gray-400 hover:text-[#ea8933] hover:border-[#ea8933] text-xs font-medium flex items-center justify-center gap-1 hover:bg-white transition-all"
+                                                                >
+                                                                    <Plus size={12} /> Add
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 );
@@ -420,6 +462,7 @@ const Schedule = () => {
                     subjects={getFilteredSubjects()}
                     teachers={teachers}
                     initialData={editingSchedule}
+                    defaultDay={selectedDayForAdd}
                     existingSchedules={schedules}
                     onSave={handleSaveSchedule}
                     onDelete={handleDeleteSchedule}

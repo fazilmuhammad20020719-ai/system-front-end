@@ -1,6 +1,6 @@
 import { Umbrella } from 'lucide-react';
 
-const AttendanceTable = ({ students, onStatusChange }) => {
+const AttendanceTable = ({ students, onStatusChange, isEditing }) => {
 
     const getInitials = (name) => name ? name.charAt(0).toLowerCase() : "-";
 
@@ -14,7 +14,7 @@ const AttendanceTable = ({ students, onStatusChange }) => {
             </div>
 
             {/* Table Body */}
-            <div className="divide-y divide-gray-100 overflow-x-auto max-h-[65vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+            <div className="divide-y divide-gray-100 overflow-x-auto max-h-[calc(100vh-280px)] overflow-y-auto pb-4 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
                 <div className="min-w-[600px]">
                     {students.length > 0 ? students.map((student) => (
                         <div key={student.id} className="grid grid-cols-12 p-3 items-center hover:bg-gray-50 transition-colors group">
@@ -35,9 +35,36 @@ const AttendanceTable = ({ students, onStatusChange }) => {
                             </div>
 
                             <div className="col-span-3 flex items-center gap-2">
-                                <button onClick={() => onStatusChange(student.id, 'Present')} className={`w-8 h-8 rounded border flex items-center justify-center transition-all ${student.status === 'Present' ? 'bg-green-100 border-green-500 text-green-600' : 'bg-white border-gray-200 text-gray-400 hover:border-green-300'}`}><span className="font-bold text-xs">P</span></button>
-                                <button onClick={() => onStatusChange(student.id, 'Absent')} className={`w-8 h-8 rounded border flex items-center justify-center transition-all ${student.status === 'Absent' ? 'bg-red-100 border-red-500 text-red-600' : 'bg-white border-gray-200 text-gray-400 hover:border-red-300'}`}><span className="font-bold text-xs">A</span></button>
-                                <button onClick={() => onStatusChange(student.id, 'Holiday')} className={`w-8 h-8 rounded border flex items-center justify-center transition-all ${student.status === 'Holiday' ? 'bg-blue-100 border-blue-500 text-blue-600' : 'bg-white border-gray-200 text-gray-400 hover:border-blue-300'}`}><Umbrella size={14} strokeWidth={2.5} /></button>
+                                <button
+                                    disabled={!isEditing}
+                                    onClick={() => onStatusChange(student.id, 'Present')}
+                                    className={`w-8 h-8 rounded border flex items-center justify-center transition-all ${student.status === 'Present'
+                                        ? 'bg-green-100 border-green-500 text-green-600'
+                                        : 'bg-white border-gray-200 text-gray-400'
+                                        } ${isEditing ? 'hover:border-green-300 cursor-pointer' : 'opacity-60 cursor-not-allowed'}`}
+                                >
+                                    <span className="font-bold text-xs">P</span>
+                                </button>
+                                <button
+                                    disabled={!isEditing}
+                                    onClick={() => onStatusChange(student.id, 'Absent')}
+                                    className={`w-8 h-8 rounded border flex items-center justify-center transition-all ${student.status === 'Absent'
+                                        ? 'bg-red-100 border-red-500 text-red-600'
+                                        : 'bg-white border-gray-200 text-gray-400'
+                                        } ${isEditing ? 'hover:border-red-300 cursor-pointer' : 'opacity-60 cursor-not-allowed'}`}
+                                >
+                                    <span className="font-bold text-xs">A</span>
+                                </button>
+                                <button
+                                    disabled={!isEditing}
+                                    onClick={() => onStatusChange(student.id, 'Holiday')}
+                                    className={`w-8 h-8 rounded border flex items-center justify-center transition-all ${student.status === 'Holiday'
+                                        ? 'bg-blue-100 border-blue-500 text-blue-600'
+                                        : 'bg-white border-gray-200 text-gray-400'
+                                        } ${isEditing ? 'hover:border-blue-300 cursor-pointer' : 'opacity-60 cursor-not-allowed'}`}
+                                >
+                                    <Umbrella size={14} strokeWidth={2.5} />
+                                </button>
                             </div>
                         </div>
                     )) : (

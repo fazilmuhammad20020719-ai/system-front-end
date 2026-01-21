@@ -5,7 +5,6 @@ import { API_URL } from './config';
 // IMPORTING SUB-COMPONENTS
 import AttendanceHeader from './attendance/AttendanceHeader';
 import AttendanceStats from './attendance/AttendanceStats';
-import AttendanceFooter from './attendance/AttendanceFooter';
 import PinModal from './attendance/PinModal';
 
 // STUDENT COMPONENTS
@@ -28,6 +27,7 @@ const Attendance = () => {
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [isPinModalOpen, setIsPinModalOpen] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [isEditing, setIsEditing] = useState(false); // New Edit Mode State
 
     // ==========================================
     // DATA HOLDING FOR SAVING
@@ -53,62 +53,62 @@ const Attendance = () => {
     // ==========================================
     // FETCH LOGIC
     // ==========================================
-    useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
-            try {
-                // 1. Fetch Master Lists
-                // Ideally we should cache this or only fetch if needed, but for simplicity we fetch parallel
-                // 1. Fetch Master Lists
-                // Ideally we should cache this or only fetch if needed, but for simplicity we fetch parallel
-                const [sRes, tRes, attRes, statRes] = await Promise.all([
-                    fetch(`${API_URL}/api/students`),
-                    fetch(`${API_URL}/api/teachers`),
-                    // Fetch attendance and stats
-                    fetch(`${API_URL}/api/attendance?date=${selectedDate}`),
-                    fetch(`${API_URL}/api/attendance/stats`)
-                ]);
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            // 1. Fetch Master Lists
+            // Ideally we should cache this or only fetch if needed, but for simplicity we fetch parallel
+            const [sRes, tRes, attRes, statRes] = await Promise.all([
+                fetch(`${API_URL}/api/students`),
+                fetch(`${API_URL}/api/teachers`),
+                // Fetch attendance and stats
+                fetch(`${API_URL}/api/attendance?date=${selectedDate}`),
+                fetch(`${API_URL}/api/attendance/stats`)
+            ]);
 
-                if (sRes.ok && tRes.ok && attRes.ok) {
-                    const allStudents = await sRes.json();
-                    const allTeachers = await tRes.json();
-                    const attendanceRecords = await attRes.json();
+            if (sRes.ok && tRes.ok && attRes.ok) {
+                const allStudents = await sRes.json();
+                const allTeachers = await tRes.json();
+                const attendanceRecords = await attRes.json();
 
-                    if (statRes && statRes.ok) {
-                        const stats = await statRes.json();
-                        setAvgRate(stats.averageRate || 0);
-                    }
-
-                    // 2. Merge Student Data
-                    // Map retrieved attendance to students
-                    const mergedStudents = allStudents.map(s => {
-                        const record = attendanceRecords.find(r => String(r.student_id) === String(s.id));
-                        return {
-                            ...s,
-                            status: record ? record.status : '' // Default to empty if no record
-                        };
-                    });
-                    setStudentsData(mergedStudents);
-
-                    // 3. Merge Teacher Data
-                    const mergedTeachers = allTeachers.map(t => {
-                        const record = attendanceRecords.find(r => String(r.teacher_id) === String(t.id));
-                        return {
-                            ...t,
-                            attendanceStatus: record ? record.status : ''
-                        };
-                    });
-                    setTeachersData(mergedTeachers);
+                if (statRes && statRes.ok) {
+                    const stats = await statRes.json();
+                    setAvgRate(stats.averageRate || 0);
                 }
 
-            } catch (err) {
-                console.error("Error fetching attendance data:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
+                // 2. Merge Student Data
+                // Map retrieved attendance to students
+                const mergedStudents = allStudents.map(s => {
+                    const record = attendanceRecords.find(r => String(r.student_id) === String(s.id));
+                    return {
+                        ...s,
+                        status: record ? record.status : '' // Default to empty if no record
+                    };
+                });
+                setStudentsData(mergedStudents);
 
+                // 3. Merge Teacher Data
+                const mergedTeachers = allTeachers.map(t => {
+                    const record = attendanceRecords.find(r => String(r.teacher_id) === String(t.id));
+                    return {
+                        ...t,
+                        attendanceStatus: record ? record.status : ''
+                    };
+                });
+                setTeachersData(mergedTeachers);
+            }
+
+        } catch (err) {
+            console.error("Error fetching attendance data:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchData();
+        // Reset Edit Mode when date changes to prevent editing wrong date by mistake
+        setIsEditing(false);
     }, [selectedDate]);
 
     // ==========================================
@@ -199,14 +199,20 @@ const Attendance = () => {
     // ==========================================
 
     const handleStudentStatusChange = (id, newStatus) => {
+        if (!isEditing) return; // Guard
         setStudentsData(prev => prev.map(s => s.id === id ? { ...s, status: newStatus } : s));
     };
 
     const handleTeacherStatusChange = (id, newStatus) => {
+        if (!isEditing) return; // Guard
         setTeachersData(prev => prev.map(t => t.id === id ? { ...t, attendanceStatus: newStatus } : t));
     };
 
     const handleBulkAction = (action) => {
+        if (!isEditing) {
+            alert("Please enable Edit Mode first.");
+            return;
+        }
         const statusMap = { 'all-present': 'Present', 'all-absent': 'Absent', 'all-holiday': 'Holiday' };
         const targetStatus = statusMap[action];
 
@@ -219,17 +225,16 @@ const Attendance = () => {
         }
     };
 
-    const handleSaveSuccess = async () => {
+    // Called when PIN is verified successfullly
+    const handlePinSuccess = () => {
         setIsPinModalOpen(false);
+        setIsEditing(true);
+    };
 
+    const handleSaveData = async () => {
         try {
             if (activeTab === 'students') {
-                // Determine changed records or just save all visible with status?
-                // Simplest strategy: Save all students who have a status assigned.
                 const recordsToSave = studentsData.filter(s => s.status && s.status !== '');
-
-                // Send requests in batches or parallel
-                // ideally bulk insert, but using loop as per server.js API
                 const promises = recordsToSave.map(s =>
                     fetch(`${API_URL}/api/attendance`, {
                         method: 'POST',
@@ -238,17 +243,15 @@ const Attendance = () => {
                             studentId: s.id,
                             date: selectedDate,
                             status: s.status,
-                            remarks: '' // Could add remarks UI later
+                            remarks: ''
                         })
                     })
                 );
 
                 await Promise.all(promises);
                 alert("Attendance saved successfully!");
-                // Optionally re-fetch to confirm consistency
             } else {
                 const recordsToSave = teachersData.filter(t => t.attendanceStatus && t.attendanceStatus !== '');
-
                 const promises = recordsToSave.map(t =>
                     fetch(`${API_URL}/api/attendance`, {
                         method: 'POST',
@@ -265,6 +268,11 @@ const Attendance = () => {
                 await Promise.all(promises);
                 alert("Teacher attendance saved successfully!");
             }
+
+            // Success Actions
+            setIsEditing(false); // Lock Editing
+            fetchData(); // Refresh Data from DB to confirm
+
         } catch (err) {
             console.error("Error saving attendance:", err);
             alert("Failed to save attendance.");
@@ -282,7 +290,7 @@ const Attendance = () => {
 
             <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
 
-            <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "md:ml-64" : "md:ml-20"} ml-0`}>
+            <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "md:ml-64" : "md:ml-20"} ml-0 text-left`}>
 
                 {/* HEADER */}
                 <AttendanceHeader
@@ -290,17 +298,18 @@ const Attendance = () => {
                     selectedDate={selectedDate}
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
+                    isEditing={isEditing}
+                    onEditClick={() => setIsPinModalOpen(true)}
+                    onSaveClick={handleSaveData}
+                    onCancelClick={() => { setIsEditing(false); fetchData(); }}
                 />
 
-                <main className="p-4 md:p-8 pb-32">
-
-                    {/* --- TOGGLE TABS --- */}
-
+                <main className="p-4 md:p-8 max-w-[1600px] mx-auto w-full">
 
                     {/* STATS (Reused for both) */}
                     <AttendanceStats
                         dailyRate={currentStats.rate}
-                        averageRate={avgRate} // Dynamic Overall Average
+                        averageRate={avgRate}
                         presentCount={currentStats.present}
                         absentCount={currentStats.absent}
                     />
@@ -315,12 +324,13 @@ const Attendance = () => {
                                 filterStatus={filterStatus} setFilterStatus={setFilterStatus}
                                 searchQuery={searchQuery} setSearchQuery={setSearchQuery}
                                 onBulkAction={handleBulkAction}
-                                programs={programs} // Dynamic Programs
+                                programs={programs}
                                 years={dynamicYears}
                             />
                             <AttendanceTable
                                 students={filteredStudents}
                                 onStatusChange={handleStudentStatusChange}
+                                isEditing={isEditing}
                             />
                         </>
                     ) : (
@@ -331,31 +341,25 @@ const Attendance = () => {
                                 filterStatus={teacherFilterStatus} setFilterStatus={setTeacherFilterStatus}
                                 searchQuery={teacherSearchQuery} setSearchQuery={setTeacherSearchQuery}
                                 onBulkAction={handleBulkAction}
-                                programs={programs} // Dynamic Programs
+                                programs={programs}
                             />
                             <TeacherAttendanceTable
                                 teachers={filteredTeachers}
                                 onStatusChange={handleTeacherStatusChange}
+                                isEditing={isEditing}
                             />
                         </>
                     )}
 
                 </main>
 
-                {/* FOOTER */}
-                <AttendanceFooter
-                    count={currentCount}
-                    onSaveClick={() => setIsPinModalOpen(true)}
-                    isSidebarOpen={isSidebarOpen}
-                />
-
             </div>
 
-            {/* PIN MODAL */}
+            {/* PIN MODAL - Now unlocks Edit Mode */}
             <PinModal
                 isOpen={isPinModalOpen}
                 onClose={() => setIsPinModalOpen(false)}
-                onSuccess={handleSaveSuccess}
+                onSuccess={handlePinSuccess}
             />
         </div>
     );

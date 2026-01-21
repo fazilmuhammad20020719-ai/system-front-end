@@ -103,6 +103,7 @@ const AddTeacher = () => {
             data.append('phone', formData.phone);
             data.append('whatsapp', formData.whatsapp);
             data.append('address', formData.address);
+            data.append('googleMapLink', formData.mapLink);
             data.append('nic', formData.nic);
             data.append('dob', formData.dob);
             data.append('gender', formData.gender);

@@ -20,7 +20,8 @@ const ViewProgram = () => {
     // DATA STATES
     const [program, setProgram] = useState(null);
     const [subjects, setSubjects] = useState([]);
-    const [teachers, setTeachers] = useState([]);
+    const [teachers, setTeachers] = useState([]); // Program Teachers
+    const [allTeachers, setAllTeachers] = useState([]); // All Teachers for Dropdown
     const [showSubjectModal, setShowSubjectModal] = useState(false);
     const [editingSubject, setEditingSubject] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -49,6 +50,7 @@ const ViewProgram = () => {
             const allPrograms = await progRes.json();
             const allSubjects = await subRes.json();
             const allTeachers = await teachRes.json();
+            setAllTeachers(allTeachers); // Store ALL teachers for Modal
 
             // 1. Find Current Program
             const currentProgram = allPrograms.find(p => p.id === parseInt(id));
@@ -454,7 +456,7 @@ const ViewProgram = () => {
                     isOpen={showSubjectModal}
                     onClose={() => setShowSubjectModal(false)}
                     programs={program ? [program] : []}
-                    teachers={teachers}  // <--- இதை புதிதாக சேர்க்கவும்! (Add this line)
+                    teachers={allTeachers}  // Pass ALL teachers for assignment
                     initialData={editingSubject}
                     isEditing={!!editingSubject}
                     onSave={async (data) => {

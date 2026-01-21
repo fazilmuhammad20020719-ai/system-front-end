@@ -25,7 +25,9 @@ const CalendarStats = ({ events }) => {
                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Current Date</h4>
                     <span className="text-xs text-gray-400">Today</span>
                 </div>
-                <span className="text-2xl font-bold text-blue-600">25 Dec</span>
+                <span className="text-2xl font-bold text-blue-600">
+                    {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                </span>
             </div>
         </div>
     );

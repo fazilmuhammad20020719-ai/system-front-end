@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { API_URL } from './config';
+import { useNotification } from './context/NotificationContext';
+import { useConfirm } from './context/ConfirmContext';
 import Sidebar from './Sidebar';
 
 // IMPORTING NEW COMPONENTS
@@ -11,13 +13,15 @@ import CalendarHeader from './calendar/CalendarHeader';
 
 const Calendar = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-    const [currentDate, setCurrentDate] = useState(new Date(2025, 11, 25));
+    const { notify } = useNotification();
+    const { confirm } = useConfirm();
+    const [currentDate, setCurrentDate] = useState(new Date());
 
     // --- STATE FOR MODAL & EVENTS ---
     const [events, setEvents] = useState([]); // Dynamic state
 
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedDay, setSelectedDay] = useState(null);
+    const [selectedDay, setSelectedDay] = useState(null); // Now stores 'YYYY-MM-DD'
 
     // FETCH EVENTS FROM API
     useEffect(() => {
@@ -36,10 +40,18 @@ const Calendar = () => {
         }
     };
 
+    // --- FILTER STATE ---
+    const [searchTerm, setSearchTerm] = useState("");
+
     // --- CALENDAR LOGIC ---
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
     const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+    // NAVIGATION HANDLERS
+    const handlePrevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
+    const handleNextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
+    const handleDateChange = (y, m) => setCurrentDate(new Date(y, m, 1));
 
     const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
     const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
@@ -55,8 +67,8 @@ const Calendar = () => {
     const nextMonthBlanks = remainingSlots < 7 ? Array.from({ length: remainingSlots }, (_, i) => i) : [];
 
     // --- HANDLERS ---
-    const handleDayClick = (day) => {
-        setSelectedDay(day);
+    const handleDayClick = (dateStr) => {
+        setSelectedDay(dateStr);
         setIsModalOpen(true);
     };
 
@@ -71,34 +83,74 @@ const Calendar = () => {
 
     // 1. ADD NEW EVENT
     const handleSaveEvent = async (newNoteData) => {
+        // ... (Keep existing logic with alerts)
+        console.log("Saving Event Data:", newNoteData);
+        if (!newNoteData.text) {
+            notify('warning', "Please enter event details.");
+            return;
+        }
+        if (!selectedDay) {
+            notify('warning', "No date selected!");
+            return;
+        }
+
         try {
+            const payload = {
+                title: newNoteData.text,
+                description: newNoteData.text,
+                date: selectedDay, // 'YYYY-MM-DD'
+                type: normalizeType(newNoteData.priority)
+            };
+            console.log("Payload sending to Backend:", payload);
+
             const response = await fetch(`${API_URL}/api/calendar/events`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
 
+            const resData = await response.json();
+            console.log("Server Response:", resData);
+
             if (response.ok) {
+                notify('success', "Event saved successfully!");
                 fetchEvents(); // Refresh from server
                 setIsModalOpen(false);
+            } else {
+                notify('error', "Failed to save event: " + (resData.message || "Unknown Error"));
             }
         } catch (error) {
             console.error("Error saving event:", error);
+            notify('error', "Error saving event. Check console.");
         }
     };
 
     // 2. DELETE EVENT
     const handleDeleteEvent = async (eventId) => {
+        const isConfirmed = await confirm({
+            title: 'Delete Event',
+            message: 'Are you sure you want to delete this event? This action cannot be undone.',
+            confirmText: 'Delete',
+            cancelText: 'Cancel',
+            type: 'danger'
+        });
+
+        if (!isConfirmed) return;
+
         try {
             const response = await fetch(`${API_URL}/api/calendar/events/${eventId}`, {
                 method: 'DELETE'
             });
             if (response.ok) {
+                notify('success', 'Event deleted successfully');
                 // Optimistic update or refetch
                 setEvents(events.filter(e => e.id !== eventId));
+            } else {
+                notify('error', 'Failed to delete event');
             }
         } catch (error) {
             console.error("Error deleting event:", error);
+            notify('error', 'Error deleting event');
         }
     };
 
@@ -118,15 +170,27 @@ const Calendar = () => {
             });
 
             if (response.ok) {
+                notify('success', 'Event updated successfully');
                 fetchEvents(); // Refresh
                 setIsModalOpen(false);
+            } else {
+                notify('error', 'Failed to update event');
             }
         } catch (error) {
             console.error("Error updating event:", error);
+            notify('error', 'Error updating event');
         }
     };
 
-    const getEventsForDay = (day) => events.filter(e => e.day === day);
+    // FILTERED EVENTS for Grid
+    const filteredEvents = events.filter(e => {
+        if (!searchTerm) return true;
+        const term = searchTerm.toLowerCase();
+        return (e.title || '').toLowerCase().includes(term) ||
+            (e.description || '').toLowerCase().includes(term);
+    });
+
+    const getEventsForDay = (dateStr) => filteredEvents.filter(e => e.date === dateStr);
 
     return (
         <div className="flex h-screen bg-[#F4F5F7] font-sans overflow-hidden relative">
@@ -139,11 +203,18 @@ const Calendar = () => {
                 <CalendarHeader
                     toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
                     monthYear={`${monthNames[month]} ${year}`}
+                    onPrevMonth={handlePrevMonth}
+                    onNextMonth={handleNextMonth}
                 />
 
                 <div className="px-8 pt-6 pb-2 bg-[#F4F5F7]">
-                    <CalendarStats events={events} />
-                    <CalendarFilters />
+                    <CalendarStats events={filteredEvents} />
+                    <CalendarFilters
+                        currentDate={currentDate}
+                        onDateChange={handleDateChange}
+                        searchTerm={searchTerm}
+                        onSearchChange={setSearchTerm}
+                    />
                 </div>
 
                 {/* CALENDAR GRID */}
@@ -155,7 +226,7 @@ const Calendar = () => {
                         nextMonthBlanks={nextMonthBlanks}
                         getEventsForDay={getEventsForDay}
                         handleDayClick={handleDayClick}
-                        onDateChange={(y, m) => setCurrentDate(new Date(y, m, 1))} // Handle nav
+                        onDateChange={handleDateChange}
                     />
                 </main>
             </div>

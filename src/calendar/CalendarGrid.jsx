@@ -85,12 +85,22 @@ const CalendarGrid = ({ year, month, days, blanks, nextMonthBlanks, getEventsFor
 
                 {/* Active Days */}
                 {days.map(day => {
-                    const dayEvents = getEventsForDay(day);
-                    // Check if this day is today (assuming simplified "today" check for demo)
-                    const isToday = day === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear();
+                    // Helper to format date as YYYY-MM-DD
+                    const formatDate = (y, m, d) => {
+                        const mm = String(m + 1).padStart(2, '0');
+                        const dd = String(d).padStart(2, '0');
+                        return `${y}-${mm}-${dd}`;
+                    };
+
+                    const dateStr = formatDate(year, month, day);
+                    const dayEvents = getEventsForDay(dateStr);
+
+                    // Check if this day is today
+                    const today = new Date();
+                    const isToday = day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
 
                     return (
-                        <div key={day} onClick={() => handleDayClick(day)}
+                        <div key={day} onClick={() => handleDayClick(dateStr)}
                             className={`min-h-[140px] p-3 border-b border-r border-gray-100 relative group cursor-pointer transition-all hover:bg-gray-50 ${isToday ? "bg-blue-50/30" : "bg-white"}`}>
 
                             <div className="flex justify-between items-start mb-2">
@@ -102,7 +112,7 @@ const CalendarGrid = ({ year, month, days, blanks, nextMonthBlanks, getEventsFor
 
                             <div className="flex flex-col gap-1.5">
                                 {dayEvents.map((event, idx) => (
-                                    <div key={idx} className={`text-[11px] px-2 py-1.5 rounded-md font-medium flex items-center justify-between border-l-2 ${event.type === 'urgent' ? 'bg-red-50 text-red-800 border-red-500' :
+                                    <div key={event.id || idx} className={`text-[11px] px-2 py-1.5 rounded-md font-medium flex items-center justify-between border-l-2 ${event.type === 'urgent' ? 'bg-red-50 text-red-800 border-red-500' :
                                         event.type === 'warning' ? 'bg-amber-50 text-amber-800 border-amber-400' :
                                             'bg-emerald-50 text-emerald-800 border-emerald-500'
                                         }`}>

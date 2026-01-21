@@ -1,6 +1,6 @@
-import { Menu } from 'lucide-react';
+import { Menu, ChevronLeft, ChevronRight } from 'lucide-react';
 
-const CalendarHeader = ({ toggleSidebar, monthYear }) => {
+const CalendarHeader = ({ toggleSidebar, monthYear, onPrevMonth, onNextMonth }) => {
     return (
         <header className="px-6 py-4 md:px-8 md:h-20 flex flex-col md:flex-row md:items-center justify-between gap-4 sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm transition-all flex-shrink-0">
             <div className="flex items-center gap-3">
@@ -15,8 +15,17 @@ const CalendarHeader = ({ toggleSidebar, monthYear }) => {
                     <p className="text-sm text-gray-500 mt-0.5">Manage schedules and events.</p>
                 </div>
             </div>
-            <div className="bg-gray-50 px-4 py-2 rounded-lg border border-gray-200 text-gray-700 font-bold text-sm shadow-sm">
-                {monthYear}
+
+            <div className="flex items-center gap-2 bg-gray-50 p-1.5 rounded-lg border border-gray-200 shadow-sm">
+                <button onClick={onPrevMonth} className="p-1 hover:bg-white hover:shadow-sm rounded-md transition-all text-gray-600">
+                    <ChevronLeft size={20} />
+                </button>
+                <span className="px-3 py-1 text-gray-700 font-bold text-sm min-w-[120px] text-center select-none">
+                    {monthYear}
+                </span>
+                <button onClick={onNextMonth} className="p-1 hover:bg-white hover:shadow-sm rounded-md transition-all text-gray-600">
+                    <ChevronRight size={20} />
+                </button>
             </div>
         </header>
     );

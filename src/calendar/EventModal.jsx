@@ -49,7 +49,7 @@ const EventModal = ({ isOpen, onClose, selectedDay, dayEvents, onSave, onDelete,
         setEditingId(event.id);
         setNoteForm({
             priority: reverseTypeMap[event.type] || 'Normal',
-            text: event.fullText,
+            text: event.title,
             file: null // File edit logic complex, keeping null for now
         });
     };
@@ -76,7 +76,7 @@ const EventModal = ({ isOpen, onClose, selectedDay, dayEvents, onSave, onDelete,
                 <div className="flex items-center justify-between p-6 border-b border-gray-100">
                     <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
                         <CalendarIcon size={20} className="text-blue-500" />
-                        {selectedDay ? `Events for Day ${selectedDay}` : 'Manage Events'}
+                        {selectedDay ? `Events for ${new Date(selectedDay).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}` : 'Manage Events'}
                     </h3>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
                         <X size={20} />
@@ -97,11 +97,11 @@ const EventModal = ({ isOpen, onClose, selectedDay, dayEvents, onSave, onDelete,
                                         {/* Content */}
                                         <div className="flex-1">
                                             <p className={`text-[10px] font-bold uppercase mb-1 ${event.type === 'urgent' ? 'text-red-500' :
-                                                    event.type === 'warning' ? 'text-orange-500' : 'text-emerald-500'
+                                                event.type === 'warning' ? 'text-orange-500' : 'text-emerald-500'
                                                 }`}>
                                                 {event.type === 'warning' ? 'MEDIUM' : event.type === 'urgent' ? 'URGENT' : 'NORMAL'}
                                             </p>
-                                            <p className="text-sm text-gray-700 leading-snug">{event.fullText}</p>
+                                            <p className="text-sm text-gray-700 leading-snug">{event.title}</p>
                                         </div>
 
                                         {/* Action Buttons (Show on Hover or if Editing) */}

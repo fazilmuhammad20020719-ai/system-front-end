@@ -36,6 +36,19 @@ const Attendance = () => {
     // When date changes, we re-fetch.
     const [studentsData, setStudentsData] = useState([]);
     const [teachersData, setTeachersData] = useState([]);
+    const [programs, setPrograms] = useState([]); // Dynamic Programs List
+    const [avgRate, setAvgRate] = useState(0); // Overall Average Rate
+
+    // 1. Fetch Programs (Once)
+    useEffect(() => {
+        const fetchPrograms = async () => {
+            try {
+                const res = await fetch(`${API_URL}/api/programs`);
+                if (res.ok) setPrograms(await res.json());
+            } catch (err) { console.error("Error fetching programs:", err); }
+        };
+        fetchPrograms();
+    }, []);
 
     // ==========================================
     // FETCH LOGIC
@@ -46,17 +59,25 @@ const Attendance = () => {
             try {
                 // 1. Fetch Master Lists
                 // Ideally we should cache this or only fetch if needed, but for simplicity we fetch parallel
-                const [sRes, tRes, attRes] = await Promise.all([
+                // 1. Fetch Master Lists
+                // Ideally we should cache this or only fetch if needed, but for simplicity we fetch parallel
+                const [sRes, tRes, attRes, statRes] = await Promise.all([
                     fetch(`${API_URL}/api/students`),
                     fetch(`${API_URL}/api/teachers`),
-                    // Fetch attendance for the specific date
-                    fetch(`${API_URL}/api/attendance?date=${selectedDate}`)
+                    // Fetch attendance and stats
+                    fetch(`${API_URL}/api/attendance?date=${selectedDate}`),
+                    fetch(`${API_URL}/api/attendance/stats`)
                 ]);
 
                 if (sRes.ok && tRes.ok && attRes.ok) {
                     const allStudents = await sRes.json();
                     const allTeachers = await tRes.json();
-                    const attendanceRecords = await attRes.json(); // Array of { student_id, status, ... }
+                    const attendanceRecords = await attRes.json();
+
+                    if (statRes && statRes.ok) {
+                        const stats = await statRes.json();
+                        setAvgRate(stats.averageRate || 0);
+                    }
 
                     // 2. Merge Student Data
                     // Map retrieved attendance to students
@@ -70,23 +91,11 @@ const Attendance = () => {
                     setStudentsData(mergedStudents);
 
                     // 3. Merge Teacher Data
-                    // Note: Teacher table uses 'emp_id' or 'id'. Let's assume 'id' for join consistency if simplified
-                    // But usually teacher has 'attendanceStatus' in UI state
                     const mergedTeachers = allTeachers.map(t => {
-                        // Assuming teacher records also come in same attendance table or similar?
-                        // For this implementation, I will assume student attendance table might serve mixed or just ignored for teachers for now if API distinct.
-                        // Wait, server.js only queries 'attendance' table which joins 'students'.
-                        // Teachers attendance is not fully implemented in server.js 'attendance' route (it joins students).
-                        // So Teacher attendance saving might fail or needs a separate table / logic. 
-                        // I will implement client-side mock logic for teachers to avoid breaking UI, 
-                        // or better: The task said "100% dynamic". 
-                        // If backend doesn't support teachers attendance yet (my server.js didn't have teachers join in GET /attendance), 
-                        // I should focus on Students primarily or update server.js.
-                        // Time constraint: I will leave teachers as locally managed for the session or just fetched static.
-                        // Actually, I'll update it to be ready but maybe just empty status.
+                        const record = attendanceRecords.find(r => String(r.teacher_id) === String(t.id));
                         return {
                             ...t,
-                            attendanceStatus: '' // Reset for new date
+                            attendanceStatus: record ? record.status : ''
                         };
                     });
                     setTeachersData(mergedTeachers);
@@ -140,6 +149,14 @@ const Attendance = () => {
         const rate = Math.round((present / total) * 100);
         return { present, absent, rate };
     }, [statsStudents]);
+
+    // Dynamic Years Calculation
+    const dynamicYears = useMemo(() => {
+        if (filterProgram === "All") return ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7"];
+        const selectedProg = programs.find(p => p.name === filterProgram);
+        const duration = selectedProg ? (parseInt(selectedProg.duration) || 5) : 5;
+        return Array.from({ length: duration }, (_, i) => `Grade ${i + 1}`);
+    }, [filterProgram, programs]);
 
 
     // ==========================================
@@ -230,8 +247,23 @@ const Attendance = () => {
                 alert("Attendance saved successfully!");
                 // Optionally re-fetch to confirm consistency
             } else {
-                // Teacher saving not fully implemented on backend yet
-                alert("Teacher attendance saved locally (Backend update pending)");
+                const recordsToSave = teachersData.filter(t => t.attendanceStatus && t.attendanceStatus !== '');
+
+                const promises = recordsToSave.map(t =>
+                    fetch(`${API_URL}/api/attendance`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            teacherId: t.id,
+                            date: selectedDate,
+                            status: t.attendanceStatus,
+                            remarks: ''
+                        })
+                    })
+                );
+
+                await Promise.all(promises);
+                alert("Teacher attendance saved successfully!");
             }
         } catch (err) {
             console.error("Error saving attendance:", err);
@@ -268,7 +300,7 @@ const Attendance = () => {
                     {/* STATS (Reused for both) */}
                     <AttendanceStats
                         dailyRate={currentStats.rate}
-                        averageRate={85} // Dynamic average would require historical data fetch
+                        averageRate={avgRate} // Dynamic Overall Average
                         presentCount={currentStats.present}
                         absentCount={currentStats.absent}
                     />
@@ -283,6 +315,8 @@ const Attendance = () => {
                                 filterStatus={filterStatus} setFilterStatus={setFilterStatus}
                                 searchQuery={searchQuery} setSearchQuery={setSearchQuery}
                                 onBulkAction={handleBulkAction}
+                                programs={programs} // Dynamic Programs
+                                years={dynamicYears}
                             />
                             <AttendanceTable
                                 students={filteredStudents}
@@ -297,6 +331,7 @@ const Attendance = () => {
                                 filterStatus={teacherFilterStatus} setFilterStatus={setTeacherFilterStatus}
                                 searchQuery={teacherSearchQuery} setSearchQuery={setTeacherSearchQuery}
                                 onBulkAction={handleBulkAction}
+                                programs={programs} // Dynamic Programs
                             />
                             <TeacherAttendanceTable
                                 teachers={filteredTeachers}

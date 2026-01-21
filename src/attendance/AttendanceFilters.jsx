@@ -6,7 +6,9 @@ const AttendanceFilters = ({
     filterYear, setFilterYear,
     filterStatus, setFilterStatus,
     searchQuery, setSearchQuery,
-    onBulkAction
+    onBulkAction,
+    programs = [],
+    years = [] // New Prop
 }) => {
     return (
         <div className="bg-white rounded-lg shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] p-4 md:p-5 mb-6">
@@ -33,12 +35,9 @@ const AttendanceFilters = ({
                         className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-gray-700 focus:outline-none focus:border-green-500 bg-white"
                     >
                         <option value="All">All Programs</option>
-                        <option value="Hifzul Quran">Hifzul Quran</option>
-                        <option value="Al-Alim Course">Al-Alim Course</option>
-                        <option value="Al-Alimah (Girls)">Al-Alimah (Girls)</option>
-                        <option value="Secondary (Gr 8-10)">Secondary (Gr 8-10)</option>
-                        <option value="G.C.E. O/L Prep">G.C.E. O/L Prep</option>
-                        <option value="G.C.E. A/L">G.C.E. A/L</option>
+                        {programs.map(prog => (
+                            <option key={prog.id} value={prog.name}>{prog.name}</option>
+                        ))}
                     </select>
                 </div>
 
@@ -51,13 +50,9 @@ const AttendanceFilters = ({
                         className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-gray-700 focus:outline-none focus:border-green-500 bg-white"
                     >
                         <option value="All">All Years</option>
-                        <option value="Grade 1">Grade 1</option>
-                        <option value="Grade 2">Grade 2</option>
-                        <option value="Grade 3">Grade 3</option>
-                        <option value="Grade 4">Grade 4</option>
-                        <option value="Grade 5">Grade 5</option>
-                        <option value="Grade 6">Grade 6</option>
-                        <option value="Grade 7">Grade 7</option>
+                        {years.map(year => (
+                            <option key={year} value={year}>{year}</option>
+                        ))}
                     </select>
                 </div>
 

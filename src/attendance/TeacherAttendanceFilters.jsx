@@ -5,7 +5,8 @@ const TeacherAttendanceFilters = ({
     filterProgram, setFilterProgram,
     filterStatus, setFilterStatus,
     searchQuery, setSearchQuery,
-    onBulkAction
+    onBulkAction,
+    programs = [] // New Prop
 }) => {
     return (
         <div className="bg-white rounded-lg shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] p-4 md:p-5 mb-6">
@@ -32,10 +33,9 @@ const TeacherAttendanceFilters = ({
                         className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-gray-700 focus:outline-none focus:border-green-500 bg-white"
                     >
                         <option value="All">All Departments</option>
-                        <option value="Hifzul Quran">Hifzul Quran</option>
-                        <option value="Al-Alim (Boys)">Al-Alim (Boys)</option>
-                        <option value="Al-Alimah (Girls)">Al-Alimah (Girls)</option>
-                        <option value="English Unit">English Unit</option>
+                        {programs.map(prog => (
+                            <option key={prog.id} value={prog.name}>{prog.name}</option>
+                        ))}
                     </select>
                 </div>
 

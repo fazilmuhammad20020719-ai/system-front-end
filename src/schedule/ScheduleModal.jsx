@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, Clock, User, BookOpen, MapPin, Calendar, AlertCircle, Layers } from 'lucide-react';
 
-const ScheduleModal = ({ isOpen, onClose, subjects, teachers, initialData, existingSchedules, onSave, onDelete }) => {
+// Added 'defaultDay' to props
+const ScheduleModal = ({ isOpen, onClose, subjects, teachers, initialData, existingSchedules, onSave, onDelete, programGrades = [], defaultGrade = 'All', defaultDay, isBreak = false }) => {
 
-    // Initial State (Room நீக்கப்பட்டது)
+    // Initial State
     const [formData, setFormData] = useState({
-        day: 'Monday',
+        day: defaultDay || 'Monday',
         subjectId: '',
         teacherId: '',
         startTime: '',
         endTime: '',
         grade: '',
-        type: 'Lecture'
+        type: isBreak ? 'Break' : ''
     });
 
     const [error, setError] = useState('');
@@ -22,51 +23,89 @@ const ScheduleModal = ({ isOpen, onClose, subjects, teachers, initialData, exist
             if (initialData) {
                 setFormData({
                     day: initialData.day,
-                    subjectId: initialData.subjectId,
-                    teacherId: initialData.teacherId,
+                    subjectId: initialData.subjectId || '',
+                    teacherId: initialData.teacherId || '',
                     startTime: initialData.startTime,
                     endTime: initialData.endTime,
                     grade: initialData.grade || '',
-                    type: initialData.type || 'Lecture'
+                    type: initialData.type || (isBreak ? 'Break' : '')
                 });
             } else {
-                // Reset for new entry
+                // Reset for new entry using passed defaults
                 setFormData({
-                    day: 'Monday',
+                    day: defaultDay || 'Monday',
                     subjectId: '',
                     teacherId: '',
                     startTime: '',
                     endTime: '',
-                    grade: '',
-                    type: 'Lecture'
+                    grade: defaultGrade !== 'All' ? defaultGrade : '',
+                    type: isBreak ? 'Break' : ''
                 });
             }
             setError('');
         }
-    }, [isOpen, initialData]);
+    }, [isOpen, initialData, defaultGrade, defaultDay, isBreak]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
-            [name]: value
+            [name]: value,
+            // Reset subject if grade changes
+            ...(name === 'grade' ? { subjectId: '' } : {})
         }));
         if (error) setError('');
     };
 
-    // Conflict Detection Logic (Room Conflict நீக்கப்பட்டது)
+    // Filter subjects based on selected grade
+    const filteredSubjects = subjects.filter(
+        s => !formData.grade || s.year === formData.grade || s.year === 'General'
+    );
+
+    // Conflict Detection Logic
     const checkConflicts = () => {
         const otherSchedules = existingSchedules.filter(s => !initialData || s.id !== initialData.id);
 
-        // Teacher Conflict Only
-        const teacherConflict = otherSchedules.find(s =>
-            s.day === formData.day &&
-            parseInt(s.teacher_id || s.teacherId) === parseInt(formData.teacherId) &&
-            ((formData.startTime >= s.startTime && formData.startTime < s.endTime) ||
-                (formData.endTime > s.startTime && formData.endTime <= s.endTime))
-        );
+        // 1. Time Logic
+        if (formData.startTime >= formData.endTime) return 'End time must be after start time';
 
-        if (teacherConflict) return `This teacher is already assigned to another class at this time.`;
+        // Skip conflict checks for Break
+        if (formData.type === 'Break') return null;
+
+        // 2. Teacher Conflict
+        if (formData.teacherId) {
+            const teacherConflict = otherSchedules.find(s =>
+                s.day === formData.day &&
+                parseInt(s.teacher_id || s.teacherId) === parseInt(formData.teacherId) &&
+                ((formData.startTime < (s.endTime || s.end_time) && formData.endTime > (s.startTime || s.start_time)))
+            );
+            if (teacherConflict) return `This teacher is already assigned to another class at this time.`;
+        }
+
+        // 3. Batch/Grade Conflict
+        if (formData.grade && formData.subjectId) {
+            const batchConflict = otherSchedules.find(s => {
+                const sSubId = parseInt(s.subject_id || s.subjectId);
+                const sSubject = subjects.find(sub => sub.id === sSubId);
+                if (!sSubject) return false;
+
+                const sYear = sSubject.year || 'General';
+                const myYear = formData.grade;
+
+                const isSameBatch =
+                    (sSubject.program_id === subjects.find(sub => sub.id === parseInt(formData.subjectId))?.program_id) &&
+                    (sYear === 'General' || myYear === 'General' || sYear === myYear);
+
+                if (!isSameBatch) return false;
+
+                const isSameDay = (s.day_of_week || s.day) === formData.day;
+                const isOverlapping = (formData.startTime < (s.endTime || s.end_time) && formData.endTime > (s.startTime || s.start_time));
+
+                return isSameDay && isOverlapping;
+            });
+
+            if (batchConflict) return `This batch (Grade ${formData.grade}) already has a class at this time.`;
+        }
 
         return null;
     };
@@ -74,14 +113,30 @@ const ScheduleModal = ({ isOpen, onClose, subjects, teachers, initialData, exist
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        if (!formData.subjectId || !formData.teacherId || !formData.startTime || !formData.endTime) {
-            setError('Please fill in all required fields');
+        // Basic Fields
+        if (!formData.day || !formData.startTime || !formData.endTime) {
+            setError('Please fill in required fields');
             return;
         }
 
-        if (formData.startTime >= formData.endTime) {
-            setError('End time must be after start time');
+        // Specific fields if NOT break
+        if (!isBreak && (!formData.subjectId || !formData.teacherId || !formData.grade)) {
+            setError('Please fill in all class details');
             return;
+        }
+
+        // Past Time Check
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        const todayIndex = new Date().getDay() - 1;
+        const currentDayName = days[todayIndex === -1 ? 6 : todayIndex];
+
+        if (formData.day === currentDayName) {
+            const now = new Date();
+            const currentTime = now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0');
+            if (formData.startTime < currentTime) {
+                setError("Cannot schedule in the past time for today.");
+                return;
+            }
         }
 
         const conflictMsg = checkConflicts();
@@ -90,7 +145,6 @@ const ScheduleModal = ({ isOpen, onClose, subjects, teachers, initialData, exist
             return;
         }
 
-        // Send Data (Room இல்லாமல்)
         onSave(formData);
     };
 
@@ -102,8 +156,8 @@ const ScheduleModal = ({ isOpen, onClose, subjects, teachers, initialData, exist
 
                 <div className="flex items-center justify-between p-6 border-b border-gray-100">
                     <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                        {initialData ? <Clock className="text-blue-600" /> : <Clock className="text-green-600" />}
-                        {initialData ? 'Edit Class Schedule' : 'Add New Class'}
+                        {isBreak ? <Clock className="text-orange-500" /> : (initialData ? <Clock className="text-blue-600" /> : <Clock className="text-green-600" />)}
+                        {isBreak ? 'Add Break' : (initialData ? 'Edit Class Schedule' : 'Add New Class')}
                     </h2>
                     <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors">
                         <X size={20} />
@@ -137,38 +191,59 @@ const ScheduleModal = ({ isOpen, onClose, subjects, teachers, initialData, exist
                         </div>
                     </div>
 
-                    {/* Subject & Teacher Grid */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Subject</label>
-                            <select
-                                name="subjectId"
-                                value={formData.subjectId}
-                                onChange={handleChange}
-                                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                            >
-                                <option value="">Select Subject</option>
-                                {subjects.map(s => (
-                                    <option key={s.id} value={s.id}>{s.name} ({s.year || 'Gen'})</option>
-                                ))}
-                            </select>
-                        </div>
+                    {!isBreak && (
+                        <>
+                            {/* Grade & Subject Grid */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Grade</label>
+                                    <select
+                                        name="grade"
+                                        value={formData.grade}
+                                        onChange={handleChange}
+                                        className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                    >
+                                        <option value="">Select Grade</option>
+                                        {programGrades.map(g => (
+                                            <option key={g} value={g}>{g}</option>
+                                        ))}
+                                    </select>
+                                </div>
 
-                        <div>
-                            <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Teacher</label>
-                            <select
-                                name="teacherId"
-                                value={formData.teacherId}
-                                onChange={handleChange}
-                                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                            >
-                                <option value="">Select Teacher</option>
-                                {teachers.map(t => (
-                                    <option key={t.id} value={t.id}>{t.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Subject</label>
+                                    <select
+                                        name="subjectId"
+                                        value={formData.subjectId}
+                                        onChange={handleChange}
+                                        disabled={!formData.grade}
+                                        className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <option value="">Select Subject</option>
+                                        {filteredSubjects.map(s => (
+                                            <option key={s.id} value={s.id}>{s.name} ({s.year || 'Gen'})</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Teacher */}
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Teacher</label>
+                                <select
+                                    name="teacherId"
+                                    value={formData.teacherId}
+                                    onChange={handleChange}
+                                    className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                >
+                                    <option value="">Select Teacher</option>
+                                    {teachers.map(t => (
+                                        <option key={t.id} value={t.id}>{t.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </>
+                    )}
 
                     {/* Time Grid */}
                     <div className="grid grid-cols-2 gap-4">
@@ -194,23 +269,20 @@ const ScheduleModal = ({ isOpen, onClose, subjects, teachers, initialData, exist
                         </div>
                     </div>
 
-                    {/* Class Type Only (Room Removed) */}
+                    {/* About Class / Break Info */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">Class Type</label>
+                        <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">
+                            {isBreak ? 'Break Details (Optional)' : 'About Class (Optional)'}
+                        </label>
                         <div className="relative">
-                            <Layers className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                            <select
+                            <BookOpen className="absolute left-3 top-3 text-gray-400" size={16} />
+                            <textarea
                                 name="type"
                                 value={formData.type}
                                 onChange={handleChange}
-                                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none"
-                            >
-                                <option value="Lecture">Lecture</option>
-                                <option value="Tutorial">Tutorial</option>
-                                <option value="Practical">Practical</option>
-                                <option value="Exam">Exam</option>
-                                <option value="Special">Special</option>
-                            </select>
+                                placeholder={isBreak ? "e.g. Lunch Break" : "Enter class topic or details..."}
+                                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 min-h-[80px] resize-none"
+                            />
                         </div>
                     </div>
 

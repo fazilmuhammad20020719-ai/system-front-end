@@ -1,24 +1,76 @@
 import React, { useState, useEffect } from 'react';
 import { X, Check, Clock, User, Ban, Save, Search } from 'lucide-react';
+import { API_URL } from '../config'; // Import API URL
 
 const AttendancePopup = ({ isOpen, onClose, slot, subjects, onSave, onCancel }) => {
     if (!isOpen || !slot) return null;
 
     // 1. Get Subject Details to filter students
-    const subject = subjects.find(s => s.id === parseInt(slot.subjectId));
+    const subject = subjects.find(s => s.id === parseInt(slot.subjectId || slot.subject_id));
 
     // 2. State for Students List & Search
     const [attendanceList, setAttendanceList] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [loading, setLoading] = useState(false);
 
     // 3. Load & Filter Students on Mount
     useEffect(() => {
-        if (subject) {
-            // Filter Mock Data based on Program and Year/Grade
-            const classStudents = [];
+        const fetchStudentsAndAttendance = async () => {
+            if (subject) {
+                setLoading(true);
+                try {
+                    // Fetch all students
+                    const studentsRes = await fetch(`${API_URL}/api/students`);
 
-            setAttendanceList(classStudents);
-        }
+                    // Fetch existing attendance for this schedule slot
+                    const dateStr = slot.date || new Date().toISOString().split('T')[0]; // Ensure we have a date
+                    const attendanceRes = await fetch(`${API_URL}/api/attendance/schedule?scheduleId=${slot.id}&date=${dateStr}`);
+
+                    if (studentsRes.ok) {
+                        const allStudents = await studentsRes.json();
+                        let existingAttendance = [];
+
+                        if (attendanceRes.ok) {
+                            existingAttendance = await attendanceRes.json();
+                        }
+
+                        // Filter Logic:
+                        const classStudents = allStudents.filter(student => {
+                            // 1. Match Program
+                            const programMatch = parseInt(student.program_id) === parseInt(subject.program_id);
+
+                            // 2. Match Grade/Year
+                            const normalize = (val) => String(val || '').toLowerCase().replace(/grade\s*|year\s*/g, '').trim();
+                            const studentGrade = normalize(student.currentYear || student.year);
+                            const subjectGrade = normalize(subject.year);
+
+                            const gradeMatch =
+                                subject.year === 'General' ||
+                                subjectGrade === 'general' ||
+                                studentGrade === subjectGrade;
+
+                            return programMatch && gradeMatch;
+                        }).map(s => {
+                            // Check if student has existing status
+                            const record = existingAttendance.find(r => r.student_id == s.id); // Loose equality for string/int IDs
+                            return {
+                                id: s.id,
+                                name: s.full_name || s.name,
+                                status: record ? record.status : null // Default to null (no selection)
+                            };
+                        });
+
+                        setAttendanceList(classStudents);
+                    }
+                } catch (err) {
+                    console.error("Error fetching data:", err);
+                } finally {
+                    setLoading(false);
+                }
+            }
+        };
+
+        fetchStudentsAndAttendance();
     }, [subject, slot]);
 
     // 4. Handlers
@@ -28,8 +80,43 @@ const AttendancePopup = ({ isOpen, onClose, slot, subjects, onSave, onCancel }) 
         ));
     };
 
-    const handleSave = () => {
-        onSave(attendanceList);
+    const handleSave = async () => {
+        try {
+            const dateStr = slot.date || new Date().toISOString().split('T')[0];
+            const payload = {
+                scheduleId: slot.id,
+                date: dateStr,
+                attendanceData: attendanceList
+                    .filter(s => s.status) // Only include students with a marked status
+                    .map(s => ({
+                        studentId: s.id,
+                        status: s.status
+                    }))
+            };
+
+            if (payload.attendanceData.length === 0) {
+                alert("Please mark attendance for at least one student.");
+                return;
+            }
+
+            const res = await fetch(`${API_URL}/api/attendance/schedule`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                alert("Attendance saved successfully!");
+                onSave(attendanceList); // Notify parent if needed
+                onClose();
+            } else {
+                const err = await res.json();
+                alert(`Failed to save: ${err.message}`);
+            }
+        } catch (error) {
+            console.error("Error saving attendance:", error);
+            alert("An error occurred while saving attendance.");
+        }
     };
 
     const handleCancelClass = () => {
@@ -41,7 +128,7 @@ const AttendancePopup = ({ isOpen, onClose, slot, subjects, onSave, onCancel }) 
     // Filter displayed students by search
     const filteredStudents = attendanceList.filter(s =>
         s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.id.includes(searchQuery)
+        String(s.id).includes(searchQuery)
     );
 
     return (
@@ -54,7 +141,7 @@ const AttendancePopup = ({ isOpen, onClose, slot, subjects, onSave, onCancel }) 
                         <div className="flex items-center gap-2 mb-1">
                             <h3 className="text-lg font-bold text-gray-800">Mark Attendance</h3>
                             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#ea8933]/10 text-[#ea8933] border border-[#ea8933]/20">
-                                {subject?.program}
+                                {subject?.program || 'General'}
                             </span>
                         </div>
                         <p className="text-sm text-gray-500 flex items-center gap-2">
@@ -63,7 +150,7 @@ const AttendancePopup = ({ isOpen, onClose, slot, subjects, onSave, onCancel }) 
                             <span>{subject?.year}</span>
                             <span>•</span>
                             <span className="flex items-center gap-1 bg-gray-100 px-1.5 py-0.5 rounded text-xs">
-                                <Clock size={10} /> {slot.startTime} - {slot.endTime}
+                                <Clock size={10} /> {(slot.startTime || "00:00").substring(0, 5)} - {(slot.endTime || "00:00").substring(0, 5)}
                             </span>
                         </p>
                     </div>
@@ -91,7 +178,9 @@ const AttendancePopup = ({ isOpen, onClose, slot, subjects, onSave, onCancel }) 
 
                 {/* --- Student List (Scrollable) --- */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-[#f8fafc]">
-                    {filteredStudents.length > 0 ? (
+                    {loading ? (
+                        <div className="text-center py-10 text-gray-400">Loading students...</div>
+                    ) : filteredStudents.length > 0 ? (
                         filteredStudents.map(student => (
                             <div key={student.id} className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-gray-300 transition-all">
                                 <div className="flex items-center gap-3">
@@ -100,26 +189,29 @@ const AttendancePopup = ({ isOpen, onClose, slot, subjects, onSave, onCancel }) 
                                     </div>
                                     <div>
                                         <h4 className="font-bold text-gray-800 text-sm">{student.name}</h4>
-                                        <p className="text-xs text-gray-400 font-mono">{student.id}</p>
+                                        <p className="text-xs text-gray-400 font-mono">ID: {student.id}</p>
                                     </div>
                                 </div>
 
                                 {/* Status Buttons */}
                                 <div className="flex gap-2">
-                                    {['Present', 'Absent'].map((status) => {
+                                    {['Present', 'Absent', 'Late', 'Excused'].map((status) => {
                                         const isActive = student.status === status;
                                         let colorClass = "hover:bg-gray-50 border-gray-200 text-gray-400"; // Default
 
                                         if (isActive && status === 'Present') colorClass = "bg-emerald-100 border-emerald-500 text-emerald-700 font-bold";
                                         if (isActive && status === 'Absent') colorClass = "bg-rose-100 border-rose-500 text-rose-700 font-bold";
+                                        if (isActive && status === 'Late') colorClass = "bg-yellow-100 border-yellow-500 text-yellow-700 font-bold";
+                                        if (isActive && status === 'Excused') colorClass = "bg-blue-100 border-blue-500 text-blue-700 font-bold";
+
 
                                         return (
                                             <button
                                                 key={status}
-                                                onClick={() => handleStatusChange(student.id, status)}
+                                                onClick={() => handleStatusChange(student.id, isActive ? null : status)}
                                                 className={`px-3 py-1.5 rounded-lg border text-xs transition-all ${colorClass}`}
                                             >
-                                                {status === 'Present' ? 'P' : 'A'}
+                                                {status.charAt(0)}
                                             </button>
                                         );
                                     })}
@@ -130,6 +222,7 @@ const AttendancePopup = ({ isOpen, onClose, slot, subjects, onSave, onCancel }) 
                         <div className="flex flex-col items-center justify-center py-10 text-gray-400">
                             <User size={40} className="mb-2 opacity-20" />
                             <p className="text-sm">No students found for this class.</p>
+                            <p className="text-xs mt-1">Make sure students are added to this Program & Grade.</p>
                         </div>
                     )}
                 </div>

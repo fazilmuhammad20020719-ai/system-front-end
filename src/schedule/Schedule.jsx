@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, MapPin, User, Plus, Edit2, ClipboardCheck, ChevronDown } from 'lucide-react';
+import { Clock, MapPin, User, Plus, Edit2, ClipboardCheck, ChevronDown, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import Sidebar from '../Sidebar';
 import ScheduleModal from './ScheduleModal';
 import AttendancePopup from './AttendancePopup';
@@ -22,65 +22,72 @@ const Schedule = () => {
     const [editingSchedule, setEditingSchedule] = useState(null);
     const [selectedProgramForAdd, setSelectedProgramForAdd] = useState(null);
     const [selectedDayForAdd, setSelectedDayForAdd] = useState('Monday');
+    const [isBreakMode, setIsBreakMode] = useState(false);
+
+    // Date Navigation State
+    const getStartOfWeek = (date) => {
+        const d = new Date(date);
+        const day = d.getDay();
+        const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+        return new Date(d.setDate(diff));
+    };
+
+    const [currentWeekStart, setCurrentWeekStart] = useState(getStartOfWeek(new Date()));
+    const [attendanceData, setAttendanceData] = useState([]); // Store fetched attendance range
 
     // State for Per-Program Filters
     const [programFilters, setProgramFilters] = useState({});
 
-    // Fetch All Data
     // --- Fetch All Data (Updated & Robust) ---
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             try {
+                // Calculate Week Range for Attendance
+                const startDate = new Date(currentWeekStart);
+                const endDate = new Date(currentWeekStart);
+                endDate.setDate(endDate.getDate() + 6);
+
+                const formatDate = (d) => d.toISOString().split('T')[0];
+
                 console.log("Fetching data from:", API_URL);
 
-                // 1. Fetch Requests (Handled Separately)
-                const fetchSchedules = fetch(`${API_URL}/api/schedules`)
-                    .then(res => {
-                        if (!res.ok) console.error("Schedules API Error:", res.status);
-                        return res.ok ? res.json() : [];
-                    })
-                    .catch(err => { console.error("Schedules Fetch Failed:", err); return []; });
+                // 1. Fetch Requests
+                // Note: Using plural 'schedules' to match backend
+                const fetchSchedules = fetch(`${API_URL}/api/schedules`).then(res => res.ok ? res.json() : []);
+                const fetchSubjects = fetch(`${API_URL}/api/subjects`).then(res => res.ok ? res.json() : []);
+                const fetchTeachers = fetch(`${API_URL}/api/teachers`).then(res => res.ok ? res.json() : []);
+                const fetchPrograms = fetch(`${API_URL}/api/programs`).then(res => res.ok ? res.json() : []);
 
-                const fetchSubjects = fetch(`${API_URL}/api/subjects`)
-                    .then(res => {
-                        if (!res.ok) console.error("Subjects API Error:", res.status);
-                        return res.ok ? res.json() : [];
-                    })
-                    .catch(err => { console.error("Subjects Fetch Failed:", err); return []; });
+                // Fetch Attendance for Range
+                const fetchAttendance = fetch(`${API_URL}/api/attendance/range?startDate=${formatDate(startDate)}&endDate=${formatDate(endDate)}`)
+                    .then(res => res.ok ? res.json() : [])
+                    .catch(err => { console.error("Attendance Fetch Failed:", err); return []; });
 
-                const fetchTeachers = fetch(`${API_URL}/api/teachers`)
-                    .then(res => {
-                        if (!res.ok) console.error("Teachers API Error:", res.status);
-                        return res.ok ? res.json() : [];
-                    })
-                    .catch(err => { console.error("Teachers Fetch Failed:", err); return []; });
-
-                const fetchPrograms = fetch(`${API_URL}/api/programs`)
-                    .then(res => {
-                        if (!res.ok) console.error("Programs API Error:", res.status);
-                        return res.ok ? res.json() : [];
-                    })
-                    .catch(err => { console.error("Programs Fetch Failed:", err); return []; });
-
-                // 2. Wait for all to finish (Success or Fail)
-                const [schData, subData, teaData, progData] = await Promise.all([
-                    fetchSchedules, fetchSubjects, fetchTeachers, fetchPrograms
+                // 2. Wait for all
+                const [schData, subData, teaData, progData, attData] = await Promise.all([
+                    fetchSchedules, fetchSubjects, fetchTeachers, fetchPrograms, fetchAttendance
                 ]);
-
-                console.log("Loaded Programs:", progData); // Debug log
 
                 // 3. Set State
                 setSchedules(schData);
-                setSubjects(subData);
+                setAttendanceData(attData);
+
+                // Enrich subjects with program name
+                const enrichedSubjects = subData.map(s => {
+                    const program = progData.find(p => p.id === s.program_id);
+                    return { ...s, program: program ? program.name : null };
+                });
+
+                setSubjects(enrichedSubjects);
                 setTeachers(teaData);
-                setTitlePrograms(progData); // Correct state setter used here
+                setTitlePrograms(progData);
 
                 // 4. Initialize Filters
                 if (progData.length > 0) {
                     const initialFilters = {};
                     progData.forEach(p => {
-                        initialFilters[p.name] = { grade: 'All', subjectId: 'All' }; // Using p.name as key based on existing component logic
+                        initialFilters[p.name] = { grade: 'All', subjectId: 'All' };
                     });
                     setProgramFilters(initialFilters);
                 }
@@ -92,7 +99,7 @@ const Schedule = () => {
             }
         };
         fetchData();
-    }, []);
+    }, [currentWeekStart]);
 
     const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
@@ -107,13 +114,13 @@ const Schedule = () => {
             'bg-indigo-50 border-indigo-200 text-indigo-700',
             'bg-cyan-50 border-cyan-200 text-cyan-700',
         ];
-        return colors[subjectId % colors.length];
+        return colors[subjectId % colors.length] || colors[0];
     };
 
     // Derived State
     const preferredOrder = ['Hifzul Quran', 'Al-Alim (Boys)', 'Al-Alimah (Girls)', 'O/L', 'A/L', 'Grade 8-10'];
     const availablePrograms = titlePrograms.map(p => p.name).filter(Boolean);
-    // Sort available programs by preference or alphabetically
+
     const programs = availablePrograms.sort((a, b) => {
         const idxA = preferredOrder.indexOf(a);
         const idxB = preferredOrder.indexOf(b);
@@ -126,7 +133,6 @@ const Schedule = () => {
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
     const handleAttendanceUpdate = (slotId, status, data = null) => {
-        // UI Optimistic update (Backend not fully implemented for class-slot-attendance state yet)
         setSchedules(schedules.map(s =>
             s.id === slotId
                 ? { ...s, attendanceStatus: status, attendanceData: data }
@@ -147,27 +153,27 @@ const Schedule = () => {
     };
 
     // --- Handlers ---
-    const handleAddClick = (program, day) => {
+    const handleAddClick = (program, day, isBreak = false) => {
         setEditingSchedule(null);
         setSelectedProgramForAdd(program);
         setSelectedDayForAdd(day);
+        setIsBreakMode(isBreak);
         setShowScheduleModal(true);
     };
 
     const handleEditClick = (slot) => {
-        // In DB schedule, subject_id is stored. Join provided 'subject_name' but we need id for modal
-        // 'slot.subject_id' should be present from API
-        const subject = subjects.find(s => s.id === parseInt(slot.subject_id));
+        const subject = subjects.find(s => s.id === parseInt(slot.subject_id || slot.subjectId));
         setSelectedProgramForAdd(subject ? subject.program : null);
+        setIsBreakMode(slot.type === 'Break'); // Set break mode if editing a break
         setEditingSchedule({
             id: slot.id,
-            day: slot.day_of_week,
-            subjectId: slot.subject_id,
-            teacherId: slot.teacher_id,
-            startTime: slot.start_time, // Time string like "09:00:00" or "09:00"
-            endTime: slot.end_time,
-            room: slot.room,
-            grade: slot.grade_year
+            day: slot.day_of_week || slot.day,
+            subjectId: slot.subject_id || slot.subjectId,
+            teacherId: slot.teacher_id || slot.teacherId,
+            startTime: slot.start_time || slot.startTime,
+            endTime: slot.end_time || slot.endTime,
+            // room removed
+            type: slot.type || 'Lecture'
         });
         setShowScheduleModal(true);
     };
@@ -179,59 +185,62 @@ const Schedule = () => {
     };
 
     const handleSaveSchedule = async (formData) => {
-        // Prepare payload
-        // Need to find programId from subjects or selectedProgramForAdd
-        // API expects { programId, subjectId, teacherId, day, startTime, endTime, room, grade }
-        // We know 'selectedProgramForAdd' (name), need ID? API takes ID.
-        // Wait, server.js insert uses programId.
-        // We need to fetch programs or map name to id.
-        // However, subjects table has program_id. So if we pick a subject, we know the program ID.
-
         const subject = subjects.find(s => s.id === parseInt(formData.subjectId));
         const programId = subject ? subject.program_id : null;
 
-        // Clean time format if needed (HH:mm)
+        // FIXED: Removed 'room', Added 'type' default, Fixed API URL
         const payload = {
-            programId, // from subject
+            programId,
             subjectId: formData.subjectId,
             teacherId: formData.teacherId,
             day: formData.day,
             startTime: formData.startTime,
             endTime: formData.endTime,
-            room: formData.room,
-            grade: formData.grade
+            type: formData.type || 'Lecture'
+            // room: formData.room // Removed as per backend change
         };
 
+        const method = editingSchedule ? 'PUT' : 'POST';
+        // FIXED: URL changed from /api/schedule to /api/schedules
+        const url = editingSchedule
+            ? `${API_URL}/api/schedules/${editingSchedule.id}`
+            : `${API_URL}/api/schedules`;
+
         try {
-            const res = await fetch(`${API_URL}/api/schedule`, {
-                method: 'POST',
+            const res = await fetch(url, {
+                method: method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
 
             if (res.ok) {
                 // Refresh data
-                const schRes = await fetch(`${API_URL}/api/schedule`);
+                const schRes = await fetch(`${API_URL}/api/schedules`);
                 const schData = await schRes.json();
                 setSchedules(schData);
                 setShowScheduleModal(false);
             } else {
-                alert("Failed to save schedule");
+                const errorData = await res.json();
+                alert(`Failed to save: ${errorData.message || 'Unknown error'}`);
             }
         } catch (err) {
             console.error("Save error:", err);
+            alert("Connection error");
         }
     };
 
     const handleDeleteSchedule = async (id) => {
         if (window.confirm("Are you sure you want to delete this class slot?")) {
             try {
-                const res = await fetch(`${API_URL}/api/schedule/${id}`, {
+                // FIXED: URL changed from /api/schedule to /api/schedules
+                const res = await fetch(`${API_URL}/api/schedules/${id}`, {
                     method: 'DELETE'
                 });
                 if (res.ok) {
                     setSchedules(schedules.filter(s => s.id !== id));
                     setShowScheduleModal(false);
+                } else {
+                    alert("Failed to delete");
                 }
             } catch (err) {
                 console.error("Delete error", err);
@@ -247,7 +256,30 @@ const Schedule = () => {
         return subjects;
     };
 
+    // Week Navigation Handlers
+    const handlePrevWeek = () => {
+        const newDate = new Date(currentWeekStart);
+        newDate.setDate(newDate.getDate() - 7);
+        setCurrentWeekStart(newDate);
+    };
+
+    const handleNextWeek = () => {
+        const newDate = new Date(currentWeekStart);
+        newDate.setDate(newDate.getDate() + 7);
+        setCurrentWeekStart(newDate);
+    };
+
+    const getDateForDay = (dayIndex) => {
+        const date = new Date(currentWeekStart);
+        date.setDate(date.getDate() + dayIndex);
+        return date;
+    };
+
     if (loading) return <Loader />;
+
+    const programUniqueGrades = selectedProgramForAdd
+        ? [...new Set(subjects.filter(s => s.program === selectedProgramForAdd).map(s => s.year || 'General'))].sort()
+        : [];
 
     return (
         <div className="flex min-h-screen bg-[#f3f4f6] font-sans text-slate-800">
@@ -260,6 +292,27 @@ const Schedule = () => {
                         <div>
                             <h1 className="text-2xl font-bold text-gray-800">Weekly Schedule</h1>
                             <p className="text-gray-500 text-sm mt-1">Manage class timetables and attendance</p>
+                        </div>
+
+                        {/* Week Picker */}
+                        <div className="flex items-center gap-4 bg-gray-50 p-2 rounded-xl border border-gray-100">
+                            <button onClick={handlePrevWeek} className="p-2 hover:bg-white hover:shadow-sm rounded-lg text-gray-600 transition-all">
+                                <ChevronLeft size={20} />
+                            </button>
+                            <div className="flex items-center gap-2 px-2">
+                                <Calendar size={18} className="text-blue-600" />
+                                <span className="font-bold text-gray-700 text-sm">
+                                    {currentWeekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} -{' '}
+                                    {(() => {
+                                        const end = new Date(currentWeekStart);
+                                        end.setDate(end.getDate() + 6);
+                                        return end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                                    })()}
+                                </span>
+                            </div>
+                            <button onClick={handleNextWeek} className="p-2 hover:bg-white hover:shadow-sm rounded-lg text-gray-600 transition-all">
+                                <ChevronRight size={20} />
+                            </button>
                         </div>
                     </div>
 
@@ -274,10 +327,7 @@ const Schedule = () => {
                             </div>
                         )}
                         {programs.map(program => {
-                            // Get filters for this program
                             const pFilters = programFilters[program] || { grade: 'All', subjectId: 'All' };
-
-                            // Get unique grades for this program only
                             const programUniqueGrades = [...new Set(subjects.filter(s => s.program === program).map(s => s.year || 'General'))].sort();
 
                             return (
@@ -289,7 +339,6 @@ const Schedule = () => {
                                             <h2 className="text-lg font-bold text-gray-800">{program}</h2>
                                         </div>
 
-                                        {/* Per-Program Filters */}
                                         <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto">
                                             {/* Grade Filter */}
                                             <div className="relative group flex-1 xl:flex-none min-w-[140px]">
@@ -343,44 +392,82 @@ const Schedule = () => {
                                     {/* Schedule Grid */}
                                     <div className="p-4 overflow-x-auto">
                                         <div className="grid grid-cols-7 min-w-[1200px] gap-3">
-                                            {days.map(day => {
+                                            {days.map((day, dayIndex) => {
+                                                const currentDayDate = getDateForDay(dayIndex);
+
                                                 const daySlots = schedules.filter(s => {
-                                                    // Map DB columns to our logic
-                                                    const subject = subjects.find(sub => sub.id === parseInt(s.subject_id || s.subjectId));
-                                                    // API returns snake_case mostly, mock was camelCase. 'sch.*' returns DB columns: subject_id, teacher_id
                                                     const sSubId = parseInt(s.subject_id || s.subjectId);
+                                                    if (!sSubId && s.type === 'Break') {
+                                                        // Break Logic: Show breaks for this program/day
+                                                        // Assuming breaks are program-wide or we might need grade filter?
+                                                        // Ideally breaks are program wide.
+                                                        const pId = s.program_id;
+                                                        // Find program ID for current 'program' name
+                                                        const currentProgramObj = titlePrograms.find(p => p.name === program);
+                                                        return pId === currentProgramObj?.id && (s.day_of_week || s.day) === day;
+                                                    }
+
+                                                    const subject = subjects.find(sub => sub.id === sSubId);
                                                     const sDay = s.day_of_week || s.day;
 
-                                                    // 1. Match Day
                                                     const dayMatch = sDay === day;
-                                                    // 2. Match Program
                                                     const programMatch = subject?.program === program;
-                                                    // 3. Match Grade Filter (Per Program)
                                                     const gradeMatch = pFilters.grade === 'All' || subject?.year === pFilters.grade;
-                                                    // 4. Match Subject Filter (Per Program)
                                                     const subjectMatch = pFilters.subjectId === 'All' || sSubId === parseInt(pFilters.subjectId);
 
                                                     return dayMatch && programMatch && gradeMatch && subjectMatch;
                                                 }).sort((a, b) => (a.start_time || a.startTime).localeCompare(b.start_time || b.startTime));
 
                                                 return (
-                                                    <div key={day} className="flex flex-col gap-2 group min-h-[200px]">
-                                                        <div className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
-                                                            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{day.substring(0, 3)}</span>
-                                                            <button
-                                                                onClick={() => handleAddClick(program, day)}
-                                                                className="text-gray-400 hover:text-[#ea8933] hover:bg-white p-1 rounded-md transition-all shadow-sm opacity-0 group-hover:opacity-100"
-                                                                title="Add New Class"
-                                                            >
-                                                                <Plus size={12} strokeWidth={3} />
-                                                            </button>
+                                                    <div key={day} className="flex flex-col gap-2">
+                                                        <div className="text-center py-2 bg-gray-50 rounded-lg flex flex-col justify-center h-14 relative group/header">
+                                                            <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">{day.substring(0, 3)}</div>
+                                                            <div className="absolute top-0.5 right-0.5 flex gap-0.5 opacity-0 group-hover/header:opacity-100 transition-opacity">
+                                                                <button
+                                                                    onClick={() => handleAddClick(program, day, true)} // True for Break
+                                                                    className="p-1 text-gray-400 hover:text-orange-500 hover:bg-white rounded-md transition-all"
+                                                                    title="Add Break"
+                                                                >
+                                                                    <div className="text-[10px] font-bold">BRK</div>
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleAddClick(program, day)}
+                                                                    className="p-1 text-gray-400 hover:text-[#ea8933] hover:bg-white rounded-md transition-all"
+                                                                    title="Add Class"
+                                                                >
+                                                                    <Plus size={12} strokeWidth={3} />
+                                                                </button>
+                                                            </div>
+                                                            <div className={`text-xs font-bold ${currentDayDate.toDateString() === new Date().toDateString() ? 'text-blue-600' : 'text-gray-600'}`}>
+                                                                {currentDayDate.getDate()}
+                                                            </div>
                                                         </div>
 
                                                         <div className="flex-1 space-y-2 min-h-[140px] bg-slate-50/30 rounded-xl p-2 border border-dashed border-slate-200">
                                                             {daySlots.map(slot => {
+                                                                if (slot.type === 'Break') {
+                                                                    // Render Break Slot
+                                                                    const startTime = (slot.start_time || slot.startTime || "00:00").substring(0, 5);
+                                                                    const endTime = (slot.end_time || slot.endTime || "00:00").substring(0, 5);
+                                                                    return (
+                                                                        <div
+                                                                            key={slot.id}
+                                                                            className="p-2 rounded-lg border border-gray-200 bg-gray-100 text-center shadow-sm cursor-pointer hover:bg-gray-200 transition-colors group relative"
+                                                                            onClick={() => handleDeleteSchedule(slot.id)} // Allow delete on click for now or edit?
+                                                                        >
+                                                                            <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Break</div>
+                                                                            <div className="text-[10px] text-gray-400 flex items-center justify-center gap-1">
+                                                                                <Clock size={10} /> {startTime} - {endTime}
+                                                                            </div>
+                                                                            <div className="absolute top-1 right-1 hidden group-hover:block">
+                                                                                <button className="text-red-400 hover:text-red-600"><X size={12} /></button>
+                                                                            </div>
+                                                                        </div>
+                                                                    )
+                                                                }
+
                                                                 const subject = subjects.find(s => s.id === parseInt(slot.subject_id || slot.subjectId));
                                                                 const colorClass = getSubjectColor(subject?.id || 0);
-
                                                                 const status = slot.attendanceStatus || 'pending';
                                                                 let statusIconColor = "bg-yellow-100 text-yellow-600 hover:bg-yellow-200";
 
@@ -390,7 +477,7 @@ const Schedule = () => {
                                                                     statusIconColor = "bg-rose-100 text-rose-600 hover:bg-rose-200 ring-2 ring-rose-500/20";
                                                                 }
 
-                                                                const startTime = (slot.start_time || slot.startTime).substring(0, 5); // Trim seconds
+                                                                const startTime = (slot.start_time || slot.startTime || "00:00").substring(0, 5);
                                                                 const teacherName = teachers.find(t => t.id === parseInt(slot.teacher_id || slot.teacherId))?.name.split(' ')[0] || 'Teacher';
 
                                                                 return (
@@ -429,8 +516,7 @@ const Schedule = () => {
                                                                         </div>
 
                                                                         <div className="text-[10px] text-gray-600 flex items-center gap-1 truncate mb-0.5">
-                                                                            <User size={10} />
-                                                                            {teacherName}
+                                                                            <User size={10} /> {teacherName}
                                                                         </div>
 
                                                                         {slot.room && (
@@ -446,9 +532,9 @@ const Schedule = () => {
                                                                 <button
                                                                     onClick={() => handleAddClick(program, day)}
                                                                     title="Add class"
-                                                                    className="w-full py-1.5 rounded-lg border-2 border-dashed border-gray-200 text-gray-400 hover:text-[#ea8933] hover:border-[#ea8933] hover:bg-orange-50 text-xs font-bold flex items-center justify-center gap-1 transition-all opacity-50 hover:opacity-100"
+                                                                    className="w-full py-1 rounded-lg border border-dashed border-gray-300 text-gray-400 hover:text-[#ea8933] hover:border-[#ea8933] text-xs font-medium flex items-center justify-center gap-1 hover:bg-white transition-all"
                                                                 >
-                                                                    <Plus size={14} /> Add Slot
+                                                                    <Plus size={12} /> Add
                                                                 </button>
                                                             </div>
                                                         </div>
@@ -473,8 +559,10 @@ const Schedule = () => {
                     existingSchedules={schedules}
                     onSave={handleSaveSchedule}
                     onDelete={handleDeleteSchedule}
+                    programGrades={programUniqueGrades}
+                    defaultGrade={programFilters[selectedProgramForAdd]?.grade}
+                    isBreak={isBreakMode}
                 />
-
                 <AttendancePopup
                     isOpen={showAttendancePopup}
                     onClose={() => setShowAttendancePopup(false)}

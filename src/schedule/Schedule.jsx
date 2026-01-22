@@ -364,9 +364,16 @@ const Schedule = () => {
                                                 }).sort((a, b) => (a.start_time || a.startTime).localeCompare(b.start_time || b.startTime));
 
                                                 return (
-                                                    <div key={day} className="flex flex-col gap-2">
-                                                        <div className="text-center py-2 text-xs font-bold text-gray-400 uppercase tracking-wider bg-gray-50 rounded-lg">
-                                                            {day.substring(0, 3)}
+                                                    <div key={day} className="flex flex-col gap-2 group min-h-[200px]">
+                                                        <div className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
+                                                            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{day.substring(0, 3)}</span>
+                                                            <button
+                                                                onClick={() => handleAddClick(program, day)}
+                                                                className="text-gray-400 hover:text-[#ea8933] hover:bg-white p-1 rounded-md transition-all shadow-sm opacity-0 group-hover:opacity-100"
+                                                                title="Add New Class"
+                                                            >
+                                                                <Plus size={12} strokeWidth={3} />
+                                                            </button>
                                                         </div>
 
                                                         <div className="flex-1 space-y-2 min-h-[140px] bg-slate-50/30 rounded-xl p-2 border border-dashed border-slate-200">
@@ -435,13 +442,13 @@ const Schedule = () => {
                                                                 );
                                                             })}
 
-                                                            <div className="mt-auto pt-2 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <div className="mt-auto pt-2 flex justify-center">
                                                                 <button
                                                                     onClick={() => handleAddClick(program, day)}
                                                                     title="Add class"
-                                                                    className="w-full py-1 rounded-lg border border-dashed border-gray-300 text-gray-400 hover:text-[#ea8933] hover:border-[#ea8933] text-xs font-medium flex items-center justify-center gap-1 hover:bg-white transition-all"
+                                                                    className="w-full py-1.5 rounded-lg border-2 border-dashed border-gray-200 text-gray-400 hover:text-[#ea8933] hover:border-[#ea8933] hover:bg-orange-50 text-xs font-bold flex items-center justify-center gap-1 transition-all opacity-50 hover:opacity-100"
                                                                 >
-                                                                    <Plus size={12} /> Add
+                                                                    <Plus size={14} /> Add Slot
                                                                 </button>
                                                             </div>
                                                         </div>

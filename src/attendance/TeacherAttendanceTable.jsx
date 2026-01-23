@@ -31,9 +31,9 @@ const TeacherAttendanceTable = ({ teachers, onStatusChange, isEditing }) => {
                             <div className="col-span-4 pl-2">
                                 <div className="flex flex-wrap gap-1.5 align-middle h-full items-center">
                                     {(teacher.assigned_programs || teacher.program_name) ? (
-                                        (teacher.assigned_programs || teacher.program_name).toString().split(',').map((prog, idx) => (
+                                        [...new Set((teacher.assigned_programs || teacher.program_name).toString().split(',').map(p => p.trim()).filter(Boolean))].map((prog, idx) => (
                                             <span key={idx} className="inline-flex items-center bg-blue-50 text-blue-700 text-[10px] font-medium px-2 py-0.5 rounded border border-blue-100 truncate max-w-[150px]">
-                                                {prog.trim()}
+                                                {prog}
                                             </span>
                                         ))
                                     ) : (

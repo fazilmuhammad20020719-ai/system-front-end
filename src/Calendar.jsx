@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
 import { API_URL } from './config';
-import { useNotification } from './context/NotificationContext';
-import { useConfirm } from './context/ConfirmContext';
 import Sidebar from './Sidebar';
 
 // IMPORTING NEW COMPONENTS
@@ -13,8 +11,6 @@ import CalendarHeader from './calendar/CalendarHeader';
 
 const Calendar = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-    const { notify } = useNotification();
-    const { confirm } = useConfirm();
     const [currentDate, setCurrentDate] = useState(new Date());
 
     // --- STATE FOR MODAL & EVENTS ---
@@ -86,11 +82,11 @@ const Calendar = () => {
         // ... (Keep existing logic with alerts)
         console.log("Saving Event Data:", newNoteData);
         if (!newNoteData.text) {
-            notify('warning', "Please enter event details.");
+            alert("Please enter event details.");
             return;
         }
         if (!selectedDay) {
-            notify('warning', "No date selected!");
+            alert("No date selected!");
             return;
         }
 
@@ -113,44 +109,30 @@ const Calendar = () => {
             console.log("Server Response:", resData);
 
             if (response.ok) {
-                notify('success', "Event saved successfully!");
+                alert("Event saved successfully!");
                 fetchEvents(); // Refresh from server
                 setIsModalOpen(false);
             } else {
-                notify('error', "Failed to save event: " + (resData.message || "Unknown Error"));
+                alert("Failed to save event: " + (resData.message || "Unknown Error"));
             }
         } catch (error) {
             console.error("Error saving event:", error);
-            notify('error', "Error saving event. Check console.");
+            alert("Error saving event. Check console.");
         }
     };
 
     // 2. DELETE EVENT
     const handleDeleteEvent = async (eventId) => {
-        const isConfirmed = await confirm({
-            title: 'Delete Event',
-            message: 'Are you sure you want to delete this event? This action cannot be undone.',
-            confirmText: 'Delete',
-            cancelText: 'Cancel',
-            type: 'danger'
-        });
-
-        if (!isConfirmed) return;
-
         try {
             const response = await fetch(`${API_URL}/api/calendar/events/${eventId}`, {
                 method: 'DELETE'
             });
             if (response.ok) {
-                notify('success', 'Event deleted successfully');
                 // Optimistic update or refetch
                 setEvents(events.filter(e => e.id !== eventId));
-            } else {
-                notify('error', 'Failed to delete event');
             }
         } catch (error) {
             console.error("Error deleting event:", error);
-            notify('error', 'Error deleting event');
         }
     };
 
@@ -170,15 +152,11 @@ const Calendar = () => {
             });
 
             if (response.ok) {
-                notify('success', 'Event updated successfully');
                 fetchEvents(); // Refresh
                 setIsModalOpen(false);
-            } else {
-                notify('error', 'Failed to update event');
             }
         } catch (error) {
             console.error("Error updating event:", error);
-            notify('error', 'Error updating event');
         }
     };
 

@@ -1,6 +1,6 @@
-import { Menu, Lock, Save, X } from 'lucide-react';
+import { Menu } from 'lucide-react';
 
-const AttendanceHeader = ({ toggleSidebar, selectedDate, activeTab, setActiveTab, isEditing, onEditClick, onSaveClick, onCancelClick }) => {
+const AttendanceHeader = ({ toggleSidebar, selectedDate, activeTab, setActiveTab }) => {
     const formattedHeaderDate = new Date(selectedDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
     return (
@@ -37,33 +37,6 @@ const AttendanceHeader = ({ toggleSidebar, selectedDate, activeTab, setActiveTab
                         Teachers
                     </button>
                 </div>
-
-                {!isEditing ? (
-                    <button
-                        onClick={onEditClick}
-                        className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-sm transition-colors"
-                    >
-                        <Lock size={16} />
-                        <span className="hidden sm:inline">Edit</span>
-                    </button>
-                ) : (
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={onCancelClick}
-                            className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-2 rounded-lg font-bold text-sm flex items-center gap-2 transition-colors"
-                        >
-                            <X size={16} />
-                            <span className="hidden sm:inline">Cancel</span>
-                        </button>
-                        <button
-                            onClick={onSaveClick}
-                            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-sm transition-colors"
-                        >
-                            <Save size={16} />
-                            <span className="hidden sm:inline">Save</span>
-                        </button>
-                    </div>
-                )}
 
                 <div className="bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-100 hidden md:block">
                     <span className="text-gray-700 font-medium text-sm">{formattedHeaderDate}</span>

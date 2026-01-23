@@ -25,13 +25,7 @@ const ManagementTeam = () => {
     // -- VIEW MODE STATE (Default: Grid) --
     const [viewMode, setViewMode] = useState('grid');
 
-    // Mock Data for Management Team
-    const [members, setMembers] = useState([
-        { id: 1, name: "Sheikh Al-Fazil", adminId: "ADM-001", position: "Principal", department: "Administration", email: "principal@college.edu", phone: "+94 77 111 2222", status: "Active", joinDate: "Jan 2015" },
-        { id: 2, name: "Mr. Abdul Raheem", adminId: "ADM-002", position: "Vice Principal", department: "Academics", email: "raheem@college.edu", phone: "+94 77 333 4444", status: "Active", joinDate: "Mar 2016" },
-        { id: 3, name: "Ms. Zainab Ali", adminId: "ADM-003", position: "Registrar", department: "Admissions", email: "registrar@college.edu", phone: "+94 71 555 6666", status: "On Leave", joinDate: "Jun 2018" },
-        { id: 4, name: "Mr. Farook Hasan", adminId: "ADM-004", position: "Bursar", department: "Accounts & Finance", email: "accounts@college.edu", phone: "+94 75 999 8888", status: "Active", joinDate: "Feb 2019" },
-    ]);
+    const [members, setMembers] = useState([]);
 
     const filteredMembers = members.filter(member => {
         const matchesSearch = member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

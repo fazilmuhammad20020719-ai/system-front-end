@@ -12,20 +12,7 @@ const TeacherAttendanceView = ({ stats }) => {
     const [currentDate, setCurrentDate] = useState(new Date());
 
     // Mock Attendance Data (Teacher Specific)
-    const attendanceData = {
-        '2025-01-01': 'Present',
-        '2025-01-02': 'Present',
-        '2025-01-03': 'Absent', // e.g., Medical Leave
-        '2025-01-06': 'Present',
-        '2025-01-07': 'Present',
-        '2025-01-08': 'Present',
-
-        '2025-01-10': 'Present',
-        '2025-01-12': 'Present',
-        '2025-01-13': 'Present',
-        '2025-01-14': 'Holiday',
-        '2025-01-15': 'Present',
-    };
+    const attendanceData = {};
 
     // Calendar Helper Functions (Identical logic)
     const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();

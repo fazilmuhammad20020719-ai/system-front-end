@@ -118,7 +118,7 @@ const Schedule = () => {
     };
 
     // Derived State
-    const preferredOrder = ['Hifzul Quran', 'Al-Alim (Boys)', 'Al-Alimah (Girls)', 'O/L', 'A/L', 'Grade 8-10'];
+    const preferredOrder = ['Hifzul Quran', 'Al-Alim (Boys)', 'Al-Alimah (Girls)', 'A/L', 'Grade 8-10'];
     const availablePrograms = titlePrograms.map(p => p.name).filter(Boolean);
 
     const programs = availablePrograms.sort((a, b) => {

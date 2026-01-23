@@ -9,32 +9,7 @@ const Examinations = () => {
     const [filter, setFilter] = useState('All');
 
     // MOCK DATA: பரிட்சைகள் பட்டியல்
-    const [exams, setExams] = useState([
-        {
-            id: 1,
-            title: "Term 1 Examination 2025",
-            target: "Year 1 & Year 2",
-            status: "Upcoming",
-            startDate: "2025-03-15",
-            subjectsCount: 5
-        },
-        {
-            id: 2,
-            title: "Monthly Assessment - Jan",
-            target: "Hifz Class A",
-            status: "Ongoing",
-            startDate: "2025-01-28",
-            subjectsCount: 2
-        },
-        {
-            id: 3,
-            title: "Year End Final 2024",
-            target: "All Students",
-            status: "Completed",
-            startDate: "2024-12-10",
-            subjectsCount: 6
-        }
-    ]);
+    const [exams, setExams] = useState([]);
 
     const getStatusColor = (status) => {
         switch (status) {

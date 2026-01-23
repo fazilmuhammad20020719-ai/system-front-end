@@ -1,11 +1,11 @@
 import { useState, useMemo, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import { API_URL } from './config';
-import { useNotification } from './context/NotificationContext';
 
 // IMPORTING SUB-COMPONENTS
 import AttendanceHeader from './attendance/AttendanceHeader';
 import AttendanceStats from './attendance/AttendanceStats';
+import AttendanceFooter from './attendance/AttendanceFooter';
 import PinModal from './attendance/PinModal';
 
 // STUDENT COMPONENTS
@@ -20,7 +20,6 @@ import Loader from './components/Loader';
 const Attendance = () => {
     // Default: Open on PC (width >= 768), Closed on Mobile
     const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
-    const { notify } = useNotification();
 
     // -- MAIN TOGGLE STATE --
     const [activeTab, setActiveTab] = useState('students'); // 'students' or 'teachers'
@@ -212,7 +211,7 @@ const Attendance = () => {
 
     const handleBulkAction = (action) => {
         if (!isEditing) {
-            notify('warning', "Please enable Edit Mode first.");
+            alert("Please enable Edit Mode first.");
             return;
         }
         const statusMap = { 'all-present': 'Present', 'all-absent': 'Absent', 'all-holiday': 'Holiday' };
@@ -251,7 +250,7 @@ const Attendance = () => {
                 );
 
                 await Promise.all(promises);
-                notify('success', "Attendance saved successfully!");
+                alert("Attendance saved successfully!");
             } else {
                 const recordsToSave = teachersData.filter(t => t.attendanceStatus && t.attendanceStatus !== '');
                 const promises = recordsToSave.map(t =>
@@ -268,7 +267,7 @@ const Attendance = () => {
                 );
 
                 await Promise.all(promises);
-                notify('success', "Teacher attendance saved successfully!");
+                alert("Teacher attendance saved successfully!");
             }
 
             // Success Actions
@@ -277,7 +276,7 @@ const Attendance = () => {
 
         } catch (err) {
             console.error("Error saving attendance:", err);
-            notify('error', "Failed to save attendance.");
+            alert("Failed to save attendance.");
         }
     };
 
@@ -300,13 +299,9 @@ const Attendance = () => {
                     selectedDate={selectedDate}
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
-                    isEditing={isEditing}
-                    onEditClick={() => setIsPinModalOpen(true)}
-                    onSaveClick={handleSaveData}
-                    onCancelClick={() => { setIsEditing(false); fetchData(); }}
                 />
 
-                <main className="p-4 md:p-8 max-w-[1600px] mx-auto w-full">
+                <main className="p-4 md:p-8 pb-32 max-w-[1600px] mx-auto w-full">
 
                     {/* STATS (Reused for both) */}
                     <AttendanceStats
@@ -354,6 +349,16 @@ const Attendance = () => {
                     )}
 
                 </main>
+
+                {/* FOOTER */}
+                <AttendanceFooter
+                    count={currentCount}
+                    isEditing={isEditing}
+                    onEditClick={() => setIsPinModalOpen(true)}
+                    onSaveClick={handleSaveData}
+                    onCancelClick={() => { setIsEditing(false); fetchData(); }}
+                    isSidebarOpen={isSidebarOpen}
+                />
 
             </div>
 

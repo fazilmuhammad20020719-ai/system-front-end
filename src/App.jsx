@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Loader from './components/Loader';
 import { LoaderProvider } from './context/LoaderContext';
 import { NotificationProvider } from './context/NotificationContext';
-import { ConfirmProvider } from './context/ConfirmContext';
 
 // Lazy Load Components
 const Login = lazy(() => import('./login'));
@@ -44,49 +43,47 @@ function App() {
     <BrowserRouter>
       <LoaderProvider>
         <NotificationProvider>
-          <ConfirmProvider>
-            <Suspense fallback={<Loader />}>
-              <Routes>
-                <Route path="/" element={<Login />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/calendar" element={<Calendar />} />
-                <Route path="/schedule" element={<Schedule />} />
+          <Suspense fallback={<Loader />}>
+            <Routes>
+              <Route path="/" element={<Login />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/calendar" element={<Calendar />} />
+              <Route path="/schedule" element={<Schedule />} />
 
-                {/* Student Routes */}
-                <Route path="/students" element={<Students />} />
-                <Route path="/add-student" element={<AddStudent />} />
-                <Route path="/edit-student/:id" element={<EditStudent />} />
-                <Route path="/view-student/:id" element={<ViewStudent />} />
+              {/* Student Routes */}
+              <Route path="/students" element={<Students />} />
+              <Route path="/add-student" element={<AddStudent />} />
+              <Route path="/edit-student/:id" element={<EditStudent />} />
+              <Route path="/view-student/:id" element={<ViewStudent />} />
 
-                {/* Teacher Routes */}
-                <Route path="/teachers" element={<Teachers />} />
-                <Route path="/add-teacher" element={<AddTeacher />} />
-                <Route path="/view-teacher/:id" element={<ViewTeacher />} />
-                <Route path="/edit-teacher/:id" element={<EditTeacher />} />
+              {/* Teacher Routes */}
+              <Route path="/teachers" element={<Teachers />} />
+              <Route path="/add-teacher" element={<AddTeacher />} />
+              <Route path="/view-teacher/:id" element={<ViewTeacher />} />
+              <Route path="/edit-teacher/:id" element={<EditTeacher />} />
 
-                {/* Management Team */}
-                <Route path="/management-team" element={<ManagementTeam />} />
+              {/* Management Team */}
+              <Route path="/management-team" element={<ManagementTeam />} />
 
-                {/* Program Routes */}
-                <Route path="/programs" element={<Programs />} />
-                <Route path="/programs/:id" element={<ProgramDetails />} />
-                <Route path="/view-program/:id" element={<ViewProgram />} />
+              {/* Program Routes */}
+              <Route path="/programs" element={<Programs />} />
+              <Route path="/programs/:id" element={<ProgramDetails />} />
+              <Route path="/view-program/:id" element={<ViewProgram />} />
 
-                {/* Examinations */}
-                <Route path="/examinations" element={<Examinations />} />
-                <Route path="/examinations/create" element={<CreateExam />} />
-                <Route path="/examinations/manage/:examId" element={<ExamManager />} />
+              {/* Examinations */}
+              <Route path="/examinations" element={<Examinations />} />
+              <Route path="/examinations/create" element={<CreateExam />} />
+              <Route path="/examinations/manage/:examId" element={<ExamManager />} />
 
-                {/* Attendance & Documents */}
-                <Route path="/attendance" element={<Attendance />} />
-                <Route path="/documents" element={<Documents />} />
+              {/* Attendance & Documents */}
+              <Route path="/attendance" element={<Attendance />} />
+              <Route path="/documents" element={<Documents />} />
 
-                {/* Catch-all */}
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
-              </Routes>
-            </Suspense>
-          </ConfirmProvider>
+              {/* Catch-all */}
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+          </Suspense>
         </NotificationProvider>
       </LoaderProvider>
     </BrowserRouter>

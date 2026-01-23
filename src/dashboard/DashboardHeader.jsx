@@ -4,17 +4,7 @@ import { Menu, Calendar, Bell } from 'lucide-react';
 import { API_URL } from '../config';
 
 
-// MOCK PAGES DATA (Client-side routing only)
-const PAGE_ROUTES = [
-    { title: 'Dashboard', path: '/dashboard', type: 'Page' },
-    { title: 'Calendar', path: '/calendar', type: 'Page' },
-    { title: 'Students Directory', path: '/students', type: 'Page' },
-    { title: 'Teachers Directory', path: '/teachers', type: 'Page' },
-    { title: 'Attendance', path: '/attendance', type: 'Page' },
-    { title: 'Programs / Courses', path: '/programs', type: 'Page' },
-    { title: 'Management Team', path: '/management-team', type: 'Page' },
-    { title: 'Documents', path: '/documents', type: 'Page' },
-];
+
 
 const DashboardHeader = ({ toggleSidebar, onAlertClick, alertCount = 0 }) => {
     const navigate = useNavigate();

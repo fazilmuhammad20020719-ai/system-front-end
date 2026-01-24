@@ -5,7 +5,6 @@ import { API_URL } from './config';
 // IMPORTING SUB-COMPONENTS
 import AttendanceHeader from './attendance/AttendanceHeader';
 import AttendanceStats from './attendance/AttendanceStats';
-import AttendanceFooter from './attendance/AttendanceFooter';
 import PinModal from './attendance/PinModal';
 
 // STUDENT COMPONENTS
@@ -299,6 +298,10 @@ const Attendance = () => {
                     selectedDate={selectedDate}
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
+                    isEditing={isEditing}
+                    onEditClick={() => setIsPinModalOpen(true)}
+                    onSaveClick={handleSaveData}
+                    onCancelClick={() => { setIsEditing(false); fetchData(); }}
                 />
 
                 <main className="p-4 md:p-8 pb-32 max-w-[1600px] mx-auto w-full">
@@ -350,15 +353,7 @@ const Attendance = () => {
 
                 </main>
 
-                {/* FOOTER */}
-                <AttendanceFooter
-                    count={currentCount}
-                    isEditing={isEditing}
-                    onEditClick={() => setIsPinModalOpen(true)}
-                    onSaveClick={handleSaveData}
-                    onCancelClick={() => { setIsEditing(false); fetchData(); }}
-                    isSidebarOpen={isSidebarOpen}
-                />
+
 
             </div>
 

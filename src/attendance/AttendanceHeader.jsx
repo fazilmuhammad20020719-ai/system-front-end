@@ -1,6 +1,6 @@
-import { Menu } from 'lucide-react';
+import { Menu, Lock, Save, X } from 'lucide-react';
 
-const AttendanceHeader = ({ toggleSidebar, selectedDate, activeTab, setActiveTab }) => {
+const AttendanceHeader = ({ toggleSidebar, selectedDate, activeTab, setActiveTab, isEditing, onEditClick, onSaveClick, onCancelClick }) => {
     const formattedHeaderDate = new Date(selectedDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
     return (
@@ -16,6 +16,36 @@ const AttendanceHeader = ({ toggleSidebar, selectedDate, activeTab, setActiveTab
             </div>
 
             <div className="flex items-center gap-4">
+                {/* Edit Controls */}
+                <div className="flex items-center gap-2">
+                    {!isEditing ? (
+                        <button
+                            onClick={onEditClick}
+                            className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-sm transition-colors"
+                        >
+                            <Lock size={16} />
+                            <span className="hidden sm:inline">Edit</span>
+                        </button>
+                    ) : (
+                        <>
+                            <button
+                                onClick={onCancelClick}
+                                className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-2 rounded-lg font-bold text-sm flex items-center gap-2 transition-colors"
+                            >
+                                <X size={16} />
+                                <span className="hidden sm:inline">Cancel</span>
+                            </button>
+                            <button
+                                onClick={onSaveClick}
+                                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 shadow-sm transition-colors"
+                            >
+                                <Save size={16} />
+                                <span className="hidden sm:inline">Save</span>
+                            </button>
+                        </>
+                    )}
+                </div>
+
                 {/* Switcher */}
                 <div className="bg-gray-100 p-1 rounded-lg border border-gray-200 inline-flex">
                     <button

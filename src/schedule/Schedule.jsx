@@ -277,9 +277,16 @@ const Schedule = () => {
 
     if (loading) return <Loader />;
 
-    const programUniqueGrades = selectedProgramForAdd
-        ? [...new Set(subjects.filter(s => s.program === selectedProgramForAdd).map(s => s.year || 'General'))].sort()
-        : [];
+    const getProgramGrades = (programName) => {
+        const prog = titlePrograms.find(p => p.name === programName);
+        const duration = prog ? parseInt(prog.duration) || 0 : 0;
+        if (duration > 0) {
+            return Array.from({ length: duration }, (_, i) => `Grade ${i + 1}`);
+        }
+        return ['General'];
+    };
+
+    const programUniqueGrades = selectedProgramForAdd ? getProgramGrades(selectedProgramForAdd) : [];
 
     return (
         <div className="flex min-h-screen bg-[#f3f4f6] font-sans text-slate-800">
@@ -328,7 +335,19 @@ const Schedule = () => {
                         )}
                         {programs.map(program => {
                             const pFilters = programFilters[program] || { grade: 'All', subjectId: 'All' };
-                            const programUniqueGrades = [...new Set(subjects.filter(s => s.program === program).map(s => s.year || 'General'))].sort();
+
+                            // DYNAMIC GRADE GENERATION BASED ON DURATION
+                            const currentProgramObj = titlePrograms.find(p => p.name === program);
+                            const duration = currentProgramObj ? parseInt(currentProgramObj.duration) || 0 : 0;
+                            let programUniqueGrades = [];
+
+                            if (duration > 0) {
+                                programUniqueGrades = Array.from({ length: duration }, (_, i) => `Grade ${i + 1}`);
+                            } else {
+                                // Fallback: If no duration, check existing subjects or default to General
+                                const existingGrades = [...new Set(subjects.filter(s => s.program === program).map(s => s.year || 'General'))];
+                                programUniqueGrades = existingGrades.length > 0 ? existingGrades.sort() : ['General'];
+                            }
 
                             return (
                                 <div key={program} className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">

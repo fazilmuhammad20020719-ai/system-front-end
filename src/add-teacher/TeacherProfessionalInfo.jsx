@@ -24,16 +24,9 @@ const TeacherProfessionalInfo = ({ formData, handleChange, programs = [], subjec
         }
     }, [formData.assignedPrograms]);
 
-    // --- MERGE HARDCODED PROGRAMS ---
-    // Ensure "Al Muballihah" is available for Sharia
-    const processedPrograms = [...programs];
-    if (!processedPrograms.some(p => p.name === 'Al Muballihah')) {
-        processedPrograms.push({ id: 'auto-muballihah', name: 'Al Muballihah', category: 'Sharia' });
-    }
-
     // --- 1. FILTERING LOGIC ---
     // டீச்சர் வகையைப் பொறுத்து ப்ரோக்ராம்களை வடிகட்டுதல்
-    const filteredPrograms = processedPrograms.filter(prog => {
+    const filteredPrograms = programs.filter(prog => {
         // 'Both' அல்லது எதுவுமே தேர்ந்தெடுக்கப்படவில்லை என்றால் எல்லாவற்றையும் காட்டு
         if (!formData.teacherCategory || formData.teacherCategory === 'Both') return true;
 

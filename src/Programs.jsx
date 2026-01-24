@@ -139,7 +139,8 @@ const Programs = () => {
                 showSuccess("Program Deleted Successfully"); // Show success msg
                 setShowDeleteModal(false); // Close Modal
             } else {
-                alert("Failed to delete program");
+                const errorData = await response.json();
+                alert(errorData.message || "Failed to delete program");
             }
         } catch (error) {
             console.error("Error deleting program:", error);

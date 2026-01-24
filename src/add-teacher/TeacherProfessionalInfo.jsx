@@ -25,16 +25,8 @@ const TeacherProfessionalInfo = ({ formData, handleChange, programs = [], subjec
     }, [formData.assignedPrograms]);
 
     // --- 1. FILTERING LOGIC ---
-    // டீச்சர் வகையைப் பொறுத்து ப்ரோக்ராம்களை வடிகட்டுதல்
-    const filteredPrograms = programs.filter(prog => {
-        // 'Both' அல்லது எதுவுமே தேர்ந்தெடுக்கப்படவில்லை என்றால் எல்லாவற்றையும் காட்டு
-        if (!formData.teacherCategory || formData.teacherCategory === 'Both') return true;
-
-        // இல்லையென்றால், அந்த வகையை மட்டும் காட்டு (Sharia or Academic) + Both இருப்பவற்றையும் காட்டு
-        // Match 'School' selection to 'Academic' programs
-        const targetCategory = formData.teacherCategory === 'School' ? 'Academic' : formData.teacherCategory;
-        return prog.category === targetCategory || prog.category === 'Both';
-    });
+    // Direct usage of programs prop as Category selection is removed
+    const filteredPrograms = programs;
 
     // --- 2. CHECKBOX CHANGE HANDLER ---
     const handleProgramCheckboxChange = (e) => {
@@ -82,15 +74,6 @@ const TeacherProfessionalInfo = ({ formData, handleChange, programs = [], subjec
                     <Briefcase className="text-[#EB8A33]" size={18} /> Employment Details
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-
-                    {/* Category Selection */}
-                    <SelectField
-                        label="Teaching Category"
-                        name="teacherCategory"
-                        value={formData.teacherCategory}
-                        onChange={handleChange}
-                        options={['Sharia', 'School', 'Both']}
-                    />
 
                     {/* --- NEW: CHECKBOXES FOR PROGRAMS --- */}
                     <div className="flex flex-col gap-2 md:col-span-2 lg:col-span-2">

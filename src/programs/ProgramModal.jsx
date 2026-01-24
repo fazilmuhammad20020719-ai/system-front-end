@@ -47,18 +47,7 @@ const ProgramModal = ({ isOpen, onClose, onSubmit, isEditing, formData, setFormD
                         />
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-1">Program Category</label>
-                        <select
-                            name="category"
-                            value={formData.category}
-                            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#ea8933] bg-white"
-                        >
-                            <option value="Sharia">Sharia</option>
-                            <option value="Academic">Academic (School)</option>
-                        </select>
-                    </div>
+
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>

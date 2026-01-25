@@ -72,6 +72,13 @@ const ScheduleModal = ({ isOpen, onClose, subjects, teachers, initialData, exist
         // Skip conflict checks for Break
         if (formData.type === 'Break') return null;
 
+        // Normalization Helper
+        const normalizeYear = (y) => {
+            if (!y) return 'general';
+            const str = String(y).toLowerCase().replace(/grade\s*/, '').trim();
+            return str === '' ? 'general' : str;
+        };
+
         // 2. Teacher Conflict
         if (formData.teacherId) {
             const teacherConflict = otherSchedules.find(s =>
@@ -79,7 +86,7 @@ const ScheduleModal = ({ isOpen, onClose, subjects, teachers, initialData, exist
                 parseInt(s.teacher_id || s.teacherId) === parseInt(formData.teacherId) &&
                 ((formData.startTime < (s.endTime || s.end_time) && formData.endTime > (s.startTime || s.start_time)))
             );
-            if (teacherConflict) return `This teacher is already assigned to another class at this time.`;
+            if (teacherConflict) return `Teacher is already booked (${teacherConflict.start_time || teacherConflict.startTime} - ${teacherConflict.end_time || teacherConflict.endTime}).`;
         }
 
         // 3. Batch/Grade Conflict
@@ -89,22 +96,33 @@ const ScheduleModal = ({ isOpen, onClose, subjects, teachers, initialData, exist
                 const sSubject = subjects.find(sub => sub.id === sSubId);
                 if (!sSubject) return false;
 
-                const sYear = sSubject.year || 'General';
-                const myYear = formData.grade;
+                const mySubject = subjects.find(sub => sub.id === parseInt(formData.subjectId));
+                if (!mySubject) return false;
 
-                const isSameBatch =
-                    (sSubject.program_id === subjects.find(sub => sub.id === parseInt(formData.subjectId))?.program_id) &&
-                    (sYear === 'General' || myYear === 'General' || sYear === myYear);
+                // Program Check
+                if (sSubject.program_id !== mySubject.program_id) return false;
 
-                if (!isSameBatch) return false;
-
+                // Day Check
                 const isSameDay = (s.day_of_week || s.day) === formData.day;
-                const isOverlapping = (formData.startTime < (s.endTime || s.end_time) && formData.endTime > (s.startTime || s.start_time));
+                if (!isSameDay) return false;
 
-                return isSameDay && isOverlapping;
+                // Time Check
+                const isOverlapping = (formData.startTime < (s.endTime || s.end_time) && formData.endTime > (s.startTime || s.start_time));
+                if (!isOverlapping) return false;
+
+                // Grade/Year Check (Normalized)
+                const sYearNorm = normalizeYear(sSubject.year);
+                const myYearNorm = normalizeYear(formData.grade);
+
+                // Conflict if General or Same Year
+                return sYearNorm === 'general' || myYearNorm === 'general' || sYearNorm === myYearNorm;
             });
 
-            if (batchConflict) return `This batch (Grade ${formData.grade}) already has a class at this time.`;
+            if (batchConflict) {
+                const sSubId = parseInt(batchConflict.subject_id || batchConflict.subjectId);
+                const sSubject = subjects.find(sub => sub.id === sSubId);
+                return `Batch conflict: ${sSubject?.year || 'General'} has ${sSubject?.name} at this time.`;
+            }
         }
 
         return null;

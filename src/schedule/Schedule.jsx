@@ -38,66 +38,92 @@ const Schedule = () => {
     // State for Per-Program Filters
     const [programFilters, setProgramFilters] = useState({});
 
-    // --- Fetch All Data (Updated & Robust) ---
-    useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
-            try {
-                // Calculate Week Range for Attendance
-                const startDate = new Date(currentWeekStart);
-                const endDate = new Date(currentWeekStart);
-                endDate.setDate(endDate.getDate() + 6);
+    // --- Fetch All Data (Reusable Function) ---
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            // Calculate Week Range for Attendance
+            const startDate = new Date(currentWeekStart);
+            const endDate = new Date(currentWeekStart);
+            endDate.setDate(endDate.getDate() + 6);
 
-                const formatDate = (d) => d.toISOString().split('T')[0];
+            const formatDate = (d) => d.toISOString().split('T')[0];
 
-                console.log("Fetching data from:", API_URL);
+            console.log("Fetching data from:", API_URL);
 
-                // 1. Fetch Requests
-                // Note: Using plural 'schedules' to match backend
-                const fetchSchedules = fetch(`${API_URL}/api/schedules`).then(res => res.ok ? res.json() : []);
-                const fetchSubjects = fetch(`${API_URL}/api/subjects`).then(res => res.ok ? res.json() : []);
-                const fetchTeachers = fetch(`${API_URL}/api/teachers`).then(res => res.ok ? res.json() : []);
-                const fetchPrograms = fetch(`${API_URL}/api/programs`).then(res => res.ok ? res.json() : []);
+            // 1. Fetch Requests
+            const fetchSchedules = fetch(`${API_URL}/api/schedules`).then(res => res.ok ? res.json() : []);
+            const fetchSubjects = fetch(`${API_URL}/api/subjects`).then(res => res.ok ? res.json() : []);
+            const fetchTeachers = fetch(`${API_URL}/api/teachers`).then(res => res.ok ? res.json() : []);
+            const fetchPrograms = fetch(`${API_URL}/api/programs`).then(res => res.ok ? res.json() : []);
 
-                // Fetch Attendance for Range
-                const fetchAttendance = fetch(`${API_URL}/api/attendance/range?startDate=${formatDate(startDate)}&endDate=${formatDate(endDate)}`)
-                    .then(res => res.ok ? res.json() : [])
-                    .catch(err => { console.error("Attendance Fetch Failed:", err); return []; });
+            // Fetch Attendance for Range
+            const fetchAttendance = fetch(`${API_URL}/api/attendance/range?startDate=${formatDate(startDate)}&endDate=${formatDate(endDate)}`)
+                .then(res => res.ok ? res.json() : [])
+                .catch(err => { console.error("Attendance Fetch Failed:", err); return []; });
 
-                // 2. Wait for all
-                const [schData, subData, teaData, progData, attData] = await Promise.all([
-                    fetchSchedules, fetchSubjects, fetchTeachers, fetchPrograms, fetchAttendance
-                ]);
+            // 2. Wait for all
+            const [schData, subData, teaData, progData, attData] = await Promise.all([
+                fetchSchedules, fetchSubjects, fetchTeachers, fetchPrograms, fetchAttendance
+            ]);
 
-                // 3. Set State
-                setSchedules(schData);
-                setAttendanceData(attData);
+            // 3. Set State & Merge Attendance
+            const daysList = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-                // Enrich subjects with program name
-                const enrichedSubjects = subData.map(s => {
-                    const program = progData.find(p => p.id === s.program_id);
-                    return { ...s, program: program ? program.name : null };
-                });
+            const mergedSchedules = schData.map(slot => {
+                // Calculate Date for this slot
+                const dayIndex = daysList.indexOf(slot.day_of_week || slot.day);
+                if (dayIndex === -1) return slot;
 
-                setSubjects(enrichedSubjects);
-                setTeachers(teaData);
-                setTitlePrograms(progData);
+                const slotDate = new Date(startDate);
+                slotDate.setDate(startDate.getDate() + dayIndex);
+                const slotDateStr = formatDate(slotDate);
 
-                // 4. Initialize Filters
-                if (progData.length > 0) {
-                    const initialFilters = {};
-                    progData.forEach(p => {
-                        initialFilters[p.name] = { grade: 'All', subjectId: 'All' };
-                    });
-                    setProgramFilters(initialFilters);
+                // Find attendance record for this slot
+                const attRecord = attData.find(a => a.schedule_id === slot.id && a.date.split('T')[0] === slotDateStr);
+
+                if (attRecord) {
+                    return { ...slot, attendanceStatus: 'completed', attendanceData: attRecord };
                 }
+                return slot;
+            });
 
-            } catch (err) {
-                console.error("Global Fetch Error:", err);
-            } finally {
-                setLoading(false);
+            setSchedules(mergedSchedules);
+            setAttendanceData(attData);
+
+            // Enrich subjects with program name
+            const enrichedSubjects = subData.map(s => {
+                const program = progData.find(p => p.id === s.program_id);
+                return { ...s, program: program ? program.name : null };
+            });
+
+            setSubjects(enrichedSubjects);
+            setTeachers(teaData);
+            setTitlePrograms(progData);
+
+            // 4. Initialize Filters
+            if (progData.length > 0) {
+                setProgramFilters(prev => {
+                    const newFilters = { ...prev };
+                    let hasChanges = false;
+                    progData.forEach(p => {
+                        if (!newFilters[p.name]) {
+                            newFilters[p.name] = { grade: 'All', subjectId: 'All' };
+                            hasChanges = true;
+                        }
+                    });
+                    return hasChanges ? newFilters : prev;
+                });
             }
-        };
+
+        } catch (err) {
+            console.error("Global Fetch Error:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchData();
     }, [currentWeekStart]);
 
@@ -139,6 +165,8 @@ const Schedule = () => {
                 : s
         ));
         setShowAttendancePopup(false);
+        // Optional: Trigger full refresh to ensure sync
+        // fetchData(); 
     };
 
     // Filter Change Handler
@@ -214,10 +242,8 @@ const Schedule = () => {
             });
 
             if (res.ok) {
-                // Refresh data
-                const schRes = await fetch(`${API_URL}/api/schedules`);
-                const schData = await schRes.json();
-                setSchedules(schData);
+                // Refresh data using the robust fetch function
+                fetchData();
                 setShowScheduleModal(false);
             } else {
                 const errorData = await res.json();

@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { X, Check, Clock, User, Ban, Save, Search } from 'lucide-react';
 import { API_URL } from '../config'; // Import API URL
+import PinModal from '../attendance/PinModal';
 
 const AttendancePopup = ({ isOpen, onClose, slot, subjects, onSave, onCancel }) => {
     // 0. Auth State
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [passcode, setPasscode] = useState('');
-    const [authError, setAuthError] = useState(false);
 
     // 1. Get Subject Details to filter students
     const subject = subjects?.find(s => s.id === parseInt(slot?.subjectId || slot?.subject_id));
@@ -20,25 +19,8 @@ const AttendancePopup = ({ isOpen, onClose, slot, subjects, onSave, onCancel }) 
     useEffect(() => {
         if (isOpen) {
             setIsAuthenticated(false);
-            setPasscode('');
-            setAuthError(false);
         }
     }, [isOpen]);
-
-    // Check Passcode
-    useEffect(() => {
-        if (passcode.length === 4) {
-            if (passcode === '1234') {
-                setIsAuthenticated(true);
-            } else {
-                setAuthError(true);
-                setTimeout(() => {
-                    setPasscode('');
-                    setAuthError(false);
-                }, 400);
-            }
-        }
-    }, [passcode]);
 
     // 3. Load & Filter Students on Mount
     useEffect(() => {
@@ -157,73 +139,20 @@ const AttendancePopup = ({ isOpen, onClose, slot, subjects, onSave, onCancel }) 
         }
     };
 
-    const handleDigitClick = (digit) => {
-        if (passcode.length < 4) {
-            setPasscode(prev => prev + digit);
-        }
-    };
-
-    const handleBackspace = () => {
-        setPasscode(prev => prev.slice(0, -1));
-    };
-
     // Filter displayed students by search
     const filteredStudents = attendanceList.filter(s =>
         s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         String(s.id).includes(searchQuery)
     );
 
-    // --- Keypad UI ---
+    // --- Auth Check with PinModal ---
     if (!isAuthenticated) {
         return (
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 animate-in fade-in zoom-in duration-200">
-                    <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-xl font-bold text-gray-800">Enter Access Code</h3>
-                        <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg">
-                            <X size={20} />
-                        </button>
-                    </div>
-
-                    <div className="flex justify-center gap-4 mb-8">
-                        {[0, 1, 2, 3].map(i => (
-                            <div
-                                key={i}
-                                className={`w-4 h-4 rounded-full transition-all duration-200 ${passcode.length > i
-                                        ? 'bg-[#ea8933] scale-110'
-                                        : 'bg-gray-200'
-                                    } ${authError ? 'animate-pulse bg-red-500' : ''}`}
-                            />
-                        ))}
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4 mb-4">
-                        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
-                            <button
-                                key={num}
-                                onClick={() => handleDigitClick(num)}
-                                className="h-14 rounded-xl bg-gray-50 border border-gray-100 text-xl font-bold text-gray-700 hover:bg-gray-100 active:scale-95 transition-all"
-                            >
-                                {num}
-                            </button>
-                        ))}
-                        <div className="h-14" /> {/* Empty Slot */}
-                        <button
-                            onClick={() => handleDigitClick(0)}
-                            className="h-14 rounded-xl bg-gray-50 border border-gray-100 text-xl font-bold text-gray-700 hover:bg-gray-100 active:scale-95 transition-all"
-                        >
-                            0
-                        </button>
-                        <button
-                            onClick={handleBackspace}
-                            className="h-14 rounded-xl bg-gray-50 border border-gray-100 text-gray-500 hover:bg-gray-100 hover:text-red-500 active:scale-95 transition-all flex items-center justify-center"
-                        >
-                            <span className="text-sm font-bold">DEL</span>
-                        </button>
-                    </div>
-                    <p className="text-center text-xs text-gray-400 mt-4">Only authorized staff can mark attendance.</p>
-                </div>
-            </div>
+            <PinModal
+                isOpen={true} // Always open if strictly checking auth
+                onClose={onClose} // Close the whole popup if they cancel
+                onSuccess={() => setIsAuthenticated(true)}
+            />
         );
     }
 

@@ -1,409 +1,280 @@
-import { useState, useMemo } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Save, ArrowLeft, Plus, Trash2, CheckSquare, Square, X, Users, UserCheck } from 'lucide-react';
-import Sidebar from '../Sidebar';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Save, ArrowLeft } from 'lucide-react';
+import { API_URL } from '../config';
 
 const CreateExam = () => {
     const navigate = useNavigate();
-    const location = useLocation();
-    const editingExam = location.state?.exam;
+    const [programs, setPrograms] = useState([]);
+    const [subjects, setSubjects] = useState([]);
 
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    // Student Selection State
+    const [allStudents, setAllStudents] = useState([]);
+    const [filteredStudents, setFilteredStudents] = useState([]);
+    const [selectedGrade, setSelectedGrade] = useState('');
+    const [selectedStudentIds, setSelectedStudentIds] = useState([]);
 
-    // --- State Management ---
-    const [examDetails, setExamDetails] = useState({
-        title: editingExam?.title || '',
-        startDate: editingExam?.startDate || '',
-        program: editingExam?.program || '',
-        years: editingExam?.years || [],        // Array of selected years
-        studentIds: editingExam?.studentIds || [], // Array of selected student IDs
-        status: editingExam?.status || 'Upcoming'
+    const [formData, setFormData] = useState({
+        title: '',
+        program_id: '',
+        subject_id: '',
+        exam_date: '',
+        start_time: '',
+        end_time: '',
+        venue: '',
+        total_marks: 100
     });
 
-    // Modal States
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [currentYearForSelection, setCurrentYearForSelection] = useState(null);
-
-    // Subjects List State
-    const [subjects, setSubjects] = useState(editingExam?.subjects || [
-        { id: 1, name: '', date: '', startTime: '', endTime: '', maxMarks: 100 }
-    ]);
-
-    // --- Derived Data ---
-
-    const availablePrograms = useMemo(() => {
-        return [];
+    // 1. Fetch Programs & Students
+    useEffect(() => {
+        const fetchData = async () => {
+            const [progRes, studRes] = await Promise.all([
+                fetch(`${API_URL}/api/programs`),
+                fetch(`${API_URL}/api/students`)
+            ]);
+            const progs = await progRes.json();
+            const studs = await studRes.json();
+            setPrograms(progs);
+            setAllStudents(studs);
+        };
+        fetchData();
     }, []);
 
-    const availableYears = useMemo(() => {
-        if (!examDetails.program) return [];
-        return [];
-    }, [examDetails.program]);
-
-    // --- Modal & Selection Logic ---
-
-    // Open Modal for a specific year
-    const handleOpenStudentSelection = (year) => {
-        setCurrentYearForSelection(year);
-        setIsModalOpen(true);
-    };
-
-    // Toggle a student inside the modal
-    const handleStudentToggle = (studentId) => {
-        setExamDetails(prev => {
-            const isSelected = prev.studentIds.includes(studentId);
-            let newIds;
-            if (isSelected) {
-                newIds = prev.studentIds.filter(id => id !== studentId);
-            } else {
-                newIds = [...prev.studentIds, studentId];
-            }
-
-            // If we remove the last student of a year, should we uncheck the year? 
-            // For now, let's keep the year checked but with 0 students if user desires.
-            return { ...prev, studentIds: newIds };
-        });
-    };
-
-    // Select All / Deselect All for the current modal year
-    const handleSelectAllForYear = (selectAll) => {
-        const studentsInYear = [];
-        const studentIdsInYear = studentsInYear.map(s => s.id);
-
-        setExamDetails(prev => {
-            let newIds = [...prev.studentIds];
-
-            if (selectAll) {
-                // Add all IDs from this year that aren't already included
-                studentIdsInYear.forEach(id => {
-                    if (!newIds.includes(id)) newIds.push(id);
+    // 2. Fetch Subjects when Program changes
+    useEffect(() => {
+        if (formData.program_id) {
+            // Fetch Subjects
+            fetch(`${API_URL}/api/subjects?programId=${formData.program_id}`)
+                .then(res => res.json())
+                .then(setSubjects)
+                .catch(() => {
+                    fetch(`${API_URL}/api/subjects`).then(res => res.json()).then(setSubjects);
                 });
-            } else {
-                // Remove all IDs belonging to this year
-                newIds = newIds.filter(id => !studentIdsInYear.includes(id));
-            }
 
-            return { ...prev, studentIds: newIds };
-        });
-    };
+            // Reset Selections
+            setSelectedGrade('');
+            setSelectedStudentIds([]);
+            setFilteredStudents([]);
+        }
+    }, [formData.program_id]);
 
-    // Handle Year Checkbox Change
-    const handleYearCheckbox = (year) => {
-        const isYearCurrentlySelected = examDetails.years.includes(year);
-
-        if (isYearCurrentlySelected) {
-            // Remove Year: Also remove all students from this year
-            const studentsInYear = [];
-            const idsToRemove = studentsInYear.map(s => s.id);
-
-            setExamDetails(prev => ({
-                ...prev,
-                years: prev.years.filter(y => y !== year),
-                studentIds: prev.studentIds.filter(id => !idsToRemove.includes(id))
-            }));
+    // 3. Filter Students when Grade changes
+    useEffect(() => {
+        if (formData.program_id && selectedGrade) {
+            const relevantStudents = allStudents.filter(s =>
+                s.program_id == formData.program_id && s.current_year === selectedGrade
+            );
+            setFilteredStudents(relevantStudents);
+            // Auto Select All? Let's default to empty or all? User asked for "all student select btn", so default empty.
+            setSelectedStudentIds([]);
         } else {
-            // Add Year: Add year AND Open Modal to select students (Default to ALL selected?)
-            // Requirement: "popup msg pola... student name katanum"
-
-            // 1. Add Year to state
-            setExamDetails(prev => ({
-                ...prev,
-                years: [...prev.years, year]
-            }));
-
-            // 2. Auto-select ALL students initially? Or let user choose?
-            // Let's auto-select ALL for convenience, then open modal to refine.
-            const studentsInYear = [];
-            const newIds = studentsInYear.map(s => s.id);
-
-            setExamDetails(prev => ({
-                ...prev,
-                years: [...prev.years, year],
-                studentIds: [...new Set([...prev.studentIds, ...newIds])] // Merge unique
-            }));
-
-            // 3. Open Modal immediately
-            handleOpenStudentSelection(year);
+            setFilteredStudents([]);
         }
-    };
+    }, [selectedGrade, formData.program_id, allStudents]);
 
-    // Helper to count selected students for a specific year
-    const getSelectedCountForYear = (year) => {
-        const studentsInYear = [];
-        const total = studentsInYear.length;
-        const selected = studentsInYear.filter(s => examDetails.studentIds.includes(s.id)).length;
-        return { selected, total };
-    };
+    // Derived Grades from Program Duration
+    const availableGrades = (() => {
+        const selectedProgram = programs.find(p => p.id == formData.program_id);
+        if (!selectedProgram || !selectedProgram.duration) return [];
 
-    // --- Subject Handlers ---
-    const handleAddSubject = () => {
-        setSubjects([...subjects, {
-            id: Date.now(), name: '', date: '', startTime: '', endTime: '', maxMarks: 100
-        }]);
-    };
+        const durationStr = String(selectedProgram.duration).toLowerCase();
+        let years = 0;
 
-    const handleSubjectChange = (id, field, value) => {
-        setSubjects(subjects.map(sub => sub.id === id ? { ...sub, [field]: value } : sub));
-    };
-
-    const handleRemoveSubject = (id) => {
-        if (subjects.length > 1) {
-            setSubjects(subjects.filter(sub => sub.id !== id));
-        }
-    };
-
-    const handleSave = () => {
-        if (!examDetails.title || !examDetails.program || examDetails.years.length === 0) {
-            alert("Please fill in the Exam Title, Program, and select at least one Year.");
-            return;
-        }
-        if (examDetails.studentIds.length === 0) {
-            alert("Please select at least one student.");
-            return;
+        if (durationStr.includes('year')) {
+            years = parseInt(durationStr);
+        } else if (!isNaN(durationStr)) {
+            years = parseInt(durationStr);
         }
 
-        console.log("Saving Exam Data:", { ...examDetails, subjects });
-        alert("Exam Created Successfully!");
-        navigate('/examinations');
-    };
+        if (years > 0) {
+            return Array.from({ length: years }, (_, i) => `Grade ${i + 1}`);
+        }
 
-    // --- Render Modal ---
-    const renderStudentModal = () => {
-        if (!isModalOpen || !currentYearForSelection) return null;
+        // Fallback: Use existing student grades if duration parse fails
+        return [...new Set(
+            allStudents
+                .filter(s => s.program_id == formData.program_id)
+                .map(s => s.current_year)
+                .filter(g => g)
+        )].sort();
+    })();
 
-        const studentsInYear = [];
-        const selectedCount = studentsInYear.filter(s => examDetails.studentIds.includes(s.id)).length;
-        const isAllSelected = selectedCount === studentsInYear.length && studentsInYear.length > 0;
-
-        return (
-            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-                <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
-                    {/* Modal Header */}
-                    <div className="bg-green-600 px-6 py-4 flex justify-between items-center text-white">
-                        <div>
-                            <h3 className="font-bold text-lg">Select Students</h3>
-                            <p className="text-green-100 text-xs">{currentYearForSelection} - {examDetails.program}</p>
-                        </div>
-                        <button onClick={() => setIsModalOpen(false)} className="p-1 hover:bg-white/20 rounded-full transition">
-                            <X size={20} />
-                        </button>
-                    </div>
-
-                    {/* Modal Controls */}
-                    <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                        <div className="text-sm text-gray-600 font-medium">
-                            {selectedCount} / {studentsInYear.length} Selected
-                        </div>
-                        <button
-                            onClick={() => handleSelectAllForYear(!isAllSelected)}
-                            className="text-sm font-bold text-green-600 hover:underline"
-                        >
-                            {isAllSelected ? 'Deselect All' : 'Select All Students'}
-                        </button>
-                    </div>
-
-                    {/* Student List */}
-                    <div className="max-h-[60vh] overflow-y-auto p-2">
-                        {studentsInYear.length > 0 ? (
-                            <div className="space-y-1">
-                                {studentsInYear.map(student => {
-                                    const isSelected = examDetails.studentIds.includes(student.id);
-                                    return (
-                                        <div
-                                            key={student.id}
-                                            onClick={() => handleStudentToggle(student.id)}
-                                            className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors border ${isSelected ? 'bg-green-50 border-green-200' : 'bg-white border-transparent hover:bg-gray-50'}`}
-                                        >
-                                            <div className={`text-green-600 transition-transform duration-200 ${isSelected ? 'scale-110' : 'scale-100 text-gray-300'}`}>
-                                                {isSelected ? <CheckSquare size={20} /> : <Square size={20} />}
-                                            </div>
-                                            <div>
-                                                <p className={`text-sm font-bold ${isSelected ? 'text-gray-800' : 'text-gray-500'}`}>{student.name}</p>
-                                                <p className="text-xs text-gray-400">ID: {student.id}</p>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        ) : (
-                            <div className="p-8 text-center text-gray-400">No students found in this year.</div>
-                        )}
-                    </div>
-
-                    {/* Modal Footer */}
-                    <div className="p-4 border-t border-gray-100 flex justify-end">
-                        <button
-                            onClick={() => setIsModalOpen(false)}
-                            className="bg-gray-800 text-white px-6 py-2 rounded-lg text-sm font-bold hover:bg-gray-700 transition"
-                        >
-                            Done
-                        </button>
-                    </div>
-                </div>
-            </div>
+    const toggleStudent = (id) => {
+        setSelectedStudentIds(prev =>
+            prev.includes(id) ? prev.filter(sid => sid !== id) : [...prev, id]
         );
     };
 
+    const toggleSelectAll = () => {
+        if (selectedStudentIds.length === filteredStudents.length) {
+            setSelectedStudentIds([]);
+        } else {
+            setSelectedStudentIds(filteredStudents.map(s => s.id));
+        }
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            // 1. Create Exam
+            const res = await fetch(`${API_URL}/api/exams`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+
+            if (res.ok) {
+                const createdExam = await res.json();
+
+                // 2. Assign Results (if students selected)
+                if (selectedStudentIds.length > 0) {
+                    const resultsPayload = selectedStudentIds.map(sid => ({
+                        student_id: sid,
+                        marks: null,
+                        grade: null,
+                        status: 'Pending',
+                        remarks: ''
+                    }));
+
+                    await fetch(`${API_URL}/api/exams/${createdExam.id}/results`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ results: resultsPayload })
+                    });
+                }
+
+                navigate('/examinations');
+            }
+        } catch (err) { console.error(err); }
+    };
+
     return (
-        <div className="min-h-screen bg-gray-50 flex font-sans">
-            <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
+        <div className="p-6 max-w-4xl mx-auto">
+            <button onClick={() => navigate(-1)} className="flex items-center text-gray-500 mb-6 hover:text-[#ea8933]">
+                <ArrowLeft size={20} className="mr-2" /> Back
+            </button>
 
-            <div className={`flex-1 transition-all duration-300 ${isSidebarOpen ? "ml-64" : "ml-20"}`}>
-                <div className="p-8">
+            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
+                <h1 className="text-2xl font-bold text-gray-800 mb-6">Schedule New Exam</h1>
 
-                    {/* Header */}
-                    <div className="flex items-center gap-4 mb-8">
-                        <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-200 rounded-full text-gray-500">
-                            <ArrowLeft size={20} />
-                        </button>
-                        <h1 className="text-2xl font-bold text-gray-800">{editingExam ? 'Edit Examination' : 'Schedule New Examination'}</h1>
-                    </div>
-
-                    <div className="max-w-4xl mx-auto space-y-6">
-
-                        {/* --- STEP 1: EXAM DETAILS --- */}
-                        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-                            <h2 className="font-bold text-gray-800 mb-6 border-b pb-2">Step 1: Exam Details & Audience</h2>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="col-span-2">
-                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Exam Title</label>
-                                    <input
-                                        type="text"
-                                        placeholder="e.g. Term 1 Final Examination 2025"
-                                        className="w-full p-3 border border-gray-200 rounded-lg focus:border-green-600 outline-none bg-white"
-                                        value={examDetails.title}
-                                        onChange={e => setExamDetails({ ...examDetails, title: e.target.value })}
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Start Date</label>
-                                    <input
-                                        type="date"
-                                        className="w-full p-3 border border-gray-200 rounded-lg focus:border-green-600 outline-none bg-white"
-                                        value={examDetails.startDate}
-                                        onChange={e => setExamDetails({ ...examDetails, startDate: e.target.value })}
-                                    />
-                                </div>
-
-                                {/* Select Program */}
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Select Program</label>
-                                    <select
-                                        className="w-full p-3 border border-gray-200 rounded-lg focus:border-[#EB8A33] outline-none bg-white"
-                                        value={examDetails.program}
-                                        onChange={e => setExamDetails({ ...examDetails, program: e.target.value, years: [], studentIds: [] })}
-                                    >
-                                        <option value="">-- Choose Program --</option>
-                                        {availablePrograms.map(prog => (
-                                            <option key={prog} value={prog}>{prog}</option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                {/* Years & Student Selection */}
-                                {examDetails.program && (
-                                    <div className="col-span-2 animate-in fade-in slide-in-from-top-2">
-                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-3">Select Grade / Batch</label>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            {availableYears.map(year => {
-                                                const isSelected = examDetails.years.includes(year);
-                                                const { selected, total } = getSelectedCountForYear(year);
-
-                                                return (
-                                                    <div key={year} className={`relative p-4 rounded-xl border-2 transition-all ${isSelected ? 'border-green-600 bg-green-50' : 'border-gray-100 bg-white hover:border-green-200'}`}>
-
-                                                        {/* Top Row: Checkbox & Year Name */}
-                                                        <div className="flex items-center justify-between mb-2">
-                                                            <label className="flex items-center gap-3 cursor-pointer select-none">
-                                                                <div
-                                                                    onClick={() => handleYearCheckbox(year)}
-                                                                    className={`w-5 h-5 rounded flex items-center justify-center border transition-colors ${isSelected ? 'bg-green-600 border-green-600 text-white' : 'bg-white border-gray-300'}`}
-                                                                >
-                                                                    {isSelected && <CheckSquare size={14} />}
-                                                                </div>
-                                                                <span className={`font-bold ${isSelected ? 'text-gray-800' : 'text-gray-500'}`}>{year}</span>
-                                                            </label>
-                                                        </div>
-
-                                                        {/* Bottom Row: Student Count & Edit Button */}
-                                                        {isSelected && (
-                                                            <div className="flex items-center justify-between text-xs pl-8">
-                                                                <span className="text-gray-600 font-medium bg-white px-2 py-1 rounded border border-green-100">
-                                                                    <Users size={12} className="inline mr-1 text-green-600" />
-                                                                    {selected} / {total} Students
-                                                                </span>
-                                                                <button
-                                                                    onClick={() => handleOpenStudentSelection(year)}
-                                                                    className="text-green-600 font-bold hover:underline flex items-center gap-1"
-                                                                >
-                                                                    <UserCheck size={14} /> Edit Selection
-                                                                </button>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Basic Info */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Exam Title</label>
+                            <input required type="text" className="w-full p-3 border rounded-lg"
+                                placeholder="e.g. First Term Mathematics"
+                                value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} />
                         </div>
 
-                        {/* --- STEP 2: SUBJECTS --- */}
-                        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-                            <div className="flex justify-between items-center mb-4 border-b pb-2">
-                                <h2 className="font-bold text-gray-800">Step 2: Subjects & Timetable</h2>
-                                <button
-                                    onClick={handleAddSubject}
-                                    className="text-xs font-bold text-green-600 flex items-center gap-1 hover:underline"
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Program</label>
+                            <select required className="w-full p-3 border rounded-lg"
+                                value={formData.program_id} onChange={e => setFormData({ ...formData, program_id: e.target.value })}>
+                                <option value="">Select Program</option>
+                                {programs.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                            </select>
+                        </div>
+
+                        {/* Grade Selection (Only if program selected) */}
+                        {formData.program_id && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Select Grade/Class</label>
+                                <select
+                                    className="w-full p-3 border rounded-lg"
+                                    value={selectedGrade}
+                                    onChange={e => setSelectedGrade(e.target.value)}
                                 >
-                                    <Plus size={14} /> Add Subject
+                                    <option value="">-- Choose Grade --</option>
+                                    {availableGrades.map(g => <option key={g} value={g}>{g}</option>)}
+                                </select>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Student Selection Area */}
+                    {selectedGrade && filteredStudents.length > 0 && (
+                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <div className="flex justify-between items-center mb-3">
+                                <h3 className="font-bold text-gray-700">Select Students ({selectedStudentIds.length})</h3>
+                                <button
+                                    type="button"
+                                    onClick={toggleSelectAll}
+                                    className="text-sm font-bold text-[#ea8933] hover:underline"
+                                >
+                                    {selectedStudentIds.length === filteredStudents.length ? 'Deselect All' : 'Select All'}
                                 </button>
                             </div>
-                            <div className="space-y-4">
-                                {subjects.map((sub) => (
-                                    <div key={sub.id} className="grid grid-cols-12 gap-3 items-end p-4 bg-gray-50 rounded-lg border border-gray-100">
-                                        <div className="col-span-3">
-                                            <label className="text-[10px] font-bold text-gray-400 uppercase">Subject Name</label>
-                                            <input type="text" className="w-full p-2 border border-gray-200 rounded text-sm" value={sub.name} onChange={e => handleSubjectChange(sub.id, 'name', e.target.value)} />
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-h-60 overflow-y-auto">
+                                {filteredStudents.map(student => (
+                                    <div
+                                        key={student.id}
+                                        onClick={() => toggleStudent(student.id)}
+                                        className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${selectedStudentIds.includes(student.id)
+                                            ? 'bg-white border-[#ea8933] shadow-sm'
+                                            : 'bg-white border-transparent hover:bg-gray-100'
+                                            }`}
+                                    >
+                                        <div className={`w-5 h-5 rounded flex items-center justify-center border ${selectedStudentIds.includes(student.id) ? 'bg-[#ea8933] border-[#ea8933]' : 'border-gray-300'
+                                            }`}>
+                                            {selectedStudentIds.includes(student.id) && <span className="text-white text-xs">✓</span>}
                                         </div>
-                                        <div className="col-span-3">
-                                            <label className="text-[10px] font-bold text-gray-400 uppercase">Exam Date</label>
-                                            <input type="date" className="w-full p-2 border border-gray-200 rounded text-sm" value={sub.date} onChange={e => handleSubjectChange(sub.id, 'date', e.target.value)} />
-                                        </div>
-                                        <div className="col-span-2">
-                                            <label className="text-[10px] font-bold text-gray-400 uppercase">Start Time</label>
-                                            <input type="time" className="w-full p-2 border border-gray-200 rounded text-sm" value={sub.startTime} onChange={e => handleSubjectChange(sub.id, 'startTime', e.target.value)} />
-                                        </div>
-                                        <div className="col-span-2">
-                                            <label className="text-[10px] font-bold text-gray-400 uppercase">End Time</label>
-                                            <input type="time" className="w-full p-2 border border-gray-200 rounded text-sm" value={sub.endTime} onChange={e => handleSubjectChange(sub.id, 'endTime', e.target.value)} />
-                                        </div>
-                                        <div className="col-span-1">
-                                            <label className="text-[10px] font-bold text-gray-400 uppercase">Marks</label>
-                                            <input type="number" value={sub.maxMarks} className="w-full p-2 border rounded text-sm text-center" readOnly />
-                                        </div>
-                                        <div className="col-span-1 flex justify-center pb-2">
-                                            <button onClick={() => handleRemoveSubject(sub.id)} className="text-red-400 hover:text-red-600"><Trash2 size={18} /></button>
+                                        <div className="text-sm">
+                                            <p className="font-bold text-gray-800">{student.name}</p>
+                                            <p className="text-xs text-gray-500">{student.reg_no}</p>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         </div>
+                    )}
 
-                        <div className="flex justify-end pt-4">
-                            <button onClick={handleSave} className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg">
-                                <Save size={20} /> Create Exam
-                            </button>
+                    {/* Subject & Timing */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+                            <select required className="w-full p-3 border rounded-lg"
+                                value={formData.subject_id} onChange={e => setFormData({ ...formData, subject_id: e.target.value })}>
+                                <option value="">Select Subject</option>
+                                {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                            <input required type="date" className="w-full p-3 border rounded-lg"
+                                value={formData.exam_date} onChange={e => setFormData({ ...formData, exam_date: e.target.value })} />
                         </div>
                     </div>
-                </div>
-            </div>
 
-            {/* Popup Modal for Student Selection */}
-            {renderStudentModal()}
+                    <div className="grid grid-cols-3 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Start Time</label>
+                            <input required type="time" className="w-full p-3 border rounded-lg"
+                                value={formData.start_time} onChange={e => setFormData({ ...formData, start_time: e.target.value })} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">End Time</label>
+                            <input required type="time" className="w-full p-3 border rounded-lg"
+                                value={formData.end_time} onChange={e => setFormData({ ...formData, end_time: e.target.value })} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Total Marks</label>
+                            <input required type="number" className="w-full p-3 border rounded-lg"
+                                value={formData.total_marks} onChange={e => setFormData({ ...formData, total_marks: e.target.value })} />
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Venue</label>
+                        <input type="text" className="w-full p-3 border rounded-lg"
+                            placeholder="Hall A"
+                            value={formData.venue} onChange={e => setFormData({ ...formData, venue: e.target.value })} />
+                    </div>
+
+                    <button type="submit" className="w-full bg-[#ea8933] text-white py-3 rounded-lg font-bold hover:bg-[#d67b2b]">
+                        <Save className="inline mr-2" size={20} /> Schedule Exam
+                    </button>
+                </form>
+            </div>
         </div>
     );
 };

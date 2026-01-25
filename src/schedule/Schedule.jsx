@@ -7,6 +7,18 @@ import { API_URL } from '../config';
 import Loader from '../components/Loader';
 
 const Schedule = () => {
+    // வாரத்தின் ஆரம்ப மற்றும் கடைசி தேதியைக் கண்டுபிடிக்க (User Provided Helper)
+    const getWeekRange = (date) => {
+        const start = new Date(date);
+        start.setDate(start.getDate() - start.getDay()); // Sunday
+        const end = new Date(start);
+        end.setDate(end.getDate() + 6); // Saturday
+        return {
+            start: start.toISOString().split('T')[0],
+            end: end.toISOString().split('T')[0]
+        };
+    };
+
     const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
     const [loading, setLoading] = useState(true);
 
@@ -57,8 +69,9 @@ const Schedule = () => {
             const fetchTeachers = fetch(`${API_URL}/api/teachers`).then(res => res.ok ? res.json() : []);
             const fetchPrograms = fetch(`${API_URL}/api/programs`).then(res => res.ok ? res.json() : []);
 
-            // Fetch Attendance for Range
-            const fetchAttendance = fetch(`${API_URL}/api/attendance/range?startDate=${formatDate(startDate)}&endDate=${formatDate(endDate)}`)
+            // Fetch Attendance for Range (Session Statuses)
+            // Endpoint: /api/attendance?startDate=...&endDate=...
+            const fetchAttendance = fetch(`${API_URL}/api/attendance?startDate=${formatDate(startDate)}&endDate=${formatDate(endDate)}`)
                 .then(res => res.ok ? res.json() : [])
                 .catch(err => { console.error("Attendance Fetch Failed:", err); return []; });
 
@@ -79,11 +92,19 @@ const Schedule = () => {
                 slotDate.setDate(startDate.getDate() + dayIndex);
                 const slotDateStr = formatDate(slotDate);
 
-                // Find attendance record for this slot
-                const attRecord = attData.find(a => a.schedule_id === slot.id && a.date.split('T')[0] === slotDateStr);
+                // Find SESSION record for this slot (class_sessions)
+                // attData is now [{ schedule_id, date, status }]
+                const sessionRecord = attData.find(a =>
+                    parseInt(a.schedule_id) === parseInt(slot.id) &&
+                    a.date.split('T')[0] === slotDateStr
+                );
 
-                if (attRecord) {
-                    return { ...slot, attendanceStatus: 'completed', attendanceData: attRecord };
+                if (sessionRecord) {
+                    return {
+                        ...slot,
+                        attendanceStatus: sessionRecord.status.toLowerCase(), // 'completed' or 'cancelled'
+                        attendanceData: sessionRecord
+                    };
                 }
                 return slot;
             });
@@ -159,14 +180,15 @@ const Schedule = () => {
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
     const handleAttendanceUpdate = (slotId, status, data = null) => {
+        // Optimistic Update
         setSchedules(schedules.map(s =>
             s.id === slotId
                 ? { ...s, attendanceStatus: status, attendanceData: data }
                 : s
         ));
         setShowAttendancePopup(false);
-        // Optional: Trigger full refresh to ensure sync
-        // fetchData(); 
+        // Full Refresh to ensure sync
+        fetchData();
     };
 
     // Filter Change Handler

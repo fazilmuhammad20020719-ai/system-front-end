@@ -1,319 +1,154 @@
-import { useState, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Save, ArrowLeft, CheckCircle, XCircle, Printer, Filter, UserCheck, Calculator } from 'lucide-react';
-import Sidebar from '../Sidebar';
+import { Save, ArrowLeft, Users, AlertCircle } from 'lucide-react';
+import { API_URL } from '../config';
 
 const ExamManager = () => {
-    const { examId } = useParams();
+    const { id } = useParams();
     const navigate = useNavigate();
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [loading, setLoading] = useState(true);
+    const [exam, setExam] = useState(null);
+    const [students, setStudents] = useState([]);
 
-    const [activeTab, setActiveTab] = useState('attendance'); // 'attendance' | 'marks' | 'report'
-    const [selectedSubject, setSelectedSubject] = useState('Fiqh'); // Default Subject
-    const [selectedGrade, setSelectedGrade] = useState('All');
+    // 1. Fetch Exam & Students
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const res = await fetch(`${API_URL}/api/exams/${id}/details`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setExam(data.exam);
+                    // Initialize results based on fetched data or defaults
+                    const initializedStudents = data.students.map(s => ({
+                        ...s,
+                        marks: s.marks_obtained || '',
+                        grade: s.grade || '',
+                        status: s.attendance_status || 'Present',
+                        remarks: s.remarks || ''
+                    }));
+                    setStudents(initializedStudents);
+                }
+            } catch (err) { console.error(err); } finally { setLoading(false); }
+        };
+        fetchData();
+    }, [id]);
 
-    // MOCK DATA (In real app, fetch based on examId)
-    const subjects = ['Fiqh', 'Aqidah', 'Arabic', 'Tajweed'];
-
-    // STUDENTS DATA
-    // 'status': 'Present' | 'Absent'
-    // 'marks': 0-100
-    const [studentData, setStudentData] = useState([
-        { id: 101, name: "Ahamad Fazil", index: "STU-001", attendance: "Present", marks: "", grade: "Grade 1" },
-        { id: 102, name: "Mohamed Rizan", index: "STU-002", attendance: "Present", marks: "", grade: "Grade 1" },
-        { id: 103, name: "Fathima Nuzha", index: "STU-003", attendance: "Absent", marks: "", grade: "Grade 2" }, // Absent Student
-        { id: 104, name: "Yusuf Khan", index: "STU-004", attendance: "Present", marks: "", grade: "Grade 2" },
-        { id: 105, name: "Mariam", index: "STU-005", attendance: "Present", marks: "85", grade: "Grade 1" },
-    ]);
-
-    // Grouping & Filtering Logic
-    const grades = useMemo(() => ['All', ...new Set(studentData.map(s => s.grade).sort())], [studentData]);
-
-    const filteredGroups = useMemo(() => {
-        const filtered = selectedGrade === 'All'
-            ? studentData
-            : studentData.filter(s => s.grade === selectedGrade);
-
-        const groups = filtered.reduce((acc, student) => {
-            if (!acc[student.grade]) acc[student.grade] = [];
-            acc[student.grade].push(student);
-            return acc;
-        }, {});
-
-        // Sort keys to ensure Grade 1, Grade 2 order
-        return Object.keys(groups).sort().reduce((acc, key) => {
-            acc[key] = groups[key];
-            return acc;
-        }, {});
-    }, [studentData, selectedGrade]);
-
-    // --- LOGIC HELPERS ---
-
-    const toggleAttendance = (id) => {
-        setStudentData(studentData.map(s =>
-            s.id === id ? { ...s, attendance: s.attendance === "Present" ? "Absent" : "Present" } : s
+    // 2. Handle Mark Change
+    const handleResultChange = (studentId, field, value) => {
+        setStudents(prev => prev.map(s =>
+            s.student_id === studentId ? { ...s, [field]: value } : s
         ));
     };
 
-    const handleMarkChange = (id, value) => {
-        let val = parseInt(value);
-        if (val > 100) val = 100;
-        if (val < 0) val = 0;
-        setStudentData(studentData.map(s => s.id === id ? { ...s, marks: val } : s));
+    // 3. Save Results
+    const handleSave = async () => {
+        try {
+            const payload = students.map(s => ({
+                student_id: s.student_id,
+                marks: s.marks === '' ? null : s.marks,
+                grade: s.grade,
+                status: s.status,
+                remarks: s.remarks
+            }));
+
+            const res = await fetch(`${API_URL}/api/exams/${id}/results`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ results: payload })
+            });
+
+            if (res.ok) alert('Results saved successfully!');
+        } catch (err) { alert('Failed to save'); }
     };
 
-    const calculateGrade = (marks) => {
-        if (!marks && marks !== 0) return "-";
-        if (marks >= 75) return "A";
-        if (marks >= 65) return "B";
-        if (marks >= 50) return "C";
-        if (marks >= 35) return "S";
-        return "F";
-    };
-
-    // Calculate Stats
-    const stats = useMemo(() => {
-        const total = studentData.length;
-        const present = studentData.filter(s => s.attendance === "Present").length;
-        const passed = studentData.filter(s => s.attendance === "Present" && s.marks >= 35).length;
-        return { total, present, absent: total - present, passed };
-    }, [studentData]);
+    if (loading) return <div>Loading...</div>;
+    if (!exam) return <div>Exam not found</div>;
 
     return (
-        <div className="min-h-screen bg-gray-50 flex font-sans">
-            <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
-
-            <div className={`flex-1 transition-all duration-300 ${isSidebarOpen ? "ml-64" : "ml-20"}`}>
-                <div className="p-8">
-
-                    {/* Header */}
-                    <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-4">
-                            <button onClick={() => navigate('/examinations')} className="p-2 hover:bg-gray-200 rounded-full text-gray-500">
-                                <ArrowLeft size={20} />
-                            </button>
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-800">Exam Manager</h1>
-                                <p className="text-sm text-gray-500">Term 1 Examination 2025</p>
-                            </div>
-                        </div>
-                        <div className="flex gap-4">
-                            {/* Grade Filter */}
-                            <div className="bg-white px-4 py-2 rounded-lg border text-sm">
-                                <span className="text-gray-500">Grade:</span>
-                                <select
-                                    value={selectedGrade}
-                                    onChange={(e) => setSelectedGrade(e.target.value)}
-                                    className="font-bold text-gray-800 ml-2 outline-none cursor-pointer"
-                                >
-                                    {grades.map(g => <option key={g} value={g}>{g}</option>)}
-                                </select>
-                            </div>
-
-                            {/* Subject Filter */}
-                            <div className="bg-white px-4 py-2 rounded-lg border text-sm">
-                                <span className="text-gray-500">Subject:</span>
-                                <select
-                                    value={selectedSubject}
-                                    onChange={(e) => setSelectedSubject(e.target.value)}
-                                    className="font-bold text-gray-800 ml-2 outline-none cursor-pointer"
-                                >
-                                    {subjects.map(s => <option key={s} value={s}>{s}</option>)}
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Progress Stats */}
-                    <div className="grid grid-cols-4 gap-4 mb-6">
-                        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                            <p className="text-xs text-gray-500 uppercase font-bold">Total Students</p>
-                            <p className="text-2xl font-bold text-gray-800">{stats.total}</p>
-                        </div>
-                        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                            <p className="text-xs text-green-500 uppercase font-bold">Present</p>
-                            <p className="text-2xl font-bold text-green-600">{stats.present}</p>
-                        </div>
-                        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                            <p className="text-xs text-red-500 uppercase font-bold">Absent</p>
-                            <p className="text-2xl font-bold text-red-600">{stats.absent}</p>
-                        </div>
-                        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                            <p className="text-xs text-blue-500 uppercase font-bold">Pass Rate</p>
-                            <p className="text-2xl font-bold text-blue-600">
-                                {stats.present > 0 ? Math.round((stats.passed / stats.present) * 100) : 0}%
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* TABS Navigation */}
-                    <div className="flex gap-2 mb-6 bg-white p-1 rounded-xl w-fit border shadow-sm">
-                        <button
-                            onClick={() => setActiveTab('attendance')}
-                            className={`px-6 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${activeTab === 'attendance' ? 'bg-gray-800 text-white' : 'text-gray-500 hover:bg-gray-100'}`}
-                        >
-                            <UserCheck size={16} /> Attendance
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('marks')}
-                            className={`px-6 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${activeTab === 'marks' ? 'bg-gray-800 text-white' : 'text-gray-500 hover:bg-gray-100'}`}
-                        >
-                            <Calculator size={16} /> Marks Entry
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('report')}
-                            className={`px-6 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${activeTab === 'report' ? 'bg-gray-800 text-white' : 'text-gray-500 hover:bg-gray-100'}`}
-                        >
-                            <Filter size={16} /> Result Sheet
-                        </button>
-                    </div>
-
-                    {/* CONTENT AREA: Grouped by Grade */}
-                    <div className="space-y-8">
-                        {Object.entries(filteredGroups).map(([grade, students]) => (
-                            <div key={grade} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                                {/* Grade Header */}
-                                <div className="bg-gray-50 px-6 py-3 border-b border-gray-100 flex justify-between items-center">
-                                    <h3 className="font-bold text-gray-700">{grade}</h3>
-                                    <span className="text-xs font-semibold text-gray-500 bg-gray-200 px-2 py-1 rounded-full">
-                                        {students.length} Students
-                                    </span>
-                                </div>
-
-                                {/* TAB 1: ATTENDANCE */}
-                                {activeTab === 'attendance' && (
-                                    <table className="w-full text-left">
-                                        <thead className="bg-white text-xs uppercase text-gray-500 font-semibold border-b">
-                                            <tr>
-                                                <th className="px-6 py-4">Index No</th>
-                                                <th className="px-6 py-4">Student Name</th>
-                                                <th className="px-6 py-4 text-center">Status</th>
-                                                <th className="px-6 py-4 text-right">Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-50">
-                                            {students.map(student => (
-                                                <tr key={student.id} className="hover:bg-gray-50">
-                                                    <td className="px-6 py-4 font-mono text-gray-500 text-sm">{student.index}</td>
-                                                    <td className="px-6 py-4 font-bold text-gray-700">{student.name}</td>
-                                                    <td className="px-6 py-4 text-center">
-                                                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${student.attendance === 'Present' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                                            {student.attendance}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-right">
-                                                        <button
-                                                            onClick={() => toggleAttendance(student.id)}
-                                                            className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors ${student.attendance === 'Present'
-                                                                ? 'border-red-200 text-red-600 hover:bg-red-50'
-                                                                : 'border-green-200 text-green-600 hover:bg-green-50'
-                                                                }`}
-                                                        >
-                                                            Mark {student.attendance === 'Present' ? 'Absent' : 'Present'}
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                )}
-
-                                {/* TAB 2: MARKS ENTRY */}
-                                {activeTab === 'marks' && (
-                                    <table className="w-full text-left">
-                                        <thead className="bg-white text-xs uppercase text-gray-500 font-semibold border-b">
-                                            <tr>
-                                                <th className="px-6 py-4">Index</th>
-                                                <th className="px-6 py-4">Student Name</th>
-                                                <th className="px-6 py-4 text-center">Marks (100)</th>
-                                                <th className="px-6 py-4 text-center">Grade</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-50">
-                                            {students.map(student => {
-                                                const isAbsent = student.attendance === "Absent";
-                                                return (
-                                                    <tr key={student.id} className={`hover:bg-gray-50 ${isAbsent ? 'bg-gray-50 opacity-60' : ''}`}>
-                                                        <td className="px-6 py-4 font-mono text-gray-500 text-sm">{student.index}</td>
-                                                        <td className="px-6 py-4 font-bold text-gray-700">
-                                                            {student.name}
-                                                            {isAbsent && <span className="ml-2 text-xs text-red-500 font-normal">(Absent)</span>}
-                                                        </td>
-                                                        <td className="px-6 py-4 text-center">
-                                                            <input
-                                                                type="number"
-                                                                disabled={isAbsent}
-                                                                value={student.marks}
-                                                                onChange={(e) => handleMarkChange(student.id, e.target.value)}
-                                                                placeholder={isAbsent ? "ABS" : "-"}
-                                                                className={`w-20 p-2 text-center border rounded-lg font-bold outline-none focus:border-[#EB8A33] ${isAbsent ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`}
-                                                            />
-                                                        </td>
-                                                        <td className="px-6 py-4 text-center font-bold text-gray-600">
-                                                            {isAbsent ? 'F' : calculateGrade(student.marks)}
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                )}
-
-                                {/* TAB 3: REPORT VIEW */}
-                                {activeTab === 'report' && (
-                                    <div>
-                                        {/* Helper message per table */}
-                                        <div className="p-3 bg-yellow-50 border-b border-yellow-100 text-yellow-800 text-xs flex justify-between items-center">
-                                            <span>Result Sheet for {grade} - {selectedSubject}</span>
-                                            <button className="flex items-center gap-2 bg-white px-2 py-1 rounded border border-yellow-200 text-xs font-bold hover:bg-yellow-100">
-                                                <Printer size={12} /> Export
-                                            </button>
-                                        </div>
-                                        <table className="w-full text-left">
-                                            <thead className="bg-gray-800 text-white text-xs uppercase font-semibold">
-                                                <tr>
-                                                    <th className="px-6 py-4">Student</th>
-                                                    <th className="px-6 py-4 text-center">Attendance</th>
-                                                    <th className="px-6 py-4 text-center">Marks</th>
-                                                    <th className="px-6 py-4 text-center">Grade</th>
-                                                    <th className="px-6 py-4 text-center">Status</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-gray-100">
-                                                {students.map(student => {
-                                                    const gradeVal = student.attendance === 'Absent' ? 'F' : calculateGrade(student.marks);
-                                                    const status = gradeVal === 'F' ? 'Fail' : 'Pass';
-                                                    return (
-                                                        <tr key={student.id}>
-                                                            <td className="px-6 py-3 font-bold text-gray-700">{student.name}</td>
-                                                            <td className="px-6 py-3 text-center text-sm">{student.attendance}</td>
-                                                            <td className="px-6 py-3 text-center font-mono">{student.marks || 0}</td>
-                                                            <td className="px-6 py-3 text-center font-bold">{gradeVal}</td>
-                                                            <td className="px-6 py-3 text-center">
-                                                                <span className={`text-xs font-bold px-2 py-1 rounded ${status === 'Pass' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                                                    {status}
-                                                                </span>
-                                                            </td>
-                                                        </tr>
-                                                    )
-                                                })}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Save Button for Marks/Attendance */}
-                    {activeTab !== 'report' && (
-                        <div className="mt-6 flex justify-end">
-                            <button className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-transform active:scale-95">
-                                <Save size={20} /> Save Changes
-                            </button>
-                        </div>
-                    )}
+        <div className="p-6 max-w-7xl mx-auto">
+            {/* Header Area */}
+            <div className="flex items-center justify-between mb-8">
+                <button onClick={() => navigate(-1)} className="flex items-center text-gray-500 hover:text-[#ea8933]">
+                    <ArrowLeft size={20} className="mr-2" /> Back to Exams
+                </button>
+                <div className="flex gap-3">
+                    <button onClick={handleSave} className="flex items-center gap-2 px-6 py-2.5 bg-[#ea8933] text-white rounded-xl hover:bg-[#d67b2b]">
+                        <Save size={20} /> Save Results
+                    </button>
                 </div>
+            </div>
+
+            {/* Exam Info Card */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-6">
+                <h2 className="text-xl font-bold text-gray-800">{exam.title}</h2>
+                <div className="flex gap-6 mt-2 text-sm text-gray-500">
+                    <span>Program: {exam.program_name}</span>
+                    <span>Subject: {exam.subject_name}</span>
+                    <span>Date: {new Date(exam.exam_date).toDateString()}</span>
+                </div>
+            </div>
+
+            {/* Students Table */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <table className="w-full">
+                    <thead className="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th className="text-left py-4 px-6 font-semibold text-gray-600">Student</th>
+                            <th className="text-left py-4 px-6 font-semibold text-gray-600">Status</th>
+                            <th className="text-left py-4 px-6 font-semibold text-gray-600">Marks (/{exam.total_marks})</th>
+                            <th className="text-left py-4 px-6 font-semibold text-gray-600">Grade</th>
+                            <th className="text-left py-4 px-6 font-semibold text-gray-600">Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                        {students.map((student) => (
+                            <tr key={student.student_id} className="hover:bg-gray-50">
+                                <td className="py-4 px-6">
+                                    <div className="font-medium text-gray-800">{student.name}</div>
+                                    <div className="text-xs text-gray-500">{student.reg_no}</div>
+                                </td>
+                                <td className="py-4 px-6">
+                                    <select
+                                        value={student.status}
+                                        onChange={(e) => handleResultChange(student.student_id, 'status', e.target.value)}
+                                        className={`px-3 py-1.5 rounded-lg text-sm border ${student.status === 'Absent' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-green-50 text-green-600 border-green-200'
+                                            }`}
+                                    >
+                                        <option value="Present">Present</option>
+                                        <option value="Absent">Absent</option>
+                                        <option value="Excused">Excused</option>
+                                    </select>
+                                </td>
+                                <td className="py-4 px-6">
+                                    <input
+                                        type="number"
+                                        disabled={student.status === 'Absent'}
+                                        value={student.marks}
+                                        onChange={(e) => handleResultChange(student.student_id, 'marks', e.target.value)}
+                                        className="w-24 p-2 border rounded-lg text-center disabled:bg-gray-100"
+                                    />
+                                </td>
+                                <td className="py-4 px-6">
+                                    <input
+                                        type="text"
+                                        value={student.grade}
+                                        onChange={(e) => handleResultChange(student.student_id, 'grade', e.target.value)}
+                                        className="w-20 p-2 border rounded-lg text-center uppercase"
+                                    />
+                                </td>
+                                <td className="py-4 px-6">
+                                    <input
+                                        type="text"
+                                        value={student.remarks}
+                                        onChange={(e) => handleResultChange(student.student_id, 'remarks', e.target.value)}
+                                        className="w-full p-2 border rounded-lg"
+                                        placeholder="Optional..."
+                                    />
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
             </div>
         </div>
     );

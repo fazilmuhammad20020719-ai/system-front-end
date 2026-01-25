@@ -43,7 +43,10 @@ const ViewTeacher = () => {
                 const profileDocs = [
                     data.cv_url ? { id: 'cv', name: 'CV / Resume', url: `${API_URL}${data.cv_url}`, date: 'Profile', size: '-', isProfileDoc: true } : null,
                     data.certificates_url ? { id: 'cert', name: 'Certificates', url: `${API_URL}${data.certificates_url}`, date: 'Profile', size: '-', isProfileDoc: true } : null,
-                    data.nic_copy_url ? { id: 'nic', name: 'NIC Copy', url: `${API_URL}${data.nic_copy_url}`, date: 'Profile', size: '-', isProfileDoc: true } : null
+                    data.nic_copy_url ? { id: 'nic', name: 'NIC Copy', url: `${API_URL}${data.nic_copy_url}`, date: 'Profile', size: '-', isProfileDoc: true } : null,
+                    data.nic_front_url ? { id: 'nicFront', name: 'NIC Front', url: `${API_URL}${data.nic_front_url}`, date: 'Profile', size: '-', isProfileDoc: true } : null,
+                    data.nic_back_url ? { id: 'nicBack', name: 'NIC Back', url: `${API_URL}${data.nic_back_url}`, date: 'Profile', size: '-', isProfileDoc: true } : null,
+                    data.birth_certificate_url ? { id: 'birthCert', name: 'Birth Certificate', url: `${API_URL}${data.birth_certificate_url}`, date: 'Profile', size: '-', isProfileDoc: true } : null
                 ].filter(Boolean);
 
                 const uploadedDocs = filesData.map(doc => ({

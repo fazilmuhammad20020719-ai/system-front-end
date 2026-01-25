@@ -1,6 +1,6 @@
 import { User, Mail, Phone, MapPin, Calendar, Briefcase, GraduationCap, Layout, MessageCircle } from 'lucide-react';
 
-const TeacherOverview = ({ teacher, stats }) => {
+const TeacherOverview = ({ teacher }) => {
 
     // Helper: Date Formatter (Same as Student)
     const formatDate = (dateString) => {
@@ -88,14 +88,6 @@ const TeacherOverview = ({ teacher, stats }) => {
                     </div>
                 </SectionCard>
 
-                {/* 3. Teaching Stats */}
-                <div className="md:col-span-2">
-                    <div className="grid grid-cols-3 gap-4">
-                        <StatCard label="Classes Assigned" value={stats?.classesAssigned || 0} color="text-indigo-600" />
-                        <StatCard label="Total Students" value={stats?.totalStudents || 0} color="text-pink-600" />
-                        <StatCard label="Avg Attendance" value={stats?.avgAttendance || "0%"} color="text-green-600" />
-                    </div>
-                </div>
 
             </div>
         </div>
@@ -131,13 +123,6 @@ const ActionButton = ({ icon: Icon, label, onClick, color }) => (
     <button onClick={onClick} className={`flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-xs font-semibold transition-all ${color}`}>
         <Icon size={16} /> {label}
     </button>
-);
-
-const StatCard = ({ label, value, color = "text-gray-800" }) => (
-    <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] text-center hover:border-blue-200 transition-all group">
-        <p className="text-xs text-gray-400 font-bold uppercase mb-2 group-hover:text-gray-500">{label}</p>
-        <p className={`text-3xl font-bold ${color}`}>{value}</p>
-    </div>
 );
 
 export default TeacherOverview;

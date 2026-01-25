@@ -60,8 +60,10 @@ const EditTeacher = () => {
         // --- Uploads ---
         profilePhoto: null,
         cvFile: null,
-        certificates: null,
-        nicCopy: null
+        qualification: null,
+        nicFront: null,
+        nicBack: null,
+        birthCertificate: null
     });
 
     const [programs, setPrograms] = useState([]);
@@ -118,8 +120,10 @@ const EditTeacher = () => {
                         // Allow file updates (null means no change)
                         profilePhoto: null,
                         cvFile: null,
-                        certificates: null,
-                        nicCopy: null
+                        qualification: null,
+                        nicFront: null,
+                        nicBack: null,
+                        birthCertificate: null
                     });
                 } else {
                     notify('error', 'Teacher not found', 'Error');
@@ -172,8 +176,10 @@ const EditTeacher = () => {
 
             if (formData.profilePhoto) data.append('profilePhoto', formData.profilePhoto);
             if (formData.cvFile) data.append('cvFile', formData.cvFile);
-            if (formData.certificates) data.append('certificates', formData.certificates);
-            if (formData.nicCopy) data.append('nicCopy', formData.nicCopy);
+            if (formData.qualification) data.append('certificates', formData.qualification);
+            if (formData.nicFront) data.append('nicFront', formData.nicFront);
+            if (formData.nicBack) data.append('nicBack', formData.nicBack);
+            if (formData.birthCertificate) data.append('birthCertificate', formData.birthCertificate);
 
             const response = await fetch(`${API_URL}/api/teachers/${id}`, {
                 method: 'PUT',

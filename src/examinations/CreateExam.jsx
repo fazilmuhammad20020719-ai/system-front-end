@@ -70,6 +70,8 @@ const CreateExam = () => {
         } else {
             setFilteredStudents([]);
         }
+        // Reset Subject when Grade changes
+        setFormData(prev => ({ ...prev, subject_id: '' }));
     }, [selectedGrade, formData.program_id, allStudents]);
 
     // Derived Grades from Program Duration
@@ -231,14 +233,18 @@ const CreateExam = () => {
 
                     {/* Subject & Timing */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
-                            <select required className="w-full p-3 border rounded-lg"
-                                value={formData.subject_id} onChange={e => setFormData({ ...formData, subject_id: e.target.value })}>
-                                <option value="">Select Subject</option>
-                                {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                            </select>
-                        </div>
+                        {selectedGrade && (
+                            <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+                                <select required className="w-full p-3 border rounded-lg"
+                                    value={formData.subject_id} onChange={e => setFormData({ ...formData, subject_id: e.target.value })}>
+                                    <option value="">Select Subject</option>
+                                    {subjects
+                                        .filter(s => s.year === selectedGrade || s.year === 'General')
+                                        .map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                </select>
+                            </div>
+                        )}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
                             <input required type="date" className="w-full p-3 border rounded-lg"

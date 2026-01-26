@@ -31,7 +31,6 @@ const ProgramDetails = lazy(() => import('./programs/ProgramDetails'));
 
 // Examinations
 const Examinations = lazy(() => import('./examinations/Examinations'));
-const CreateExam = lazy(() => import('./examinations/CreateExam'));
 const ExamManager = lazy(() => import('./examinations/ExamManager'));
 
 // Others
@@ -73,7 +72,6 @@ function App() {
 
               {/* Examinations */}
               <Route path="/examinations" element={<Examinations />} />
-              <Route path="/examinations/create" element={<CreateExam />} />
               <Route path="/examinations/manage/:examId" element={<ExamManager />} />
 
               {/* Attendance & Documents */}

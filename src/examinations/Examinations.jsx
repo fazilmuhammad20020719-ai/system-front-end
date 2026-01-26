@@ -11,6 +11,8 @@ const Examinations = () => {
 
     // -- MODAL STATE --
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [exams, setExams] = useState([]);
 
     // -- FORM STATE (From CreateExam.jsx) --
     const [programs, setPrograms] = useState([]);
@@ -92,12 +94,25 @@ const Examinations = () => {
         }
     }, [formData.program_id]);
 
-    // Filter Students when Grade changes
+    // Filter Students when Grade changes (Robust Numeric Match)
     useEffect(() => {
         if (formData.program_id && selectedGrade) {
-            const relevantStudents = allStudents.filter(s =>
-                s.program_id == formData.program_id && s.current_year === selectedGrade
-            );
+            // Extract number from selectedGrade (e.g. "Grade 1" -> 1)
+            const selectedMatch = selectedGrade.match(/\d+/);
+            const selectedYearNum = selectedMatch ? parseInt(selectedMatch[0]) : null;
+
+            const relevantStudents = allStudents.filter(s => {
+                if (s.program_id != formData.program_id) return false;
+
+                // Extract number from student's current_year (e.g. "Year 1" -> 1, "1" -> 1)
+                const studentYearStr = String(s.current_year || '');
+                const studentMatch = studentYearStr.match(/\d+/);
+                const studentYearNum = studentMatch ? parseInt(studentMatch[0]) : null;
+
+                // Match if numbers are equal (and valid)
+                return selectedYearNum !== null && studentYearNum !== null && selectedYearNum === studentYearNum;
+            });
+
             setFilteredStudents(relevantStudents);
             setSelectedStudentIds([]);
         } else {

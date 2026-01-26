@@ -1,6 +1,7 @@
 // src/exams/CreateExamModal.jsx
 import { useState, useEffect } from 'react';
 import { X, Save, Calendar, Clock, BookOpen, Layers, Bookmark, Users, Check, AlertCircle, CheckCircle } from 'lucide-react';
+import { API_URL } from '../config';
 
 const CreateExamModal = ({ isOpen, onClose, onSave }) => {
     // --- State Management ---
@@ -24,39 +25,34 @@ const CreateExamModal = ({ isOpen, onClose, onSave }) => {
     const [touched, setTouched] = useState({}); // Field touch state for error display
     const [showSummary, setShowSummary] = useState(false);
 
-    // --- Mock Data Loading ---
+    // --- Data Loading ---
     useEffect(() => {
         if (isOpen) {
-            setPrograms([
-                { id: 1, name: 'Diploma in Arabic', duration: 2 },
-                { id: 2, name: 'Higher Diploma in Islamic Studies', duration: 3 },
-                { id: 3, name: 'Certificate in Fiqh', duration: 1 }
-            ]);
+            const fetchData = async () => {
+                try {
+                    const [programsRes, subjectsRes, studentsRes] = await Promise.all([
+                        fetch(`${API_URL}/api/programs`),
+                        fetch(`${API_URL}/api/subjects`),
+                        fetch(`${API_URL}/api/students`)
+                    ]);
 
-            setSubjects([
-                { id: 101, programId: 1, name: 'Arabic Grammar (Nahw)', grade: 'Year 1' },
-                { id: 102, programId: 1, name: 'Morphology (Sarf)', grade: 'Year 1' },
-                { id: 103, programId: 1, name: 'Advanced Grammar', grade: 'Year 2' },
-                { id: 201, programId: 2, name: 'Usul al-Fiqh', grade: 'Year 1' },
-                { id: 301, programId: 3, name: 'Basics of Fiqh', grade: 'Year 1' }
-            ]);
+                    if (programsRes.ok) setPrograms(await programsRes.json());
+                    if (subjectsRes.ok) setSubjects(await subjectsRes.json());
+                    if (studentsRes.ok) setStudents(await studentsRes.json());
 
-            setStudents([
-                { id: 1, name: 'Ahmed Ali', programId: 1, grade: 'Year 1' },
-                { id: 2, name: 'Mohamed Fazil', programId: 1, grade: 'Year 1' },
-                { id: 3, name: 'Yusuf Khan', programId: 1, grade: 'Year 2' },
-                { id: 4, name: 'Ibrahim Zaid', programId: 2, grade: 'Year 1' },
-                { id: 5, name: 'Omar Farooq', programId: 1, grade: 'Year 1' },
-            ]);
-
-            // Reset state on open
-            setFormData({
-                title: '', programId: '', grade: '', subjectId: '',
-                startDate: '', startTime: '', endDate: '', endTime: '', description: ''
-            });
-            setSelectedStudentIds([]);
-            setTouched({});
-            setShowSummary(false);
+                    // Reset state
+                    setFormData({
+                        title: '', programId: '', grade: '', subjectId: '',
+                        startDate: '', startTime: '', endDate: '', endTime: '', description: ''
+                    });
+                    setSelectedStudentIds([]);
+                    setTouched({});
+                    setShowSummary(false);
+                } catch (error) {
+                    console.error("Error fetching data:", error);
+                }
+            };
+            fetchData();
         }
     }, [isOpen]);
 
@@ -64,20 +60,25 @@ const CreateExamModal = ({ isOpen, onClose, onSave }) => {
 
     // 1. Available Grades based on Program
     const selectedProgram = programs.find(p => p.id === parseInt(formData.programId));
-    const availableGrades = selectedProgram
-        ? Array.from({ length: selectedProgram.duration }, (_, i) => `Year ${i + 1}`)
+    const duration = selectedProgram?.duration ? parseInt(selectedProgram.duration) : 0;
+    const availableGrades = duration > 0
+        ? Array.from({ length: duration }, (_, i) => `Grade ${i + 1}`)
         : [];
 
     // 2. Filtered Subjects
     const availableSubjects = subjects.filter(
-        s => s.programId === parseInt(formData.programId) && s.grade === formData.grade
+        s => s.program_id === parseInt(formData.programId) &&
+            (s.year === formData.grade || s.year === formData.grade.replace('Grade ', '') || !s.year)
     );
     const selectedSubject = subjects.find(s => s.id === parseInt(formData.subjectId));
 
     // 3. Filtered Students
-    const availableStudents = students.filter(
-        s => s.programId === parseInt(formData.programId) && s.grade === formData.grade
-    );
+    // Note: API returns currentYear (camelCase)
+    const availableStudents = students.filter(s => {
+        const pIdMatch = String(s.program_id) === String(formData.programId);
+        const gradeMatch = s.currentYear === formData.grade || s.currentYear === formData.grade.replace('Grade ', '');
+        return pIdMatch && gradeMatch;
+    });
 
     // --- Progressive Disclosure State ---
     const isStep1Complete = formData.title && formData.programId && formData.grade;
@@ -167,14 +168,28 @@ const CreateExamModal = ({ isOpen, onClose, onSave }) => {
         }
     };
 
-    const handleFinalSubmit = () => {
+    const handleFinalSubmit = async () => {
         setLoading(true);
-        setTimeout(() => {
-            console.log("Saving Exam:", { ...formData, studentIds: selectedStudentIds });
+        try {
+            const response = await fetch(`${API_URL}/api/exams`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...formData, studentIds: selectedStudentIds })
+            });
+
+            if (response.ok) {
+                const newExam = await response.json();
+                onSave({ ...newExam, id: newExam.id }); // Ensure ID is passed
+                onClose();
+            } else {
+                alert("Failed to create exam");
+            }
+        } catch (error) {
+            console.error("Error creating exam:", error);
+            alert("Error creating exam");
+        } finally {
             setLoading(false);
-            onSave({ ...formData, studentIds: selectedStudentIds });
-            onClose();
-        }, 800);
+        }
     };
 
     if (!isOpen) return null;

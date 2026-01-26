@@ -1,62 +1,123 @@
-// src/exams/ExamRegistrations.jsx
-import { useState, useMemo } from 'react';
+// src/exams/ExaminationAttendance.jsx
+import { useState, useEffect, useMemo } from 'react';
 import { Search, Calendar, UserCheck, XCircle, CheckCircle, Clock } from 'lucide-react';
+import { API_URL } from '../config';
 
-const ExamRegistrations = () => {
+const ExaminationAttendance = () => {
     // --- State ---
     const [selectedExamId, setSelectedExamId] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
-    const [attendance, setAttendance] = useState({}); // { studentId: 'present' | 'absent' | 'late' }
+    const [attendance, setAttendance] = useState({}); // { studentId: 'Present' | 'Absent' | 'Late' }
+    const [exams, setExams] = useState([]);
+    const [students, setStudents] = useState([]);
     const [saving, setSaving] = useState(false);
 
-    // --- Mock Data ---
-    const exams = [
-        { id: 'EX101', title: 'Arabic Grammar (Nahw) - Mid Term', date: '2025-10-15', time: '09:00 AM' },
-        { id: 'EX102', title: 'Morphology (Sarf) - Final', date: '2025-10-18', time: '02:00 PM' },
-        { id: 'EX103', title: 'Fiqh Basics - Monthly Test', date: '2025-10-20', time: '10:00 AM' },
-    ];
+    // --- Data Loading ---
+    useEffect(() => {
+        // Fetch Exams
+        const fetchExams = async () => {
+            try {
+                const res = await fetch(`${API_URL}/api/exams`);
+                if (res.ok) setExams(await res.json());
+            } catch (err) {
+                console.error("Error fetching exams:", err);
+            }
+        };
+        fetchExams();
+    }, []);
 
-    const students = [
-        { id: 'ST001', name: 'Ahmed Fazil', program: 'Diploma in Arabic' },
-        { id: 'ST002', name: 'Mohamed Nazeer', program: 'Diploma in Arabic' },
-        { id: 'ST003', name: 'Yusuf Khan', program: 'Diploma in Arabic' },
-        { id: 'ST004', name: 'Ibrahim Zaid', program: 'Higher Diploma' },
-        { id: 'ST005', name: 'Omar Farooq', program: 'Higher Diploma' },
-    ];
+    useEffect(() => {
+        if (!selectedExamId) {
+            setStudents([]);
+            setAttendance({});
+            return;
+        }
+
+        const fetchDetails = async () => {
+            try {
+                // 1. Get Exam Details to know Program
+                const exam = exams.find(e => String(e.id) === String(selectedExamId));
+                if (!exam) return;
+
+                // 2. Fetch Students for that Program (Simplification: Fetch all and filter, or dedicated route)
+                // Better approach: Fetch students by program
+                const studentsRes = await fetch(`${API_URL}/api/students`); // Optimally: /api/students?programId=${exam.program_id}
+                let allStudents = [];
+                if (studentsRes.ok) allStudents = await studentsRes.json();
+
+                // Filter by program and grade (if available in exam or inferred)
+                // Assuming exam has program_id. 
+                // Note: exam object keys depend on DB query (program_id)
+                const relevantStudents = allStudents.filter(s =>
+                    String(s.program_id) === String(exam.program_id)
+                    // && s.current_year === ... (if we enforced year/grade in exam)
+                );
+                setStudents(relevantStudents);
+
+                // 3. Fetch Existing Attendance
+                const attRes = await fetch(`${API_URL}/api/exams/${selectedExamId}/attendance`);
+                if (attRes.ok) {
+                    const data = await attRes.json();
+                    const map = {};
+                    data.forEach(r => map[r.student_id] = r.status);
+                    setAttendance(map);
+                }
+
+            } catch (err) {
+                console.error("Error fetching details:", err);
+            }
+        };
+
+        fetchDetails();
+    }, [selectedExamId, exams]);
+
 
     // --- Helpers ---
-    const handleMark = (studentId, status) => {
+    const handleMark = async (studentId, status) => {
+        // Optimistic UI Update
         setAttendance(prev => ({ ...prev, [studentId]: status }));
+
+        // API Call
+        try {
+            await fetch(`${API_URL}/api/exams/attendance`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    examId: selectedExamId,
+                    studentId: studentId,
+                    status: status
+                })
+            });
+        } catch (err) {
+            console.error("Error saving attendance:", err);
+            alert("Failed to save status");
+        }
     };
 
-    const handleMarkAll = (status) => {
+    const handleMarkAll = async (status) => {
         const updates = {};
         students.forEach(s => updates[s.id] = status);
         setAttendance(updates);
+
+        // Batch save could be implemented, but iterating for now (or simple alert)
+        // In prod: add /bulk-attendance endpoint
+        // For now, simulate by looping in background or just local state if "Save Log" is main trigger
     };
 
     const getStats = () => {
         const total = students.length;
-        const present = Object.values(attendance).filter(s => s === 'present').length;
-        const absent = Object.values(attendance).filter(s => s === 'absent').length;
-        const late = Object.values(attendance).filter(s => s === 'late').length;
-        return { total, present, absent, late, unmarked: total - (present + absent + late) };
+        const present = Object.values(attendance).filter(s => s === 'Present').length;
+        const absent = Object.values(attendance).filter(s => s === 'Absent').length;
+        const late = Object.values(attendance).filter(s => s === 'Late').length;
+        return { total, present, absent, late };
     };
 
     const stats = getStats();
 
     const filteredStudents = students.filter(s =>
         s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.id.toLowerCase().includes(searchQuery.toLowerCase())
+        String(s.id).toLowerCase().includes(searchQuery.toLowerCase())
     );
-
-    const handleSave = () => {
-        setSaving(true);
-        setTimeout(() => {
-            alert(`Attendance Saved!\nPresent: ${stats.present}, Absent: ${stats.absent}`);
-            setSaving(false);
-        }, 800);
-    };
 
     return (
         <div className="flex flex-col h-[calc(100vh-140px)] gap-6">
@@ -69,12 +130,12 @@ const ExamRegistrations = () => {
                         <Calendar className="absolute left-3 top-2.5 text-slate-400" size={18} />
                         <select
                             value={selectedExamId}
-                            onChange={(e) => { setSelectedExamId(e.target.value); setAttendance({}); }}
+                            onChange={(e) => setSelectedExamId(e.target.value)}
                             className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-slate-700 font-medium focus:ring-2 focus:ring-blue-500 outline-none"
                         >
                             <option value="">-- Choose Exam to Take Attendance --</option>
                             {exams.map(ex => (
-                                <option key={ex.id} value={ex.id}>{ex.title} ({ex.date})</option>
+                                <option key={ex.id} value={ex.id}>{ex.title} ({new Date(ex.exam_date).toLocaleDateString()})</option>
                             ))}
                         </select>
                     </div>
@@ -119,10 +180,7 @@ const ExamRegistrations = () => {
                             />
                         </div>
                         <div className="flex gap-2 w-full md:w-auto">
-                            <button onClick={() => handleMarkAll('present')} className="px-3 py-1.5 text-xs font-bold bg-green-100 text-green-700 rounded hover:bg-green-200 transition">Mark All Present</button>
-                            <button onClick={handleSave} disabled={saving} className="ml-2 px-6 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg shadow hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50">
-                                {saving ? "Saving..." : "Save Log"}
-                            </button>
+                            {/* <button onClick={() => handleMarkAll('Present')} className="px-3 py-1.5 text-xs font-bold bg-green-100 text-green-700 rounded hover:bg-green-200 transition">Mark All Present</button> */}
                         </div>
                     </div>
 
@@ -144,12 +202,12 @@ const ExamRegistrations = () => {
                                         <tr key={student.id} className="hover:bg-slate-50 transition-colors">
                                             <td className="p-4 text-sm font-medium text-slate-600">{student.id}</td>
                                             <td className="p-4 text-sm font-bold text-slate-800">{student.name}</td>
-                                            <td className="p-4 text-xs text-slate-500">{student.program}</td>
+                                            <td className="p-4 text-xs text-slate-500">{student.program_name || '-'}</td>
                                             <td className="p-4 flex justify-center gap-2">
                                                 {/* Present Button */}
                                                 <button
-                                                    onClick={() => handleMark(student.id, 'present')}
-                                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all ${status === 'present'
+                                                    onClick={() => handleMark(student.id, 'Present')}
+                                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all ${status === 'Present'
                                                         ? 'bg-green-600 text-white border-green-600 shadow-md scale-105'
                                                         : 'bg-white text-slate-400 border-slate-200 hover:border-green-300 hover:text-green-500'}`}
                                                 >
@@ -159,8 +217,8 @@ const ExamRegistrations = () => {
 
                                                 {/* Absent Button */}
                                                 <button
-                                                    onClick={() => handleMark(student.id, 'absent')}
-                                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all ${status === 'absent'
+                                                    onClick={() => handleMark(student.id, 'Absent')}
+                                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all ${status === 'Absent'
                                                         ? 'bg-red-600 text-white border-red-600 shadow-md scale-105'
                                                         : 'bg-white text-slate-400 border-slate-200 hover:border-red-300 hover:text-red-500'}`}
                                                 >
@@ -170,8 +228,8 @@ const ExamRegistrations = () => {
 
                                                 {/* Late Button */}
                                                 <button
-                                                    onClick={() => handleMark(student.id, 'late')}
-                                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all ${status === 'late'
+                                                    onClick={() => handleMark(student.id, 'Late')}
+                                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all ${status === 'Late'
                                                         ? 'bg-orange-500 text-white border-orange-500 shadow-md scale-105'
                                                         : 'bg-white text-slate-400 border-slate-200 hover:border-orange-300 hover:text-orange-500'}`}
                                                 >
@@ -185,7 +243,9 @@ const ExamRegistrations = () => {
                             </tbody>
                         </table>
                         {filteredStudents.length === 0 && (
-                            <div className="p-10 text-center text-slate-400">No students match your search.</div>
+                            <div className="p-10 text-center text-slate-400">
+                                {exams.length === 0 ? "Loading Exams..." : "No students found for this exam's program."}
+                            </div>
                         )}
                     </div>
                 </div>
@@ -204,4 +264,4 @@ const ExamRegistrations = () => {
     );
 };
 
-export default ExamRegistrations;
+export default ExaminationAttendance;

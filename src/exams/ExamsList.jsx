@@ -1,16 +1,38 @@
 // src/exams/ExamsList.jsx
-import { useState } from 'react';
-import { Plus, Search, Calendar, Clock, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Plus, Search, Calendar, Clock, AlertCircle, Trash2 } from 'lucide-react';
 import CreateExamModal from './CreateExamModal';
+import { API_URL } from '../config';
 
 const ExamsList = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [exams, setExams] = useState([]);
 
-    // Mock Data for "Perfect" Visualization
-    const exams = [
-        { id: 1, title: 'Mid-Term Arabic Grammar', program: 'Diploma in Arabic', date: '2026-02-10', time: '09:00 AM', status: 'Upcoming' },
-        { id: 2, title: 'Islamic History Final', program: 'Higher Diploma', date: '2026-01-15', time: '10:00 AM', status: 'Completed' },
-    ];
+    const fetchExams = async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/exams`);
+            if (response.ok) {
+                const data = await response.json();
+                setExams(data);
+            }
+        } catch (error) {
+            console.error("Error fetching exams:", error);
+        }
+    };
+
+    useEffect(() => {
+        fetchExams();
+    }, []);
+
+    const handleDelete = async (id) => {
+        if (!window.confirm("Are you sure you want to delete this exam?")) return;
+        try {
+            await fetch(`${API_URL}/api/exams/${id}`, { method: 'DELETE' });
+            fetchExams();
+        } catch (error) {
+            console.error("Error deleting exam:", error);
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -48,17 +70,20 @@ const ExamsList = () => {
                         </div>
 
                         <h3 className="font-bold text-lg text-slate-800 mb-1">{exam.title}</h3>
-                        <p className="text-sm text-green-600 font-medium mb-4">{exam.program}</p>
+                        <p className="text-sm text-green-600 font-medium mb-4">{exam.program_name}</p>
 
                         <div className="flex items-center gap-4 text-sm text-slate-500 border-t border-slate-100 pt-4">
                             <div className="flex items-center gap-1.5">
                                 <Calendar size={14} />
-                                {exam.date}
+                                {new Date(exam.exam_date).toLocaleDateString()}
                             </div>
                             <div className="flex items-center gap-1.5">
                                 <Clock size={14} />
-                                {exam.time}
+                                {exam.start_time} - {exam.end_time}
                             </div>
+                            <button onClick={() => handleDelete(exam.id)} className="ml-auto text-red-400 hover:text-red-600">
+                                <Trash2 size={16} />
+                            </button>
                         </div>
                     </div>
                 ))}
@@ -68,7 +93,7 @@ const ExamsList = () => {
             <CreateExamModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                onSave={(newExam) => console.log("New Exam Config:", newExam)}
+                onSave={fetchExams}
             />
         </div>
     );

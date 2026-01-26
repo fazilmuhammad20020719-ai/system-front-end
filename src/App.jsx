@@ -29,6 +29,9 @@ const Programs = lazy(() => import('./Programs'));
 const ViewProgram = lazy(() => import('./programs/ViewProgram'));
 const ProgramDetails = lazy(() => import('./programs/ProgramDetails'));
 
+// Exams
+const ExamsLayout = lazy(() => import('./exams/ExamsLayout'));
+
 
 
 // Others
@@ -67,6 +70,9 @@ function App() {
               <Route path="/programs" element={<Programs />} />
               <Route path="/programs/:id" element={<ProgramDetails />} />
               <Route path="/view-program/:id" element={<ViewProgram />} />
+
+              {/* Exams Routes */}
+              <Route path="/exams" element={<ExamsLayout />} />
 
 
 

@@ -143,6 +143,13 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                                 isOpen={isOpen}
                             />
 
+                            <SidebarItem
+                                icon={ClipboardList}
+                                text="Exams & Results"
+                                to="/exams"
+                                active={isActive('/exams')}
+                                isOpen={isOpen}
+                            />
                         </div>
                     </div>
 

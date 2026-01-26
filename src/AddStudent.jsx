@@ -23,7 +23,7 @@ const AddStudent = () => {
         studentPhoto: null, indexNumber: '', firstName: '', lastName: '', dob: '', gender: 'Male', nic: '', email: '', phone: '',
         province: '', district: '', dsDivision: '', gnDivision: '', address: '', googleMapLink: '', latitude: '', longitude: '',
         guardianName: '', guardianRelation: 'Father', guardianOccupation: '', guardianPhone: '', guardianEmail: '',
-        program: '', session: '2025', currentYear: '', status: 'Active', admissionDate: '', lastStudiedGrade: '', previousSchoolName: '', previousCollegeName: '', mediumOfStudy: 'Tamil',
+        programId: '', session: '2025', currentYear: '', status: 'Active', admissionDate: '', lastStudiedGrade: '', previousSchoolName: '', previousCollegeName: '', mediumOfStudy: 'Tamil',
         nicFront: null, nicBack: null, studentSignature: null, birthCertificate: null,
         medicalReport: null, guardianNic: null, guardianPhoto: null, leavingCertificate: null
     });

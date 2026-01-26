@@ -3,11 +3,16 @@ import { InputField, SelectField } from './FormComponents';
 
 const StudentAcademicInfo = ({ formData, handleChange, programs = [] }) => {
 
-    // 1. Program Names for Dropdown
-    const programNames = programs.map(p => p.name);
+    // 1. Program Options for Dropdown (ID as Value, Name as Label)
+    // programs prop is expected to be array of { id, name, duration }
+    const programOptions = programs.map(p => ({
+        value: p.id,
+        label: p.name
+    }));
 
-    // 2. Find Selected Program Data
-    const selectedProgram = programs.find(p => p.name === formData.program);
+    // 2. Find Selected Program Data using ID
+    // formData.programId is expected to hold the ID
+    const selectedProgram = programs.find(p => String(p.id) === String(formData.programId));
 
     // 3. Grade Options Logic (Status-ஐப் பொறுத்து மாறுதல்)
     let yearOptions = [];
@@ -43,10 +48,10 @@ const StudentAcademicInfo = ({ formData, handleChange, programs = [] }) => {
                     {/* Program */}
                     <SelectField
                         label="Admission Program"
-                        name="program"
-                        value={formData.program}
+                        name="programId" // Changed from 'program' to 'programId'
+                        value={formData.programId || ''}
                         onChange={handleChange}
-                        options={programNames.length > 0 ? programNames : ['Loading...']}
+                        options={programOptions.length > 0 ? programOptions : [{ value: '', label: 'Loading...' }]}
                         required
                     />
 

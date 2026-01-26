@@ -26,7 +26,7 @@ const EditStudent = () => {
         status: 'Active',
         province: '', district: '', dsDivision: '', gnDivision: '', address: '', googleMapLink: '', latitude: '', longitude: '',
         guardianName: '', guardianRelation: 'Father', guardianOccupation: '', guardianPhone: '', guardianEmail: '',
-        program: '', session: '', currentYear: '', admissionDate: '', lastStudiedGrade: '', previousSchoolName: '', previousCollegeName: '', mediumOfStudy: 'Tamil',
+        programId: '', session: '', currentYear: '', admissionDate: '', lastStudiedGrade: '', previousSchoolName: '', previousCollegeName: '', mediumOfStudy: 'Tamil',
         nicFront: null, nicBack: null, studentSignature: null, birthCertificate: null,
         medicalReport: null, guardianNic: null, guardianPhoto: null, leavingCertificate: null
     });
@@ -68,7 +68,7 @@ const EditStudent = () => {
                         guardianRelation: data.guardian_relation || 'Father',
                         guardianOccupation: data.guardian_occupation || '',
                         guardianPhone: data.guardian_phone || '',
-                        program: data.program_name || '',
+                        programId: data.program_id || '',
                         session: data.session_year || '',
                         currentYear: data.current_year || '',
                         admissionDate: data.admission_date ? data.admission_date.split('T')[0] : '',

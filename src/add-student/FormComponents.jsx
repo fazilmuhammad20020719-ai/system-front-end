@@ -32,9 +32,14 @@ export const SelectField = ({ label, name, value, onChange, options, placeholder
             className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-all disabled:opacity-50 disabled:bg-gray-100 shadow-sm hover:border-gray-400 cursor-pointer"
         >
             <option value="">{placeholder || 'Select'}</option>
-            {options.map((opt) => (
-                <option key={opt} value={opt}>{opt}</option>
-            ))}
+            {options.map((opt, index) => {
+                const isObject = typeof opt === 'object' && opt !== null;
+                const optionValue = isObject ? opt.value : opt;
+                const optionLabel = isObject ? opt.label : opt;
+                return (
+                    <option key={isObject ? opt.value : opt} value={optionValue}>{optionLabel}</option>
+                );
+            })}
         </select>
     </div>
 );

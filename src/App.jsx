@@ -70,7 +70,6 @@ function App() {
               <Route path="/programs/:id" element={<ProgramDetails />} />
               <Route path="/view-program/:id" element={<ViewProgram />} />
 
-              {/* Examinations */}
               <Route path="/examinations" element={<Examinations />} />
               <Route path="/examinations/manage/:examId" element={<ExamManager />} />
 

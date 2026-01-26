@@ -133,9 +133,30 @@ const AttendancePopup = ({ isOpen, onClose, slot, subjects, onSave, onCancel }) 
         }
     };
 
-    const handleCancelClass = () => {
+    const handleCancelClass = async () => {
         if (window.confirm("Are you sure you want to CANCEL this class session?")) {
-            onCancel();
+            try {
+                const dateStr = slot.date || new Date().toISOString().split('T')[0];
+                const res = await fetch(`${API_URL}/api/attendance/session-status`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        scheduleId: slot.id,
+                        date: dateStr,
+                        status: 'Cancelled'
+                    })
+                });
+
+                if (res.ok) {
+                    onCancel(); // Parent handler
+                    onClose();
+                } else {
+                    alert("Failed to cancel class.");
+                }
+            } catch (err) {
+                console.error("Error cancelling class:", err);
+                alert("Error cancelling class");
+            }
         }
     };
 

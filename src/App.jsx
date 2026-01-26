@@ -29,9 +29,7 @@ const Programs = lazy(() => import('./Programs'));
 const ViewProgram = lazy(() => import('./programs/ViewProgram'));
 const ProgramDetails = lazy(() => import('./programs/ProgramDetails'));
 
-// Examinations
-const Examinations = lazy(() => import('./examinations/Examinations'));
-const ExamManager = lazy(() => import('./examinations/ExamManager'));
+
 
 // Others
 const Attendance = lazy(() => import('./Attendance'));
@@ -70,8 +68,7 @@ function App() {
               <Route path="/programs/:id" element={<ProgramDetails />} />
               <Route path="/view-program/:id" element={<ViewProgram />} />
 
-              <Route path="/examinations" element={<Examinations />} />
-              <Route path="/examinations/manage/:examId" element={<ExamManager />} />
+
 
               {/* Attendance & Documents */}
               <Route path="/attendance" element={<Attendance />} />

@@ -1,7 +1,7 @@
 // src/exams/ExamsLayout.jsx
 import { useState } from 'react';
 import Sidebar from '../Sidebar';
-import ExamsList from './ExamsList';
+import ExaminationSlots from './ExaminationSlots';
 import ResultsLog from './ResultsLog';
 import ExaminationAttendance from './ExaminationAttendance';
 import { ClipboardList, GraduationCap, UserCheck } from 'lucide-react';
@@ -30,8 +30,8 @@ const ExamsLayout = () => {
                                     key={tab}
                                     onClick={() => setActiveTab(tab)}
                                     className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${activeTab === tab
-                                            ? "bg-white text-green-700 shadow-md"
-                                            : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+                                        ? "bg-white text-green-700 shadow-md"
+                                        : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
                                         }`}
                                 >
                                     {tab === 'exams' && <ClipboardList size={16} />}
@@ -45,7 +45,7 @@ const ExamsLayout = () => {
                 </header>
 
                 <main className="p-6 md:p-8 max-w-7xl mx-auto w-full">
-                    {activeTab === 'exams' && <ExamsList />}
+                    {activeTab === 'exams' && <ExaminationSlots />}
                     {activeTab === 'results' && <ResultsLog />}
                     {activeTab === 'attendance' && <ExaminationAttendance />}
                 </main>

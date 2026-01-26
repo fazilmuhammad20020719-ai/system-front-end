@@ -3,11 +3,11 @@ import { useState, useEffect } from 'react';
 import { X, Save, Calendar, Clock, BookOpen, Layers, Bookmark, Users, Check, AlertCircle, CheckCircle } from 'lucide-react';
 import { API_URL } from '../config';
 
-const CreateExamModal = ({ isOpen, onClose, onSave }) => {
+const CreateExamModal = ({ isOpen, onClose, onSave, slot }) => {
     // --- State Management ---
     const [formData, setFormData] = useState({
         title: '',
-        programId: '',
+        programId: slot?.program_id || '',
         grade: '',
         subjectId: '',
         startDate: '',
@@ -40,9 +40,12 @@ const CreateExamModal = ({ isOpen, onClose, onSave }) => {
                     if (subjectsRes.ok) setSubjects(await subjectsRes.json());
                     if (studentsRes.ok) setStudents(await studentsRes.json());
 
-                    // Reset state
+                    // Reset state (Preserve slot info if exists via prop)
                     setFormData({
-                        title: '', programId: '', grade: '', subjectId: '',
+                        title: '',
+                        programId: slot?.program_id || '',
+                        grade: '',
+                        subjectId: '',
                         startDate: '', startTime: '', endDate: '', endTime: '', description: ''
                     });
                     setSelectedStudentIds([]);
@@ -54,7 +57,7 @@ const CreateExamModal = ({ isOpen, onClose, onSave }) => {
             };
             fetchData();
         }
-    }, [isOpen]);
+    }, [isOpen, slot]);
 
     // --- Computed / Derived Values ---
 
@@ -171,10 +174,16 @@ const CreateExamModal = ({ isOpen, onClose, onSave }) => {
     const handleFinalSubmit = async () => {
         setLoading(true);
         try {
+            const payload = {
+                ...formData,
+                studentIds: selectedStudentIds,
+                slotId: slot?.id || null // Add slotId if present
+            };
+
             const response = await fetch(`${API_URL}/api/exams`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...formData, studentIds: selectedStudentIds })
+                body: JSON.stringify(payload)
             });
 
             if (response.ok) {
@@ -283,7 +292,8 @@ const CreateExamModal = ({ isOpen, onClose, onSave }) => {
                                         value={formData.programId}
                                         onChange={handleChange}
                                         onBlur={() => handleBlur('programId')}
-                                        className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                                        disabled={!!slot} // Lock if slot provided
+                                        className={`w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-green-500 ${slot ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white'}`}
                                     >
                                         <option value="">Select Program</option>
                                         {programs.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}

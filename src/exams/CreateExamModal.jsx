@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
-import { X, Save, Users, Check, AlertCircle, CheckCircle, Plus, Minus, Layers, Calendar, Clock, MapPin, Hash } from 'lucide-react';
+import { X, Save, Users, Check, AlertCircle, CheckCircle, Plus, Minus, Calendar, Clock, MapPin } from 'lucide-react';
 import { API_URL } from '../config';
 
-const CreateExamModal = ({ isOpen, onClose, onSave, slot }) => {
+const CreateExamModal = ({ isOpen, onClose, onSave, slot, examToEdit = null }) => {
     // --- State Management ---
     const [formData, setFormData] = useState({
         title: '',
         grade: '',
         subjectId: '',
         description: '',
-        examType: 'Single' // 'Single' or 'Multi'
+        examType: 'Single', // 'Single' or 'Multi'
+        supervisorId: ''
     });
 
     // Parts State
@@ -25,6 +26,7 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot }) => {
     const [subjects, setSubjects] = useState([]);
     const [students, setStudents] = useState([]);
     const [programs, setPrograms] = useState([]);
+    const [teachers, setTeachers] = useState([]); // For Supervisor
 
     // UI State
     const [loading, setLoading] = useState(false);
@@ -36,28 +38,53 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot }) => {
         if (isOpen) {
             const fetchData = async () => {
                 try {
-                    const [subRes, stuRes, progRes] = await Promise.all([
+                    const [subRes, stuRes, progRes, teachRes] = await Promise.all([
                         fetch(`${API_URL}/api/subjects`),
                         fetch(`${API_URL}/api/students`),
-                        fetch(`${API_URL}/api/programs`)
+                        fetch(`${API_URL}/api/programs`),
+                        fetch(`${API_URL}/api/teachers`)
                     ]);
 
                     if (subRes.ok) setSubjects(await subRes.json());
                     if (stuRes.ok) setStudents(await stuRes.json());
                     if (progRes.ok) setPrograms(await progRes.json());
+                    if (teachRes.ok) setTeachers(await teachRes.json());
 
-                    // Reset State
-                    setFormData({
-                        title: '',
-                        grade: '',
-                        subjectId: '',
-                        description: '',
-                        examType: 'Single'
-                    });
-                    setParts([{ name: 'Main Exam', date: '', startTime: '', endTime: '', venue: '' }]);
-                    setPartCount(2);
-                    setSelectedStudentIds([]);
-                    setSelectedAllStudents(false);
+                    if (teachRes.ok) setTeachers(await teachRes.json());
+
+                    // Populate or Reset
+                    if (examToEdit) {
+                        setFormData({
+                            title: examToEdit.title,
+                            grade: '', // Needs manual selection or inference to be safe
+                            subjectId: examToEdit.subject_id,
+                            description: '',
+                            examType: 'Single',
+                            supervisorId: examToEdit.supervisor_id || ''
+                        });
+                        setParts([{
+                            name: 'Main Exam',
+                            date: examToEdit.exam_date ? examToEdit.exam_date.split('T')[0] : '',
+                            startTime: examToEdit.start_time,
+                            endTime: examToEdit.end_time,
+                            venue: examToEdit.venue
+                        }]);
+                        setSelectedStudentIds([]); // Do not auto-select to avoid override issues
+                    } else {
+                        setFormData({
+                            title: '',
+                            grade: '',
+                            subjectId: '',
+                            description: '',
+                            examType: 'Single',
+                            supervisorId: ''
+                        });
+                        setParts([{ name: 'Main Exam', date: '', startTime: '', endTime: '', venue: '' }]);
+                        setPartCount(2);
+                        setSelectedStudentIds([]);
+                        setSelectedAllStudents(false);
+                    }
+
                     setTouched({});
                     setShowSummary(false);
 
@@ -67,7 +94,7 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot }) => {
             };
             fetchData();
         }
-    }, [isOpen, slot]);
+    }, [isOpen, slot, examToEdit]);
 
     // --- Logic & Filtering ---
 
@@ -223,11 +250,15 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot }) => {
                 examType: formData.examType,
                 studentIds: selectedStudentIds,
                 parts: parts,
-                slotId: slot?.id || null
+                slotId: slot?.id || null,
+                supervisorId: formData.supervisorId
             };
 
-            const response = await fetch(`${API_URL}/api/exams`, {
-                method: 'POST',
+            const url = examToEdit ? `${API_URL}/api/exams/${examToEdit.id}` : `${API_URL}/api/exams`;
+            const method = examToEdit ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method: method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
@@ -237,11 +268,11 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot }) => {
                 onSave(newExam);
                 onClose();
             } else {
-                alert("Failed to create exam");
+                alert("Failed to save exam");
             }
         } catch (error) {
-            console.error("Error creating exam:", error);
-            alert("Error creating exam");
+            console.error("Error saving exam:", error);
+            alert("Error saving exam");
         } finally {
             setLoading(false);
         }
@@ -264,6 +295,10 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot }) => {
                     </div>
                     <div className="p-6 space-y-4 text-sm">
                         <div className="space-y-2">
+                            <div className="flex justify-between border-b pb-2">
+                                <span className="text-gray-500">Supervisor</span>
+                                <span className="font-medium">{teachers.find(t => t.id == formData.supervisorId)?.name || 'None'}</span>
+                            </div>
                             <div className="flex justify-between border-b pb-2">
                                 <span className="text-gray-500">Type</span>
                                 <span className="font-medium">{formData.examType} ({parts.length} Parts)</span>
@@ -370,18 +405,32 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot }) => {
                         <div className="flex items-center gap-2 text-gray-800 font-bold border-b pb-2">
                             <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs">02</span> Target Grade
                         </div>
-                        <div className="w-full md:w-1/2">
-                            <label className="text-sm font-bold text-gray-700 block mb-1">Select Grade</label>
-                            <select
-                                name="grade"
-                                value={formData.grade}
-                                onChange={handleChange}
-                                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-green-500 outline-none"
-                            >
-                                <option value="">-- Choose Grade --</option>
-                                {availableGrades.map(g => <option key={g} value={g}>{g}</option>)}
-                            </select>
-                            {touched.grade && errors.grade && <p className="text-xs text-red-500 mt-1">{errors.grade}</p>}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="text-sm font-bold text-gray-700 block mb-1">Select Grade</label>
+                                <select
+                                    name="grade"
+                                    value={formData.grade}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-green-500 outline-none"
+                                >
+                                    <option value="">-- Choose Grade --</option>
+                                    {availableGrades.map(g => <option key={g} value={g}>{g}</option>)}
+                                </select>
+                                {touched.grade && errors.grade && <p className="text-xs text-red-500 mt-1">{errors.grade}</p>}
+                            </div>
+                            <div>
+                                <label className="text-sm font-bold text-gray-700 block mb-1">Supervisor</label>
+                                <select
+                                    name="supervisorId"
+                                    value={formData.supervisorId}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-green-500 outline-none"
+                                >
+                                    <option value="">-- Select Supervisor --</option>
+                                    {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                                </select>
+                            </div>
                         </div>
                     </section>
 

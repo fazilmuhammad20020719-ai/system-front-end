@@ -1,30 +1,34 @@
-// src/exams/CreateExamModal.jsx
 import { useState, useEffect } from 'react';
-import { X, Save, Calendar, Clock, BookOpen, Layers, Bookmark, Users, Check, AlertCircle, CheckCircle, Plus, Trash2 } from 'lucide-react';
+import { X, Save, Users, Check, AlertCircle, CheckCircle, Plus, Minus, Layers, Calendar, Clock, MapPin, Hash } from 'lucide-react';
 import { API_URL } from '../config';
 
 const CreateExamModal = ({ isOpen, onClose, onSave, slot }) => {
     // --- State Management ---
     const [formData, setFormData] = useState({
         title: '',
-        programId: slot?.program_id || '',
         grade: '',
         subjectId: '',
         description: '',
         examType: 'Single' // 'Single' or 'Multi'
     });
 
-    // Parts State: Always an array. If Single, length is 1.
+    // Parts State
     const [parts, setParts] = useState([
         { name: 'Main Exam', date: '', startTime: '', endTime: '', venue: '' }
     ]);
+    const [partCount, setPartCount] = useState(2);
 
     const [selectedStudentIds, setSelectedStudentIds] = useState([]);
-    const [programs, setPrograms] = useState([]);
+    const [selectedAllStudents, setSelectedAllStudents] = useState(false);
+
+    // Data
     const [subjects, setSubjects] = useState([]);
-    const [students, setStudents] = useState([]); // Mock Students
+    const [students, setStudents] = useState([]);
+    const [programs, setPrograms] = useState([]);
+
+    // UI State
     const [loading, setLoading] = useState(false);
-    const [touched, setTouched] = useState({}); // Field touch state for error display
+    const [touched, setTouched] = useState({});
     const [showSummary, setShowSummary] = useState(false);
 
     // --- Data Loading ---
@@ -32,29 +36,31 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot }) => {
         if (isOpen) {
             const fetchData = async () => {
                 try {
-                    const [programsRes, subjectsRes, studentsRes] = await Promise.all([
-                        fetch(`${API_URL}/api/programs`),
+                    const [subRes, stuRes, progRes] = await Promise.all([
                         fetch(`${API_URL}/api/subjects`),
-                        fetch(`${API_URL}/api/students`)
+                        fetch(`${API_URL}/api/students`),
+                        fetch(`${API_URL}/api/programs`)
                     ]);
 
-                    if (programsRes.ok) setPrograms(await programsRes.json());
-                    if (subjectsRes.ok) setSubjects(await subjectsRes.json());
-                    if (studentsRes.ok) setStudents(await studentsRes.json());
+                    if (subRes.ok) setSubjects(await subRes.json());
+                    if (stuRes.ok) setStudents(await stuRes.json());
+                    if (progRes.ok) setPrograms(await progRes.json());
 
-                    // Reset state (Preserve slot info if exists via prop)
+                    // Reset State
                     setFormData({
                         title: '',
-                        programId: slot?.program_id || '',
                         grade: '',
                         subjectId: '',
                         description: '',
                         examType: 'Single'
                     });
                     setParts([{ name: 'Main Exam', date: '', startTime: '', endTime: '', venue: '' }]);
+                    setPartCount(2);
                     setSelectedStudentIds([]);
+                    setSelectedAllStudents(false);
                     setTouched({});
                     setShowSummary(false);
+
                 } catch (error) {
                     console.error("Error fetching data:", error);
                 }
@@ -63,33 +69,28 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot }) => {
         }
     }, [isOpen, slot]);
 
-    // --- Computed / Derived Values ---
+    // --- Logic & Filtering ---
 
-    // 1. Available Grades based on Program
-    const selectedProgram = programs.find(p => p.id === parseInt(formData.programId));
-    const duration = selectedProgram?.duration ? parseInt(selectedProgram.duration) : 0;
-    const availableGrades = duration > 0
-        ? Array.from({ length: duration }, (_, i) => `Grade ${i + 1}`)
-        : [];
+    // 1. Available Grades (Respect Slot's Program Duration if applicable)
+    const slotProgram = slot?.program_id ? programs.find(p => p.id === parseInt(slot.program_id)) : null;
+    const maxGrade = slotProgram?.duration ? parseInt(slotProgram.duration) : 13;
+    const availableGrades = Array.from({ length: maxGrade }, (_, i) => `Grade ${i + 1}`);
 
-    // 2. Filtered Subjects
-    const availableSubjects = subjects.filter(
-        s => s.program_id === parseInt(formData.programId) &&
-            (s.year === formData.grade || s.year === formData.grade.replace('Grade ', '') || !s.year)
-    );
-    const selectedSubject = subjects.find(s => s.id === parseInt(formData.subjectId));
-
-    // 3. Filtered Students
-    // Note: API returns currentYear (camelCase)
-    const availableStudents = students.filter(s => {
-        const pIdMatch = String(s.program_id) === String(formData.programId);
-        const gradeMatch = s.currentYear === formData.grade || s.currentYear === formData.grade.replace('Grade ', '');
-        return pIdMatch && gradeMatch;
+    // 2. Filtered Subjects (Based on Grade AND Slot's Program if applicable)
+    const availableSubjects = subjects.filter(s => {
+        const gradeMatch = formData.grade && (s.year === formData.grade || s.year === formData.grade.replace('Grade ', ''));
+        // If we are in a slot, strictly show subjects for that slot's program. 
+        // If not, show all subjects for that grade.
+        const programMatch = slot?.program_id ? s.program_id === parseInt(slot.program_id) : true;
+        return gradeMatch && programMatch;
     });
 
-    // --- Progressive Disclosure State ---
-    const isStep1Complete = formData.title && formData.programId && formData.grade;
-    const isStep2Complete = formData.subjectId && selectedStudentIds.length > 0;
+    // 3. Filtered Students
+    const availableStudents = students.filter(s => {
+        const gradeMatch = formData.grade && (s.currentYear === formData.grade || s.currentYear === formData.grade.replace('Grade ', ''));
+        const programMatch = slot?.program_id ? String(s.program_id) === String(slot.program_id) : true;
+        return gradeMatch && programMatch;
+    });
 
     // --- Handlers ---
 
@@ -98,38 +99,48 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot }) => {
         setFormData(prev => {
             const updates = { ...prev, [name]: value };
 
-            // Dependency Resets
-            if (name === 'programId') {
-                updates.grade = '';
-                updates.subjectId = '';
-                setSelectedStudentIds([]);
-            }
+            // Reset dependent fields
             if (name === 'grade') {
                 updates.subjectId = '';
                 setSelectedStudentIds([]);
+                setSelectedAllStudents(false);
             }
 
             return updates;
         });
     };
 
-    const handleTypeChange = (e) => {
-        const type = e.target.value;
+    const handleTypeChange = (type) => { // 'Single' or 'Multi'
         setFormData(prev => ({ ...prev, examType: type }));
 
-        // Reset parts based on type
         if (type === 'Single') {
             setParts([{ name: 'Main Exam', date: '', startTime: '', endTime: '', venue: '' }]);
         } else {
-            // Keep existing or reset to Multi default if empty (though rarely empty)
-            if (parts.length === 0) {
-                setParts([{ name: 'Part 1', date: '', startTime: '', endTime: '', venue: '' }, { name: 'Part 2', date: '', startTime: '', endTime: '', venue: '' }]);
-            } else if (parts.length === 1 && parts[0].name === 'Main Exam') {
-                // Converting from Single to Multi: Rename Main to Part 1 and maybe add Part 2? Or just keep it.
-                // Let's just keep it as Part 1.
-                setParts([{ ...parts[0], name: 'Part 1' }]);
-            }
+            syncPartsWithCount(partCount);
         }
+    };
+
+    const handlePartCountChange = (increment) => {
+        const newCount = partCount + increment;
+        if (newCount < 1) return;
+        if (newCount > 10) return;
+
+        setPartCount(newCount);
+        syncPartsWithCount(newCount);
+    };
+
+    const syncPartsWithCount = (count) => {
+        setParts(prev => {
+            const newParts = [...prev];
+            if (count > prev.length) {
+                for (let i = prev.length; i < count; i++) {
+                    newParts.push({ name: `Part ${i + 1}`, date: '', startTime: '', endTime: '', venue: '' });
+                }
+            } else if (count < prev.length) {
+                newParts.splice(count);
+            }
+            return newParts.map((p, i) => ({ ...p, name: `Part ${i + 1}` }));
+        });
     };
 
     const handlePartChange = (index, field, value) => {
@@ -140,70 +151,41 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot }) => {
         });
     };
 
-    const addPart = () => {
-        setParts(prev => [
-            ...prev,
-            { name: `Part ${prev.length + 1}`, date: '', startTime: '', endTime: '', venue: '' }
-        ]);
-    };
-
-    const removePart = (index) => {
-        if (parts.length > 1) {
-            setParts(prev => prev.filter((_, i) => i !== index));
-        }
-    };
-
-    const handleBlur = (field) => {
-        setTouched(prev => ({ ...prev, [field]: true }));
-    };
-
     const toggleStudent = (id) => {
+        if (selectedAllStudents) return;
         setSelectedStudentIds(prev =>
             prev.includes(id) ? prev.filter(sid => sid !== id) : [...prev, id]
         );
     };
 
-    const toggleAllStudents = () => {
-        if (selectedStudentIds.length === availableStudents.length) {
-            setSelectedStudentIds([]);
-        } else {
+    const handleSelectAllToggle = () => {
+        const newValue = !selectedAllStudents;
+        setSelectedAllStudents(newValue);
+        if (newValue) {
             setSelectedStudentIds(availableStudents.map(s => s.id));
+        } else {
+            setSelectedStudentIds([]);
         }
     };
 
-    // --- Validation Logic ---
-
+    // --- Validation ---
     const getErrors = () => {
         const errors = {};
-        if (!formData.title) errors.title = "Exam title is required";
-        if (!formData.programId) errors.programId = "Program is required";
         if (!formData.grade) errors.grade = "Grade is required";
         if (!formData.subjectId) errors.subjectId = "Subject is required";
 
-        if (selectedStudentIds.length === 0 && formData.grade) errors.students = "Select at least one student";
+        if (selectedStudentIds.length === 0) errors.students = "Select at least one student";
 
-        // Validate Parts
-        const now = new Date();
         const partErrors = {};
         parts.forEach((part, index) => {
-            if (!part.date) partErrors[`date_${index}`] = "Date is required";
-            if (!part.startTime) partErrors[`start_${index}`] = "Start time is required";
-            if (!part.endTime) partErrors[`end_${index}`] = "End time is required";
+            if (!part.date) partErrors[`date_${index}`] = "Required";
+            if (!part.startTime) partErrors[`start_${index}`] = "Required";
+            if (!part.endTime) partErrors[`end_${index}`] = "Required";
 
-            if (part.date && part.startTime) {
-                const start = new Date(`${part.date}T${part.startTime}`);
-                if (start <= now && index === 0) { // Only strict future check for 1st part usually, or all? Let's say all.
-                    // errors[`future_${index}`] = "Must be in future"; 
-                    // Relaxing future check for demo ease, or keep it strict?
-                    // Strict: if (start <= now) partErrors[`start_${index}`] = "Must be future";
-                }
-                if (part.endTime) {
-                    const end = new Date(`${part.date}T${part.endTime}`);
-                    if (end <= start) partErrors[`end_${index}`] = "End > Start";
-                }
+            if (part.startTime && part.endTime && part.startTime >= part.endTime) {
+                partErrors[`end_${index}`] = "Invalid";
             }
         });
-
         if (Object.keys(partErrors).length > 0) errors.parts = partErrors;
 
         return errors;
@@ -214,8 +196,7 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot }) => {
 
     const handleInitialSubmit = () => {
         setTouched({
-            title: true, programId: true, grade: true, subjectId: true,
-            students: true, parts: true
+            grade: true, subjectId: true, students: true, parts: true
         });
 
         if (isValid) {
@@ -226,11 +207,23 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot }) => {
     const handleFinalSubmit = async () => {
         setLoading(true);
         try {
+            const selectedSubject = subjects.find(s => s.id === parseInt(formData.subjectId));
+            // Inferred Logic:
+            // If slot exists, use its programId.
+            // If not, try to use subject's programId.
+            // If strictly needed, we assume the backend handles null or we rely on subject linkage.
+            const inferredProgramId = slot?.program_id ? parseInt(slot.program_id) : selectedSubject?.program_id;
+
             const payload = {
-                ...formData,
+                title: formData.title || `${selectedSubject?.name} - ${formData.grade} Exam`,
+                grade: formData.grade,
+                subjectId: formData.subjectId,
+                programId: inferredProgramId,
+                description: formData.description,
+                examType: formData.examType,
                 studentIds: selectedStudentIds,
-                slotId: slot?.id || null,
-                parts: parts
+                parts: parts,
+                slotId: slot?.id || null
             };
 
             const response = await fetch(`${API_URL}/api/exams`, {
@@ -241,7 +234,7 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot }) => {
 
             if (response.ok) {
                 const newExam = await response.json();
-                onSave({ ...newExam, id: newExam.id });
+                onSave(newExam);
                 onClose();
             } else {
                 alert("Failed to create exam");
@@ -257,52 +250,48 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot }) => {
     if (!isOpen) return null;
 
     if (showSummary) {
-        // --- SUMMARY VIEW ---
-        const sProgram = programs.find(p => p.id === parseInt(formData.programId));
-        const sSubject = subjects.find(s => s.id === parseInt(formData.subjectId));
-
+        const selectedSubject = subjects.find(s => s.id === parseInt(formData.subjectId));
         return (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col">
+                <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
                     <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-green-50/50">
-                        <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                        <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
                             <CheckCircle size={20} className="text-green-600" /> Confirm Schedule
                         </h2>
                         <button onClick={() => setShowSummary(false)} className="text-gray-400 hover:text-gray-600">
                             <X size={20} />
                         </button>
                     </div>
-
-                    <div className="p-6 space-y-4 text-sm max-h-[60vh] overflow-y-auto custom-scrollbar">
-                        <div className="grid grid-cols-2 gap-y-4 gap-x-2">
-                            <div><p className="font-bold text-gray-500 text-xs uppercase">Title</p><p>{formData.title}</p></div>
-                            <div><p className="font-bold text-gray-500 text-xs uppercase">Type</p><p>{formData.examType} Part</p></div>
-                            <div><p className="font-bold text-gray-500 text-xs uppercase">Program</p><p>{sProgram?.name}</p></div>
-                            <div><p className="font-bold text-gray-500 text-xs uppercase">Grade</p><p>{formData.grade}</p></div>
-                            <div><p className="font-bold text-gray-500 text-xs uppercase">Subject</p><p>{sSubject?.name}</p></div>
-                            <div><p className="font-bold text-gray-500 text-xs uppercase">Students</p><p>{selectedStudentIds.length} Selected</p></div>
+                    <div className="p-6 space-y-4 text-sm">
+                        <div className="space-y-2">
+                            <div className="flex justify-between border-b pb-2">
+                                <span className="text-gray-500">Type</span>
+                                <span className="font-medium">{formData.examType} ({parts.length} Parts)</span>
+                            </div>
+                            <div className="flex justify-between border-b pb-2">
+                                <span className="text-gray-500">Grade</span>
+                                <span className="font-medium">{formData.grade}</span>
+                            </div>
+                            <div className="flex justify-between border-b pb-2">
+                                <span className="text-gray-500">Subject</span>
+                                <span className="font-medium">{selectedSubject?.name}</span>
+                            </div>
+                            <div className="flex justify-between border-b pb-2">
+                                <span className="text-gray-500">Students</span>
+                                <span className="font-medium">{selectedStudentIds.length} Selected</span>
+                            </div>
                         </div>
-
-                        <div className="border-t pt-2">
-                            <p className="font-bold text-gray-500 text-xs uppercase mb-2">Schedule</p>
+                        <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 space-y-2">
+                            <p className="font-bold text-gray-500 text-xs uppercase mb-1">Schedule Details</p>
                             {parts.map((p, i) => (
-                                <div key={i} className="flex justify-between text-xs mb-1">
-                                    <span className="font-medium">{p.name}</span>
-                                    <span>{p.date} • {p.startTime} - {p.endTime}</span>
+                                <div key={i} className="flex justify-between text-xs">
+                                    <span className="text-gray-600">{p.name}</span>
+                                    <span className="font-medium">{p.date} • {p.startTime}-{p.endTime}</span>
                                 </div>
                             ))}
                         </div>
-
-                        <div className="bg-yellow-50 p-3 rounded border border-yellow-100 text-yellow-800 text-xs">
-                            <AlertCircle size={14} className="inline mr-1 mb-0.5" />
-                            Please double check the dates. Notifications will be sent to all selected students.
-                        </div>
-                    </div>
-
-                    <div className="p-4 bg-gray-50 border-t flex justify-end gap-3">
-                        <button onClick={() => setShowSummary(false)} className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-bold text-gray-700">Back to Edit</button>
-                        <button onClick={handleFinalSubmit} disabled={loading} className="px-6 py-2 bg-green-600 text-white rounded-lg text-sm font-bold shadow-md hover:bg-green-700">
-                            {loading ? 'Saving...' : 'Confirm & Schedule'}
+                        <button onClick={handleFinalSubmit} disabled={loading} className="w-full py-2.5 bg-green-600 text-white rounded-lg font-bold shadow hover:bg-green-700 transition-colors">
+                            {loading ? 'Scheduling...' : 'Confirm & Create'}
                         </button>
                     </div>
                 </div>
@@ -312,289 +301,261 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot }) => {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
 
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 sticky top-0 z-10">
+                <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                     <div>
-                        <h2 className="text-xl font-bold text-gray-800">Schedule Examination</h2>
-                        <p className="text-xs text-gray-500 mt-1">Setup exam details, assign students, and schedule timing.</p>
+                        <h2 className="text-xl font-bold text-gray-800">Create New Exam</h2>
+                        <p className="text-xs text-gray-500 mt-0.5">Configure exam structure, assign students, and set schedule.</p>
                     </div>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-full">
                         <X size={20} />
                     </button>
                 </div>
 
-                <div className="overflow-y-auto p-6 space-y-8">
-                    {/* Step 1: Basic Info */}
-                    <section className="space-y-4">
-                        <div className="flex items-center gap-2 text-green-700 font-bold border-b border-green-100 pb-2">
-                            <span className="bg-green-100 px-2 py-0.5 rounded text-sm">Step 1</span> Basic Information
+                <div className="overflow-y-auto p-6 space-y-8 custom-scrollbar">
+
+                    {/* 1. Exam Type Selection */}
+                    <section className="space-y-3">
+                        <div className="flex items-center gap-2 text-gray-800 font-bold border-b pb-2">
+                            <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs">01</span> Exam Configuration
                         </div>
 
-                        <div className="space-y-1.5">
-                            <label className="text-sm font-bold text-gray-700">Exam Title <span className="text-red-500">*</span></label>
-                            <input
-                                type="text"
-                                name="title"
-                                value={formData.title}
-                                onChange={handleChange}
-                                onBlur={() => handleBlur('title')}
-                                className={`w-full px-4 py-2 border rounded-lg text-sm outline-none focus:ring-2 transition-all ${touched.title && errors.title ? 'border-red-500 focus:ring-red-200' : 'border-gray-200 focus:ring-green-500'}`}
-                                placeholder="e.g. Mid-Term Assessment"
-                            />
-                            {touched.title && errors.title && <p className="text-xs text-red-500">{errors.title}</p>}
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <div className="space-y-1.5">
-                                <label className="text-sm font-bold text-gray-700">Program <span className="text-red-500">*</span></label>
-                                <div className="relative">
-                                    <Layers size={16} className="absolute left-3 top-2.5 text-gray-400" />
-                                    <select
-                                        name="programId"
-                                        value={formData.programId}
-                                        onChange={handleChange}
-                                        onBlur={() => handleBlur('programId')}
-                                        disabled={!!slot} // Lock if slot provided
-                                        className={`w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-green-500 ${slot ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-white'}`}
-                                    >
-                                        <option value="">Select Program</option>
-                                        {programs.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <label className="text-sm font-bold text-gray-700">Grade <span className="text-red-500">*</span></label>
-                                <select
-                                    name="grade"
-                                    value={formData.grade}
-                                    onChange={handleChange}
-                                    onBlur={() => handleBlur('grade')}
-                                    disabled={!formData.programId}
-                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-green-500 bg-white disabled:bg-gray-50 disabled:text-gray-400"
-                                >
-                                    <option value="">{formData.programId ? "Select Grade" : "Select Program First"}</option>
-                                    {availableGrades.map(g => <option key={g} value={g}>{g}</option>)}
-                                </select>
-                            </div>
-                        </div>
-
-                        {/* Exam Type Selection */}
-                        <div className="space-y-1.5">
-                            <label className="text-sm font-bold text-gray-700">Presentation Mode</label>
-                            <div className="flex items-center gap-4">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <input
-                                        type="radio"
-                                        name="examType"
-                                        value="Single"
-                                        checked={formData.examType === 'Single'}
-                                        onChange={handleTypeChange}
-                                        className="text-green-600 focus:ring-green-500 cursor-pointer"
-                                    />
-                                    <span className="text-sm text-gray-700">Single Part</span>
-                                </label>
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <input
-                                        type="radio"
-                                        name="examType"
-                                        value="Multi"
-                                        checked={formData.examType === 'Multi'}
-                                        onChange={handleTypeChange}
-                                        className="text-green-600 focus:ring-green-500 cursor-pointer"
-                                    />
-                                    <span className="text-sm text-gray-700">Multi-Part (Part 1, Part 2...)</span>
-                                </label>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Step 2: Assignments - Enabled when Step 1 is mostly done (Program & Grade) */}
-                    <section className={`space-y-4 transition-all duration-300 ${!isStep1Complete ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
-                        <div className="flex items-center gap-2 text-blue-700 font-bold border-b border-blue-100 pb-2">
-                            <span className="bg-blue-100 px-2 py-0.5 rounded text-sm">Step 2</span> Assignments
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Students Selection */}
-                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 h-64 flex flex-col">
-                                <div className="flex justify-between items-center mb-2 border-b border-gray-200 pb-2">
-                                    <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
-                                        <Users size={14} /> Students
-                                    </label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-3">
+                                <label className="text-sm font-bold text-gray-700 block">Exam Type</label>
+                                <div className="flex gap-3">
                                     <button
-                                        type="button"
-                                        onClick={toggleAllStudents}
-                                        className="text-xs font-bold text-blue-600 hover:text-blue-800"
+                                        onClick={() => handleTypeChange('Single')}
+                                        className={`flex-1 py-3 px-4 rounded-xl border-2 text-sm font-bold transition-all ${formData.examType === 'Single' ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}
                                     >
-                                        {selectedStudentIds.length === availableStudents.length ? 'Unselect All' : 'Select All'}
+                                        Single Exam
+                                    </button>
+                                    <button
+                                        onClick={() => handleTypeChange('Multi')}
+                                        className={`flex-1 py-3 px-4 rounded-xl border-2 text-sm font-bold transition-all ${formData.examType === 'Multi' ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}
+                                    >
+                                        Multi-Part Exam
                                     </button>
                                 </div>
-                                <div className="flex-1 overflow-y-auto space-y-1 custom-scrollbar">
-                                    {availableStudents.length > 0 ? (
-                                        availableStudents.map(student => (
-                                            <div
-                                                key={student.id}
-                                                onClick={() => toggleStudent(student.id)}
-                                                className={`flex items-center gap-3 p-2 rounded cursor-pointer transition-colors ${selectedStudentIds.includes(student.id) ? 'bg-blue-50 border border-blue-100' : 'hover:bg-gray-100 border border-transparent'}`}
-                                            >
-                                                <div className={`w-4 h-4 rounded border flex items-center justify-center ${selectedStudentIds.includes(student.id) ? 'bg-blue-600 border-blue-600' : 'border-gray-400 bg-white'}`}>
-                                                    {selectedStudentIds.includes(student.id) && <Check size={12} className="text-white" />}
-                                                </div>
-                                                <span className="text-sm text-gray-700">{student.name}</span>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <p className="text-xs text-gray-400 text-center mt-10">No students found for this grade.</p>
-                                    )}
-                                </div>
-                                {touched.students && errors.students && <p className="text-xs text-red-500 mt-1 text-center font-medium bg-red-50 p-1 rounded">{errors.students}</p>}
                             </div>
 
-                            {/* Subject Selection */}
-                            <div className="space-y-4">
-                                <div className="space-y-1.5">
-                                    <label className="text-sm font-bold text-gray-700">Subject <span className="text-red-500">*</span></label>
-                                    <div className="relative">
-                                        <Bookmark size={16} className="absolute left-3 top-2.5 text-gray-400" />
-                                        <select
-                                            name="subjectId"
-                                            value={formData.subjectId}
-                                            onChange={handleChange}
-                                            onBlur={() => handleBlur('subjectId')}
-                                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                                        >
-                                            <option value="">Select Subject</option>
-                                            {availableSubjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                                        </select>
-                                    </div>
-                                    {touched.subjectId && errors.subjectId && <p className="text-xs text-red-500">{errors.subjectId}</p>}
-                                </div>
-
-                                <div className="space-y-1.5">
-                                    <label className="text-sm font-bold text-gray-700">Description</label>
-                                    <textarea
-                                        name="description"
-                                        value={formData.description}
-                                        onChange={handleChange}
-                                        rows={4}
-                                        className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                                        placeholder="Instructions for students..."
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* Step 3: Timing - Multi-Part Aware */}
-                    <section className={`space-y-4 transition-opacity duration-300 ${!isStep2Complete ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
-                        <div className="flex items-center gap-2 text-purple-700 font-bold border-b border-purple-100 pb-2">
-                            <span className="bg-purple-100 px-2 py-0.5 rounded text-sm">Step 3</span> Schedule {formData.examType === 'Multi' ? 'Parts' : 'Timing'}
-                        </div>
-
-                        <div className="space-y-4">
-                            {parts.map((part, index) => (
-                                <div key={index} className="bg-gray-50 p-4 rounded-xl border border-gray-200 relative animate-in fade-in duration-300">
-                                    <div className="flex justify-between items-center mb-3">
-                                        <h4 className="font-bold text-sm text-gray-600 flex items-center gap-2">
-                                            {formData.examType === 'Multi' ? (
-                                                <input
-                                                    value={part.name}
-                                                    onChange={(e) => handlePartChange(index, 'name', e.target.value)}
-                                                    className="bg-transparent border-b border-dashed border-gray-400 text-gray-800 focus:outline-none focus:border-green-500 w-32"
-                                                />
-                                            ) : (
-                                                <span className="uppercase text-xs tracking-wide">Standard Schedule</span>
-                                            )}
-                                        </h4>
-                                        {formData.examType === 'Multi' && parts.length > 1 && (
-                                            <button onClick={() => removePart(index)} className="text-red-400 hover:text-red-600 p-1">
-                                                <Trash2 size={16} />
-                                            </button>
-                                        )}
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {/* Date and Venue */}
-                                        <div className="space-y-2">
-                                            <div className="space-y-1">
-                                                <label className="text-xs font-bold text-gray-500">Date</label>
-                                                <input
-                                                    type="date"
-                                                    value={part.date}
-                                                    onChange={(e) => handlePartChange(index, 'date', e.target.value)}
-                                                    className="w-full px-3 py-1.5 border border-gray-200 rounded text-sm"
-                                                />
-                                                {touched.parts && errors.parts?.[`date_${index}`] && <p className="text-xs text-red-500">{errors.parts[`date_${index}`]}</p>}
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-xs font-bold text-gray-500">Venue</label>
-                                                <input
-                                                    type="text"
-                                                    value={part.venue}
-                                                    onChange={(e) => handlePartChange(index, 'venue', e.target.value)}
-                                                    placeholder="Classroom / Hall"
-                                                    className="w-full px-3 py-1.5 border border-gray-200 rounded text-sm"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Time Range */}
-                                        <div className="space-y-2">
-                                            <div className="space-y-1">
-                                                <label className="text-xs font-bold text-gray-500">Start Time</label>
-                                                <input
-                                                    type="time"
-                                                    value={part.startTime}
-                                                    onChange={(e) => handlePartChange(index, 'startTime', e.target.value)}
-                                                    className="w-full px-3 py-1.5 border border-gray-200 rounded text-sm"
-                                                />
-                                                {touched.parts && errors.parts?.[`start_${index}`] && <p className="text-xs text-red-500">{errors.parts[`start_${index}`]}</p>}
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-xs font-bold text-gray-500">End Time</label>
-                                                <input
-                                                    type="time"
-                                                    value={part.endTime}
-                                                    onChange={(e) => handlePartChange(index, 'endTime', e.target.value)}
-                                                    className="w-full px-3 py-1.5 border border-gray-200 rounded text-sm"
-                                                />
-                                                {touched.parts && errors.parts?.[`end_${index}`] && <p className="text-xs text-red-500">{errors.parts[`end_${index}`]}</p>}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-
+                            {/* 2. Multi-Part Controller */}
                             {formData.examType === 'Multi' && (
-                                <button
-                                    onClick={addPart}
-                                    className="w-full py-2 border-2 border-dashed border-gray-200 rounded-xl text-gray-500 font-bold text-sm hover:border-green-500 hover:text-green-600 transition-colors flex items-center justify-center gap-2"
-                                >
-                                    <Plus size={16} /> Add Part
-                                </button>
+                                <div className="space-y-3 animate-in fade-in slide-in-from-left-2 duration-300">
+                                    <label className="text-sm font-bold text-gray-700 block">Number of Parts</label>
+                                    <div className="flex items-center gap-4 bg-gray-50 border border-gray-200 rounded-xl p-2 w-fit">
+                                        <button
+                                            onClick={() => handlePartCountChange(-1)}
+                                            className="p-1.5 hover:bg-white rounded-lg shadow-sm border border-transparent hover:border-gray-200 text-gray-600"
+                                        >
+                                            <Minus size={16} />
+                                        </button>
+                                        <span className="font-bold text-lg w-8 text-center text-gray-800">{partCount}</span>
+                                        <button
+                                            onClick={() => handlePartCountChange(1)}
+                                            className="p-1.5 hover:bg-white rounded-lg shadow-sm border border-transparent hover:border-gray-200 text-gray-600"
+                                        >
+                                            <Plus size={16} />
+                                        </button>
+                                    </div>
+                                </div>
                             )}
                         </div>
                     </section>
+
+                    {/* 3. Grade Selection */}
+                    <section className="space-y-3">
+                        <div className="flex items-center gap-2 text-gray-800 font-bold border-b pb-2">
+                            <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs">02</span> Target Grade
+                        </div>
+                        <div className="w-full md:w-1/2">
+                            <label className="text-sm font-bold text-gray-700 block mb-1">Select Grade</label>
+                            <select
+                                name="grade"
+                                value={formData.grade}
+                                onChange={handleChange}
+                                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-green-500 outline-none"
+                            >
+                                <option value="">-- Choose Grade --</option>
+                                {availableGrades.map(g => <option key={g} value={g}>{g}</option>)}
+                            </select>
+                            {touched.grade && errors.grade && <p className="text-xs text-red-500 mt-1">{errors.grade}</p>}
+                        </div>
+                    </section>
+
+                    {/* Steps 4, 5, 6 - Unlocked after Grade */}
+                    <div className={`space-y-8 transition-all duration-300 ${!formData.grade ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
+
+                        {/* 4. Student Selection */}
+                        <section className="space-y-3">
+                            <div className="flex items-center gap-2 text-gray-800 font-bold border-b pb-2 justify-between">
+                                <div className="flex items-center gap-2">
+                                    <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs">03</span> Students
+                                </div>
+                                <div>
+                                    <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedAllStudents}
+                                            onChange={handleSelectAllToggle}
+                                            className="rounded text-green-600 focus:ring-green-500 w-4 h-4"
+                                        />
+                                        <span className={`font-bold ${selectedAllStudents ? 'text-green-700' : 'text-gray-500'}`}>Select All Students</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div className={`border rounded-xl overflow-hidden transition-colors ${selectedAllStudents ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-200'}`}>
+                                {selectedAllStudents ? (
+                                    <div className="p-8 text-center text-gray-500 flex flex-col items-center">
+                                        <CheckCircle size={32} className="text-green-500 mb-2" />
+                                        <p className="font-medium">All {availableStudents.length} students in {formData.grade} selected.</p>
+                                        <p className="text-xs mt-1">Individual selection is disabled.</p>
+                                    </div>
+                                ) : (
+                                    <div className="max-h-48 overflow-y-auto p-2 custom-scrollbar grid grid-cols-1 md:grid-cols-2 gap-2">
+                                        {availableStudents.length > 0 ? availableStudents.map(student => (
+                                            <div
+                                                key={student.id}
+                                                onClick={() => toggleStudent(student.id)}
+                                                className={`flex items-center gap-3 p-2.5 rounded-lg cursor-pointer border transition-all ${selectedStudentIds.includes(student.id) ? 'bg-green-50 border-green-200' : 'border-transparent hover:bg-gray-50'}`}
+                                            >
+                                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${selectedStudentIds.includes(student.id) ? 'bg-green-600 border-green-600' : 'border-gray-300 bg-white'}`}>
+                                                    {selectedStudentIds.includes(student.id) && <Check size={14} className="text-white" />}
+                                                </div>
+                                                <span className="text-sm text-gray-700 font-medium">{student.name}</span>
+                                            </div>
+                                        )) : (
+                                            <div className="col-span-2 py-8 text-center text-gray-400 text-xs">No students found for {formData.grade}</div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                            {touched.students && errors.students && <p className="text-xs text-red-500 font-medium">{errors.students}</p>}
+                        </section>
+
+                        {/* 5. Subject Selection */}
+                        <section className="space-y-3">
+                            <div className="flex items-center gap-2 text-gray-800 font-bold border-b pb-2">
+                                <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs">04</span> Subject
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-sm font-bold text-gray-700 block mb-1">Subject</label>
+                                    <select
+                                        name="subjectId"
+                                        value={formData.subjectId}
+                                        onChange={handleChange}
+                                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-green-500 outline-none"
+                                    >
+                                        <option value="">-- Select Subject --</option>
+                                        {availableSubjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                    </select>
+                                    {touched.subjectId && errors.subjectId && <p className="text-xs text-red-500 mt-1">{errors.subjectId}</p>}
+                                </div>
+                                <div>
+                                    <label className="text-sm font-bold text-gray-700 block mb-1">Description (Optional)</label>
+                                    <input
+                                        type="text"
+                                        name="description"
+                                        value={formData.description}
+                                        onChange={handleChange}
+                                        placeholder="e.g. Unit 1-5"
+                                        className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none"
+                                    />
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* 6. Date & Time Selection */}
+                        <section className="space-y-4">
+                            <div className="flex items-center gap-2 text-gray-800 font-bold border-b pb-2">
+                                <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs">05</span> Date & Time
+                            </div>
+
+                            <div className="space-y-4">
+                                {parts.map((part, index) => (
+                                    <div key={index} className="bg-gray-50 border border-gray-200 rounded-xl p-4 animate-in fade-in duration-300">
+                                        <h4 className="font-bold text-gray-700 mb-3 flex items-center gap-2">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                            {part.name}
+                                        </h4>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                            <div>
+                                                <label className="text-xs font-bold text-gray-500 mb-1 block">Date</label>
+                                                <div className="relative">
+                                                    <Calendar size={14} className="absolute left-3 top-2.5 text-gray-400" />
+                                                    <input
+                                                        type="date"
+                                                        value={part.date}
+                                                        onChange={(e) => handlePartChange(index, 'date', e.target.value)}
+                                                        className={`w-full pl-9 pr-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none ${touched.parts && errors.parts?.[`date_${index}`] ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="text-xs font-bold text-gray-500 mb-1 block">Start Time</label>
+                                                <div className="relative">
+                                                    <Clock size={14} className="absolute left-3 top-2.5 text-gray-400" />
+                                                    <input
+                                                        type="time"
+                                                        value={part.startTime}
+                                                        onChange={(e) => handlePartChange(index, 'startTime', e.target.value)}
+                                                        className={`w-full pl-9 pr-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none ${touched.parts && errors.parts?.[`start_${index}`] ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="text-xs font-bold text-gray-500 mb-1 block">End Time</label>
+                                                <div className="relative">
+                                                    <Clock size={14} className="absolute left-3 top-2.5 text-gray-400" />
+                                                    <input
+                                                        type="time"
+                                                        value={part.endTime}
+                                                        onChange={(e) => handlePartChange(index, 'endTime', e.target.value)}
+                                                        className={`w-full pl-9 pr-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none ${touched.parts && errors.parts?.[`end_${index}`] ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="text-xs font-bold text-gray-500 mb-1 block">Venue (Optional)</label>
+                                                <div className="relative">
+                                                    <MapPin size={14} className="absolute left-3 top-2.5 text-gray-400" />
+                                                    <input
+                                                        type="text"
+                                                        value={part.venue}
+                                                        onChange={(e) => handlePartChange(index, 'venue', e.target.value)}
+                                                        placeholder="Hall A"
+                                                        className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+                    </div>
+
                 </div>
 
                 {/* Footer */}
-                <div className="border-t border-gray-100 p-4 bg-gray-50 flex justify-end gap-3">
+                <div className="border-t border-gray-100 p-4 bg-gray-50 flex justify-end gap-3 z-20">
                     <button
                         type="button"
                         onClick={onClose}
-                        className="px-5 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-lg text-sm font-bold hover:bg-gray-100 transition-colors"
+                        className="px-5 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-xl text-sm font-bold hover:bg-gray-100 transition-colors"
                     >
                         Cancel
                     </button>
                     <button
                         onClick={handleInitialSubmit}
                         disabled={loading}
-                        className={`flex items-center gap-2 px-8 py-2.5 bg-green-600 text-white rounded-lg text-sm font-bold shadow-md hover:bg-green-700 transition-all ${loading ? 'opacity-70 cursor-not-allowed' : 'active:scale-95'}`}
+                        className={`flex items-center gap-2 px-8 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-bold shadow-lg hover:shadow-xl hover:bg-black transition-all transform active:scale-95 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
                     >
-                        <Save size={16} /> Schedule Exam
+                        <Save size={16} /> Save Exam
                     </button>
                 </div>
             </div>

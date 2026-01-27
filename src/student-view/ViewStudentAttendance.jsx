@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useParams } from 'react-router-dom';
 import {
     CheckCircle,
     XCircle,
@@ -6,26 +7,15 @@ import {
     ChevronRight,
     Calendar as CalendarIcon
 } from 'lucide-react';
+import { API_URL } from '../config'; // Ensure this path matches your project structure
 
-const ViewStudentAttendance = ({ stats }) => {
+const ViewStudentAttendance = () => {
+    const { id } = useParams(); // Get student ID from URL
+
     // State for the Calendar
     const [currentDate, setCurrentDate] = useState(new Date());
-
-    // Mock Attendance Data
-    const attendanceData = {
-        '2025-01-01': 'Present',
-        '2025-01-02': 'Present',
-        '2025-01-03': 'Absent',
-        '2025-01-06': 'Present',
-        '2025-01-07': 'Present',
-        '2025-01-08': 'Present',
-        '2025-01-09': 'Absent',
-        '2025-01-10': 'Present',
-        '2025-01-12': 'Present',
-        '2025-01-13': 'Present',
-        '2025-01-14': 'Holiday',
-        '2025-01-15': 'Present',
-    };
+    const [attendanceData, setAttendanceData] = useState({});
+    const [loading, setLoading] = useState(false);
 
     // Calendar Helper Functions
     const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
@@ -37,26 +27,64 @@ const ViewStudentAttendance = ({ stats }) => {
     const firstDay = getFirstDayOfMonth(year, month);
 
     const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-
-    // Generate Year Range
     const currentYear = new Date().getFullYear();
     const years = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i);
 
-    const handlePrevMonth = () => {
-        setCurrentDate(new Date(year, month - 1, 1));
-    };
+    // Fetch Attendance Data when Month/Year changes
+    useEffect(() => {
+        const fetchAttendance = async () => {
+            if (!id) return;
+            setLoading(true);
+            try {
+                // Calculate start and end date for the selected month
+                const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+                const endDate = `${year}-${String(month + 1).padStart(2, '0')}-${daysInMonth}`;
 
-    const handleNextMonth = () => {
-        setCurrentDate(new Date(year, month + 1, 1));
-    };
+                const res = await fetch(`${API_URL}/api/students/${id}/attendance?startDate=${startDate}&endDate=${endDate}`);
 
-    const handleMonthChange = (e) => {
-        setCurrentDate(new Date(year, parseInt(e.target.value), 1));
-    };
+                if (res.ok) {
+                    const data = await res.json();
 
-    const handleYearChange = (e) => {
-        setCurrentDate(new Date(parseInt(e.target.value), month, 1));
-    };
+                    // Transform array to object: { "2025-01-01": "Present", ... }
+                    const dataMap = {};
+                    data.forEach(record => {
+                        dataMap[record.date] = record.status;
+                    });
+                    setAttendanceData(dataMap);
+                }
+            } catch (error) {
+                console.error("Failed to fetch student attendance:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchAttendance();
+    }, [id, month, year, daysInMonth]);
+
+    // Calculate Stats for the CURRENTLY VIEWED Month
+    const stats = useMemo(() => {
+        let present = 0;
+        let absent = 0;
+        let holidays = 0;
+
+        Object.values(attendanceData).forEach(status => {
+            if (status === 'Present') present++;
+            if (status === 'Absent') absent++;
+            if (status === 'Holiday') holidays++;
+        });
+
+        const totalWorkingDays = present + absent; // Ignoring holidays for calculation
+        const rate = totalWorkingDays > 0 ? Math.round((present / totalWorkingDays) * 100) : 0;
+
+        return { present, absent, holidays, total: totalWorkingDays, rate };
+    }, [attendanceData]);
+
+    // Handlers
+    const handlePrevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
+    const handleNextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
+    const handleMonthChange = (e) => setCurrentDate(new Date(year, parseInt(e.target.value), 1));
+    const handleYearChange = (e) => setCurrentDate(new Date(parseInt(e.target.value), month, 1));
 
     // Generate Calendar Grid
     const renderCalendarDays = () => {
@@ -76,7 +104,7 @@ const ViewStudentAttendance = ({ stats }) => {
             let tooltip = "No Data";
 
             if (status === 'Present') {
-                statusColor = "bg-green-100 text-green-700 border-green-200 font-bold";
+                statusColor = "bg-green-100 text-green-700 border-green-200 font-bold border";
                 tooltip = "Present";
             } else if (status === 'Absent') {
                 statusColor = "bg-red-100 text-red-700 border-red-200 font-bold";
@@ -95,7 +123,7 @@ const ViewStudentAttendance = ({ stats }) => {
                     `}
                 >
                     <span>{day}</span>
-                    <div className="absolute bottom-full mb-2 hidden group-hover:block z-10">
+                    <div className="absolute bottom-full mb-2 hidden group-hover:block z-10 w-max">
                         <div className="bg-gray-800 text-white text-[10px] px-2 py-1 rounded shadow-lg whitespace-nowrap">
                             {tooltip}
                         </div>
@@ -112,11 +140,13 @@ const ViewStudentAttendance = ({ stats }) => {
             {/* LEFT SIDE: Stats Cards */}
             <div className="lg:col-span-1 space-y-4">
                 <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm text-center">
-                    <p className="text-gray-500 text-sm font-medium">Overall Attendance</p>
-                    <h2 className="text-4xl font-bold text-green-600 mt-2">
-                        {Math.round((stats.present / stats.total) * 100)}%
+                    <p className="text-gray-500 text-sm font-medium">
+                        {monthNames[month]} Attendance
+                    </p>
+                    <h2 className={`text-4xl font-bold mt-2 ${stats.rate >= 75 ? 'text-green-600' : 'text-orange-500'}`}>
+                        {loading ? '...' : `${stats.rate}%`}
                     </h2>
-                    <p className="text-xs text-gray-400 mt-1">Total School Days: {stats.total}</p>
+                    <p className="text-xs text-gray-400 mt-1">Recorded Days: {stats.total}</p>
                 </div>
 
                 <div className="bg-green-50 p-4 rounded-xl border border-green-100 flex justify-between items-center">
@@ -148,6 +178,7 @@ const ViewStudentAttendance = ({ stats }) => {
                     <div className="flex items-center gap-2">
                         <CalendarIcon className="text-green-600" size={20} />
                         <h3 className="font-bold text-gray-800">Attendance Log</h3>
+                        {loading && <span className="text-xs text-gray-400 ml-2 animate-pulse">Loading...</span>}
                     </div>
 
                     <div className="flex items-center gap-2">

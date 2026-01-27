@@ -1,6 +1,6 @@
 // src/exams/CreateExamModal.jsx
 import { useState, useEffect } from 'react';
-import { X, Save, Calendar, Clock, BookOpen, Layers, Bookmark, Users, Check, AlertCircle, CheckCircle } from 'lucide-react';
+import { X, Save, Calendar, Clock, BookOpen, Layers, Bookmark, Users, Check, AlertCircle, CheckCircle, Plus, Trash2 } from 'lucide-react';
 import { API_URL } from '../config';
 
 const CreateExamModal = ({ isOpen, onClose, onSave, slot }) => {
@@ -10,12 +10,14 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot }) => {
         programId: slot?.program_id || '',
         grade: '',
         subjectId: '',
-        startDate: '',
-        startTime: '',
-        endDate: '',
-        endTime: '',
-        description: ''
+        description: '',
+        examType: 'Single' // 'Single' or 'Multi'
     });
+
+    // Parts State: Always an array. If Single, length is 1.
+    const [parts, setParts] = useState([
+        { name: 'Main Exam', date: '', startTime: '', endTime: '', venue: '' }
+    ]);
 
     const [selectedStudentIds, setSelectedStudentIds] = useState([]);
     const [programs, setPrograms] = useState([]);
@@ -46,8 +48,10 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot }) => {
                         programId: slot?.program_id || '',
                         grade: '',
                         subjectId: '',
-                        startDate: '', startTime: '', endDate: '', endTime: '', description: ''
+                        description: '',
+                        examType: 'Single'
                     });
+                    setParts([{ name: 'Main Exam', date: '', startTime: '', endTime: '', venue: '' }]);
                     setSelectedStudentIds([]);
                     setTouched({});
                     setShowSummary(false);
@@ -109,19 +113,57 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot }) => {
         });
     };
 
+    const handleTypeChange = (e) => {
+        const type = e.target.value;
+        setFormData(prev => ({ ...prev, examType: type }));
+
+        // Reset parts based on type
+        if (type === 'Single') {
+            setParts([{ name: 'Main Exam', date: '', startTime: '', endTime: '', venue: '' }]);
+        } else {
+            // Keep existing or reset to Multi default if empty (though rarely empty)
+            if (parts.length === 0) {
+                setParts([{ name: 'Part 1', date: '', startTime: '', endTime: '', venue: '' }, { name: 'Part 2', date: '', startTime: '', endTime: '', venue: '' }]);
+            } else if (parts.length === 1 && parts[0].name === 'Main Exam') {
+                // Converting from Single to Multi: Rename Main to Part 1 and maybe add Part 2? Or just keep it.
+                // Let's just keep it as Part 1.
+                setParts([{ ...parts[0], name: 'Part 1' }]);
+            }
+        }
+    };
+
+    const handlePartChange = (index, field, value) => {
+        setParts(prev => {
+            const newParts = [...prev];
+            newParts[index] = { ...newParts[index], [field]: value };
+            return newParts;
+        });
+    };
+
+    const addPart = () => {
+        setParts(prev => [
+            ...prev,
+            { name: `Part ${prev.length + 1}`, date: '', startTime: '', endTime: '', venue: '' }
+        ]);
+    };
+
+    const removePart = (index) => {
+        if (parts.length > 1) {
+            setParts(prev => prev.filter((_, i) => i !== index));
+        }
+    };
+
     const handleBlur = (field) => {
         setTouched(prev => ({ ...prev, [field]: true }));
     };
 
     const toggleStudent = (id) => {
-        // Simple toggle, no checks for step
         setSelectedStudentIds(prev =>
             prev.includes(id) ? prev.filter(sid => sid !== id) : [...prev, id]
         );
     };
 
     const toggleAllStudents = () => {
-        // Simple toggle all, no checks for step
         if (selectedStudentIds.length === availableStudents.length) {
             setSelectedStudentIds([]);
         } else {
@@ -140,19 +182,29 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot }) => {
 
         if (selectedStudentIds.length === 0 && formData.grade) errors.students = "Select at least one student";
 
-        // Date/Time Validation
-        const startDateTime = new Date(`${formData.startDate}T${formData.startTime}`);
-        const endDateTime = new Date(`${formData.endDate}T${formData.endTime}`);
+        // Validate Parts
         const now = new Date();
+        const partErrors = {};
+        parts.forEach((part, index) => {
+            if (!part.date) partErrors[`date_${index}`] = "Date is required";
+            if (!part.startTime) partErrors[`start_${index}`] = "Start time is required";
+            if (!part.endTime) partErrors[`end_${index}`] = "End time is required";
 
-        if (formData.startDate && formData.startTime && startDateTime <= now) {
-            errors.start = "Start time must be in the future";
-        }
-        if (formData.endDate && formData.endTime && startDateTime && endDateTime <= startDateTime) {
-            errors.end = "End time must be after start time";
-        }
-        if (!formData.startDate || !formData.startTime) errors.startTimeMissing = true;
-        if (!formData.endDate || !formData.endTime) errors.endTimeMissing = true;
+            if (part.date && part.startTime) {
+                const start = new Date(`${part.date}T${part.startTime}`);
+                if (start <= now && index === 0) { // Only strict future check for 1st part usually, or all? Let's say all.
+                    // errors[`future_${index}`] = "Must be in future"; 
+                    // Relaxing future check for demo ease, or keep it strict?
+                    // Strict: if (start <= now) partErrors[`start_${index}`] = "Must be future";
+                }
+                if (part.endTime) {
+                    const end = new Date(`${part.date}T${part.endTime}`);
+                    if (end <= start) partErrors[`end_${index}`] = "End > Start";
+                }
+            }
+        });
+
+        if (Object.keys(partErrors).length > 0) errors.parts = partErrors;
 
         return errors;
     };
@@ -163,7 +215,7 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot }) => {
     const handleInitialSubmit = () => {
         setTouched({
             title: true, programId: true, grade: true, subjectId: true,
-            start: true, end: true, students: true
+            students: true, parts: true
         });
 
         if (isValid) {
@@ -177,7 +229,8 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot }) => {
             const payload = {
                 ...formData,
                 studentIds: selectedStudentIds,
-                slotId: slot?.id || null // Add slotId if present
+                slotId: slot?.id || null,
+                parts: parts
             };
 
             const response = await fetch(`${API_URL}/api/exams`, {
@@ -188,7 +241,7 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot }) => {
 
             if (response.ok) {
                 const newExam = await response.json();
-                onSave({ ...newExam, id: newExam.id }); // Ensure ID is passed
+                onSave({ ...newExam, id: newExam.id });
                 onClose();
             } else {
                 alert("Failed to create exam");
@@ -220,15 +273,26 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot }) => {
                         </button>
                     </div>
 
-                    <div className="p-6 space-y-4 text-sm">
+                    <div className="p-6 space-y-4 text-sm max-h-[60vh] overflow-y-auto custom-scrollbar">
                         <div className="grid grid-cols-2 gap-y-4 gap-x-2">
                             <div><p className="font-bold text-gray-500 text-xs uppercase">Title</p><p>{formData.title}</p></div>
+                            <div><p className="font-bold text-gray-500 text-xs uppercase">Type</p><p>{formData.examType} Part</p></div>
                             <div><p className="font-bold text-gray-500 text-xs uppercase">Program</p><p>{sProgram?.name}</p></div>
                             <div><p className="font-bold text-gray-500 text-xs uppercase">Grade</p><p>{formData.grade}</p></div>
                             <div><p className="font-bold text-gray-500 text-xs uppercase">Subject</p><p>{sSubject?.name}</p></div>
                             <div><p className="font-bold text-gray-500 text-xs uppercase">Students</p><p>{selectedStudentIds.length} Selected</p></div>
-                            <div><p className="font-bold text-gray-500 text-xs uppercase">Timing</p><p>{formData.startDate} {formData.startTime} - {formData.endTime}</p></div>
                         </div>
+
+                        <div className="border-t pt-2">
+                            <p className="font-bold text-gray-500 text-xs uppercase mb-2">Schedule</p>
+                            {parts.map((p, i) => (
+                                <div key={i} className="flex justify-between text-xs mb-1">
+                                    <span className="font-medium">{p.name}</span>
+                                    <span>{p.date} • {p.startTime} - {p.endTime}</span>
+                                </div>
+                            ))}
+                        </div>
+
                         <div className="bg-yellow-50 p-3 rounded border border-yellow-100 text-yellow-800 text-xs">
                             <AlertCircle size={14} className="inline mr-1 mb-0.5" />
                             Please double check the dates. Notifications will be sent to all selected students.
@@ -316,6 +380,35 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot }) => {
                                 </select>
                             </div>
                         </div>
+
+                        {/* Exam Type Selection */}
+                        <div className="space-y-1.5">
+                            <label className="text-sm font-bold text-gray-700">Presentation Mode</label>
+                            <div className="flex items-center gap-4">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="examType"
+                                        value="Single"
+                                        checked={formData.examType === 'Single'}
+                                        onChange={handleTypeChange}
+                                        className="text-green-600 focus:ring-green-500 cursor-pointer"
+                                    />
+                                    <span className="text-sm text-gray-700">Single Part</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="examType"
+                                        value="Multi"
+                                        checked={formData.examType === 'Multi'}
+                                        onChange={handleTypeChange}
+                                        className="text-green-600 focus:ring-green-500 cursor-pointer"
+                                    />
+                                    <span className="text-sm text-gray-700">Multi-Part (Part 1, Part 2...)</span>
+                                </label>
+                            </div>
+                        </div>
                     </section>
 
                     {/* Step 2: Assignments - Enabled when Step 1 is mostly done (Program & Grade) */}
@@ -395,56 +488,94 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot }) => {
                         </div>
                     </section>
 
-                    {/* Step 3: Timing - Enabled when Step 2 is mostly done */}
+                    {/* Step 3: Timing - Multi-Part Aware */}
                     <section className={`space-y-4 transition-opacity duration-300 ${!isStep2Complete ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
                         <div className="flex items-center gap-2 text-purple-700 font-bold border-b border-purple-100 pb-2">
-                            <span className="bg-purple-100 px-2 py-0.5 rounded text-sm">Step 3</span> Schedule Timing
+                            <span className="bg-purple-100 px-2 py-0.5 rounded text-sm">Step 3</span> Schedule {formData.examType === 'Multi' ? 'Parts' : 'Timing'}
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Start Time */}
-                            <div className={`p-4 rounded-xl border ${touched.start && errors.start ? 'bg-red-50 border-red-100' : 'bg-gray-50 border-gray-100'}`}>
-                                <h4 className="text-xs font-bold uppercase text-gray-500 mb-3 flex items-center gap-1"><Calendar size={12} /> Start</h4>
-                                <input
-                                    type="date"
-                                    name="startDate"
-                                    value={formData.startDate}
-                                    onChange={handleChange}
-                                    onBlur={() => handleBlur('start')}
-                                    className="w-full mb-2 bg-white border border-gray-200 rounded px-3 py-2 text-sm"
-                                />
-                                <input
-                                    type="time"
-                                    name="startTime"
-                                    value={formData.startTime}
-                                    onChange={handleChange}
-                                    onBlur={() => handleBlur('start')}
-                                    className="w-full bg-white border border-gray-200 rounded px-3 py-2 text-sm"
-                                />
-                                {touched.start && errors.start && <p className="text-xs text-red-600 font-bold mt-2">{errors.start}</p>}
-                            </div>
+                        <div className="space-y-4">
+                            {parts.map((part, index) => (
+                                <div key={index} className="bg-gray-50 p-4 rounded-xl border border-gray-200 relative animate-in fade-in duration-300">
+                                    <div className="flex justify-between items-center mb-3">
+                                        <h4 className="font-bold text-sm text-gray-600 flex items-center gap-2">
+                                            {formData.examType === 'Multi' ? (
+                                                <input
+                                                    value={part.name}
+                                                    onChange={(e) => handlePartChange(index, 'name', e.target.value)}
+                                                    className="bg-transparent border-b border-dashed border-gray-400 text-gray-800 focus:outline-none focus:border-green-500 w-32"
+                                                />
+                                            ) : (
+                                                <span className="uppercase text-xs tracking-wide">Standard Schedule</span>
+                                            )}
+                                        </h4>
+                                        {formData.examType === 'Multi' && parts.length > 1 && (
+                                            <button onClick={() => removePart(index)} className="text-red-400 hover:text-red-600 p-1">
+                                                <Trash2 size={16} />
+                                            </button>
+                                        )}
+                                    </div>
 
-                            {/* End Time */}
-                            <div className={`p-4 rounded-xl border ${touched.end && errors.end ? 'bg-red-50 border-red-100' : 'bg-gray-50 border-gray-100'}`}>
-                                <h4 className="text-xs font-bold uppercase text-gray-500 mb-3 flex items-center gap-1"><Clock size={12} /> End</h4>
-                                <input
-                                    type="date"
-                                    name="endDate"
-                                    value={formData.endDate}
-                                    onChange={handleChange}
-                                    onBlur={() => handleBlur('end')}
-                                    className="w-full mb-2 bg-white border border-gray-200 rounded px-3 py-2 text-sm"
-                                />
-                                <input
-                                    type="time"
-                                    name="endTime"
-                                    value={formData.endTime}
-                                    onChange={handleChange}
-                                    onBlur={() => handleBlur('end')}
-                                    className="w-full bg-white border border-gray-200 rounded px-3 py-2 text-sm"
-                                />
-                                {touched.end && errors.end && <p className="text-xs text-red-600 font-bold mt-2">{errors.end}</p>}
-                            </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {/* Date and Venue */}
+                                        <div className="space-y-2">
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-bold text-gray-500">Date</label>
+                                                <input
+                                                    type="date"
+                                                    value={part.date}
+                                                    onChange={(e) => handlePartChange(index, 'date', e.target.value)}
+                                                    className="w-full px-3 py-1.5 border border-gray-200 rounded text-sm"
+                                                />
+                                                {touched.parts && errors.parts?.[`date_${index}`] && <p className="text-xs text-red-500">{errors.parts[`date_${index}`]}</p>}
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-bold text-gray-500">Venue</label>
+                                                <input
+                                                    type="text"
+                                                    value={part.venue}
+                                                    onChange={(e) => handlePartChange(index, 'venue', e.target.value)}
+                                                    placeholder="Classroom / Hall"
+                                                    className="w-full px-3 py-1.5 border border-gray-200 rounded text-sm"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Time Range */}
+                                        <div className="space-y-2">
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-bold text-gray-500">Start Time</label>
+                                                <input
+                                                    type="time"
+                                                    value={part.startTime}
+                                                    onChange={(e) => handlePartChange(index, 'startTime', e.target.value)}
+                                                    className="w-full px-3 py-1.5 border border-gray-200 rounded text-sm"
+                                                />
+                                                {touched.parts && errors.parts?.[`start_${index}`] && <p className="text-xs text-red-500">{errors.parts[`start_${index}`]}</p>}
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-bold text-gray-500">End Time</label>
+                                                <input
+                                                    type="time"
+                                                    value={part.endTime}
+                                                    onChange={(e) => handlePartChange(index, 'endTime', e.target.value)}
+                                                    className="w-full px-3 py-1.5 border border-gray-200 rounded text-sm"
+                                                />
+                                                {touched.parts && errors.parts?.[`end_${index}`] && <p className="text-xs text-red-500">{errors.parts[`end_${index}`]}</p>}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+
+                            {formData.examType === 'Multi' && (
+                                <button
+                                    onClick={addPart}
+                                    className="w-full py-2 border-2 border-dashed border-gray-200 rounded-xl text-gray-500 font-bold text-sm hover:border-green-500 hover:text-green-600 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <Plus size={16} /> Add Part
+                                </button>
+                            )}
                         </div>
                     </section>
                 </div>

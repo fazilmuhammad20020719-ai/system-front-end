@@ -3,13 +3,12 @@ import { useState, useEffect } from 'react';
 import { X, Save, Layers, Calendar, CheckCircle } from 'lucide-react';
 import { API_URL } from '../config';
 
-const CreateSlotModal = ({ isOpen, onClose, onSave }) => {
+const CreateSlotModal = ({ isOpen, onClose, onSave, slot = null }) => {
     const [formData, setFormData] = useState({
         name: '',
         programId: '',
         startDate: '',
-        endDate: '',
-        status: 'Upcoming'
+        endDate: ''
     });
     const [programs, setPrograms] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -25,9 +24,21 @@ const CreateSlotModal = ({ isOpen, onClose, onSave }) => {
                 }
             };
             fetchPrograms();
-            setFormData({ name: '', programId: '', startDate: '', endDate: '', status: 'Upcoming' });
+
+            if (slot) {
+                // Populate form for editing
+                setFormData({
+                    name: slot.name,
+                    programId: slot.program_id,
+                    startDate: slot.start_date ? new Date(slot.start_date).toISOString().split('T')[0] : '',
+                    endDate: slot.end_date ? new Date(slot.end_date).toISOString().split('T')[0] : ''
+                });
+            } else {
+                // Reset for new slot
+                setFormData({ name: '', programId: '', startDate: '', endDate: '' });
+            }
         }
-    }, [isOpen]);
+    }, [isOpen, slot]);
 
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -43,8 +54,11 @@ const CreateSlotModal = ({ isOpen, onClose, onSave }) => {
 
         setLoading(true);
         try {
-            const res = await fetch(`${API_URL}/api/slots`, {
-                method: 'POST',
+            const url = slot ? `${API_URL}/api/slots/${slot.id}` : `${API_URL}/api/slots`;
+            const method = slot ? 'PUT' : 'POST';
+
+            const res = await fetch(url, {
+                method: method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
             });
@@ -52,11 +66,11 @@ const CreateSlotModal = ({ isOpen, onClose, onSave }) => {
                 onSave();
                 onClose();
             } else {
-                alert("Failed to create slot.");
+                alert(`Failed to ${slot ? 'update' : 'create'} slot.`);
             }
         } catch (err) {
             console.error(err);
-            alert("Error creating slot.");
+            alert(`Error ${slot ? 'updating' : 'creating'} slot.`);
         } finally {
             setLoading(false);
         }
@@ -68,7 +82,7 @@ const CreateSlotModal = ({ isOpen, onClose, onSave }) => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in duration-200">
                 <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                    <h2 className="text-xl font-bold text-gray-800">Add Examination Slot</h2>
+                    <h2 className="text-xl font-bold text-gray-800">{slot ? 'Edit Examination Slot' : 'Add Examination Slot'}</h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
                 </div>
 
@@ -127,7 +141,7 @@ const CreateSlotModal = ({ isOpen, onClose, onSave }) => {
                 <div className="p-4 bg-gray-50 border-t flex justify-end gap-3">
                     <button onClick={onClose} className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-bold text-gray-600">Cancel</button>
                     <button onClick={handleSubmit} disabled={loading} className="px-6 py-2 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 shadow-sm">
-                        {loading ? 'Saving...' : 'Save Slot'}
+                        {loading ? 'Saving...' : (slot ? 'Update Slot' : 'Save Slot')}
                     </button>
                 </div>
             </div>

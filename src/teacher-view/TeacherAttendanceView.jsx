@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useParams } from 'react-router-dom';
 import {
     CheckCircle,
     XCircle,
@@ -6,15 +7,17 @@ import {
     ChevronRight,
     Calendar as CalendarIcon
 } from 'lucide-react';
+import { API_URL } from '../config'; // Ensure this path is correct
 
-const TeacherAttendanceView = ({ stats }) => {
+const TeacherAttendanceView = () => {
+    const { id } = useParams(); // Get teacher ID from URL
+
     // State for the Calendar
     const [currentDate, setCurrentDate] = useState(new Date());
+    const [attendanceData, setAttendanceData] = useState({});
+    const [loading, setLoading] = useState(false);
 
-    // Mock Attendance Data (Teacher Specific)
-    const attendanceData = {};
-
-    // Calendar Helper Functions (Identical logic)
+    // Calendar Helper Functions
     const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
     const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
 
@@ -27,6 +30,59 @@ const TeacherAttendanceView = ({ stats }) => {
     const currentYear = new Date().getFullYear();
     const years = Array.from({ length: 11 }, (_, i) => currentYear - 5 + i);
 
+    // Fetch Attendance Data when Month/Year changes
+    useEffect(() => {
+        const fetchAttendance = async () => {
+            if (!id) return;
+            setLoading(true);
+            try {
+                // Calculate start and end date for the selected month
+                // Adding 1 to month because JS months are 0-indexed
+                const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+                const endDate = `${year}-${String(month + 1).padStart(2, '0')}-${daysInMonth}`;
+
+                const res = await fetch(`${API_URL}/api/teachers/${id}/attendance?startDate=${startDate}&endDate=${endDate}`);
+
+                if (res.ok) {
+                    const data = await res.json();
+
+                    // Transform array to object: { "2023-10-01": "Present", ... }
+                    const dataMap = {};
+                    data.forEach(record => {
+                        dataMap[record.date] = record.status;
+                    });
+                    setAttendanceData(dataMap);
+                }
+            } catch (error) {
+                console.error("Failed to fetch teacher attendance:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchAttendance();
+    }, [id, month, year, daysInMonth]);
+
+    // Calculate Stats for the CURRENTLY VIEWED Month
+    const stats = useMemo(() => {
+        let present = 0;
+        let absent = 0;
+        let holidays = 0;
+
+        Object.values(attendanceData).forEach(status => {
+            if (status === 'Present') present++;
+            if (status === 'Absent') absent++;
+            if (status === 'Holiday') holidays++;
+        });
+
+        const totalWorkingDays = present + absent; // Ignoring holidays for rate calculation
+        const rate = totalWorkingDays > 0 ? Math.round((present / totalWorkingDays) * 100) : 0;
+
+        return { present, absent, holidays, total: totalWorkingDays, rate };
+    }, [attendanceData]);
+
+
+    // Handlers
     const handlePrevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
     const handleNextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
     const handleMonthChange = (e) => setCurrentDate(new Date(year, parseInt(e.target.value), 1));
@@ -86,11 +142,13 @@ const TeacherAttendanceView = ({ stats }) => {
             {/* LEFT SIDE: Stats Cards */}
             <div className="lg:col-span-1 space-y-4">
                 <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm text-center">
-                    <p className="text-gray-500 text-sm font-medium">Monthly Attendance</p>
-                    <h2 className="text-4xl font-bold text-green-600 mt-2">
-                        {stats ? Math.round((stats.present / stats.total) * 100) : 0}%
+                    <p className="text-gray-500 text-sm font-medium">
+                        {monthNames[month]} Attendance
+                    </p>
+                    <h2 className={`text-4xl font-bold mt-2 ${stats.rate >= 75 ? 'text-green-600' : 'text-orange-500'}`}>
+                        {loading ? '...' : `${stats.rate}%`}
                     </h2>
-                    <p className="text-xs text-gray-400 mt-1">Total Working Days: {stats?.total || 0}</p>
+                    <p className="text-xs text-gray-400 mt-1">Recorded Days: {stats.total}</p>
                 </div>
 
                 <div className="bg-white p-4 rounded-xl border border-gray-100 flex justify-between items-center shadow-sm">
@@ -100,7 +158,7 @@ const TeacherAttendanceView = ({ stats }) => {
                         </div>
                         Present
                     </span>
-                    <span className="font-bold text-gray-800 text-lg">{stats?.present || 0} Days</span>
+                    <span className="font-bold text-gray-800 text-lg">{stats.present} Days</span>
                 </div>
 
                 <div className="bg-red-50 p-4 rounded-xl border border-red-100 flex justify-between items-center">
@@ -110,7 +168,7 @@ const TeacherAttendanceView = ({ stats }) => {
                         </div>
                         Absent
                     </span>
-                    <span className="font-bold text-red-800 text-lg">{stats?.absent || 0} Days</span>
+                    <span className="font-bold text-red-800 text-lg">{stats.absent} Days</span>
                 </div>
             </div>
 
@@ -122,6 +180,7 @@ const TeacherAttendanceView = ({ stats }) => {
                     <div className="flex items-center gap-2">
                         <CalendarIcon className="text-green-600" size={20} />
                         <h3 className="font-bold text-gray-800">Attendance Log</h3>
+                        {loading && <span className="text-xs text-gray-400 ml-2 animate-pulse">Loading...</span>}
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -174,7 +233,6 @@ const TeacherAttendanceView = ({ stats }) => {
                 <div className="flex flex-wrap gap-4 mt-6 pt-4 border-t border-gray-100 text-xs text-gray-500 justify-center">
                     <div className="flex items-center gap-1.5"><span className="w-3 h-3 bg-white border border-green-500 rounded"></span> Present</div>
                     <div className="flex items-center gap-1.5"><span className="w-3 h-3 bg-red-100 border border-red-200 rounded"></span> Absent</div>
-
                     <div className="flex items-center gap-1.5"><span className="w-3 h-3 bg-blue-50 border border-blue-100 rounded"></span> Holiday</div>
                 </div>
 

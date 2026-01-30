@@ -1,14 +1,9 @@
-// src/exams/ExamsLayout.jsx
 import { useState } from 'react';
 import Sidebar from '../Sidebar';
 import ExaminationSlots from './ExaminationSlots';
-import ResultsLog from './ResultsLog';
-import ExaminationAttendance from './ExaminationAttendance';
-import { ClipboardList, GraduationCap, UserCheck } from 'lucide-react';
 
 const ExamsLayout = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
-    const [activeTab, setActiveTab] = useState('exams'); // 'exams' | 'results' | 'attendance'
 
     return (
         <div className="flex min-h-screen bg-[#f3f4f6] font-sans text-slate-800">
@@ -22,32 +17,11 @@ const ExamsLayout = () => {
                             <h1 className="text-2xl font-bold text-slate-900">Academic Assessments</h1>
                             <p className="text-sm text-slate-500">Manage exams, results, and student enrollments</p>
                         </div>
-
-                        {/* 3-Way Toggle Switch */}
-                        <div className="bg-slate-100 p-1.5 rounded-xl flex flex-wrap items-center shadow-inner gap-1">
-                            {['exams', 'results', 'attendance'].map((tab) => (
-                                <button
-                                    key={tab}
-                                    onClick={() => setActiveTab(tab)}
-                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${activeTab === tab
-                                        ? "bg-white text-green-700 shadow-md"
-                                        : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
-                                        }`}
-                                >
-                                    {tab === 'exams' && <ClipboardList size={16} />}
-                                    {tab === 'results' && <GraduationCap size={16} />}
-                                    {tab === 'attendance' && <UserCheck size={16} />}
-                                    <span className="capitalize">{tab}</span>
-                                </button>
-                            ))}
-                        </div>
                     </div>
                 </header>
 
                 <main className="p-6 md:p-8 max-w-7xl mx-auto w-full">
-                    {activeTab === 'exams' && <ExaminationSlots />}
-                    {activeTab === 'results' && <ResultsLog />}
-                    {activeTab === 'attendance' && <ExaminationAttendance />}
+                    <ExaminationSlots />
                 </main>
             </div>
         </div>

@@ -3,15 +3,20 @@ import { useState, useEffect } from 'react';
 import { Filter, Download, Save, Search, CheckCircle, AlertCircle } from 'lucide-react';
 import { API_URL } from '../config';
 
-const ResultsLog = () => {
+const ResultsLog = ({ exams: propExams }) => {
     const [exams, setExams] = useState([]);
     const [selectedExamId, setSelectedExamId] = useState('');
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
 
-    // Fetch Exams on Mount
+    // Fetch Exams on Mount or use Props
     useEffect(() => {
+        if (propExams) {
+            setExams(propExams);
+            return;
+        }
+
         const fetchExams = async () => {
             try {
                 const res = await fetch(`${API_URL}/api/exams`);
@@ -21,7 +26,7 @@ const ResultsLog = () => {
             }
         };
         fetchExams();
-    }, []);
+    }, [propExams]);
 
     // Fetch Results when Exam Selected
     useEffect(() => {

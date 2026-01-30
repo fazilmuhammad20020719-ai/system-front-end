@@ -1,88 +1,165 @@
-import { BookOpen, GraduationCap, School, MapPin } from 'lucide-react';
+import { BookOpen, GraduationCap, School, MapPin, Plus, Trash2 } from 'lucide-react';
 import { InputField, SelectField } from './FormComponents';
 
-const StudentAcademicInfo = ({ formData, handleChange, programs = [] }) => {
+const StudentAcademicInfo = ({ formData, handleChange, programs = [], setFormData }) => {
 
-    // 1. Program Options for Dropdown (ID as Value, Name as Label)
-    // programs prop is expected to be array of { id, name, duration }
-    const programOptions = programs.map(p => ({
+    // Safety check for programs
+    const safePrograms = programs || [];
+
+    const programOptions = safePrograms.map(p => ({
         value: p.id,
         label: p.name
     }));
 
-    // 2. Find Selected Program Data using ID
-    // formData.programId is expected to hold the ID
-    const selectedProgram = programs.find(p => String(p.id) === String(formData.programId));
-
-    // 3. Grade Options Logic (Status-ஐப் பொறுத்து மாறுதல்)
-    let yearOptions = [];
-    let isGradeDisabled = false;
-
-    // Active ஆக இல்லையென்றால் (எ.கா: Graduated), Grade Dropdown-ஐ நிறுத்தவும்
-    if (formData.status && formData.status !== 'Active') {
-        yearOptions = [formData.status]; // Dropdown-ல் Status மட்டுமே தெரியும்
-        isGradeDisabled = true; // Dropdown வேலை செய்யாது (Disabled)
-    } else {
-        // Active என்றால், Program Duration படி Grades வரும்
-        if (selectedProgram) {
-            const durationNum = parseInt(selectedProgram.duration) || 5;
-            yearOptions = Array.from({ length: durationNum }, (_, i) => `Grade ${i + 1}`);
-        } else {
-            yearOptions = ['Select Program First'];
-        }
-    }
-
-    // Generate Batch years (2026 to 2002)
     const sessionYears = Array.from({ length: 25 }, (_, i) => 2026 - i);
+
+    // Safety check for enrollments: Default to [] if missing to avoid crash
+    const enrollments = formData?.enrollments || [];
+
+    // --- Enrollment Handlers ---
+    const handleEnrollmentChange = (index, name, value) => {
+        const currentEnrollments = formData.enrollments || [];
+        if (index >= currentEnrollments.length) return; // Should not happen
+
+        const updatedEnrollments = [...currentEnrollments];
+        updatedEnrollments[index] = { ...updatedEnrollments[index], [name]: value };
+        setFormData(prev => ({ ...prev, enrollments: updatedEnrollments }));
+    };
+
+    const addEnrollment = () => {
+        setFormData(prev => ({
+            ...prev,
+            enrollments: [
+                ...(prev.enrollments || []), // Safety check
+                { programId: '', session: '2025', currentYear: '', status: 'Active', admissionDate: '' }
+            ]
+        }));
+    };
+
+    const removeEnrollment = (index) => {
+        if (formData.enrollments.length === 1) return; // Prevent removing the last one
+        setFormData(prev => ({
+            ...prev,
+            enrollments: prev.enrollments.filter((_, i) => i !== index)
+        }));
+    };
 
     return (
         <div className="space-y-6">
 
-            {/* Current Admission Details */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-                <h3 className="text-base font-bold text-gray-800 mb-5 flex items-center gap-2 border-b border-gray-100 pb-3">
-                    <BookOpen className="text-[#EB8A33]" size={18} /> Academic Admission
-                </h3>
+            {/* --- ADMISSION DETAILS (Multi-Row) --- */}
+            {enrollments.map((enrollment, index) => {
+                // Determine options dynamically for this specific enrollment
+                const selectedProgram = programs.find(p => String(p.id) === String(enrollment.programId));
+                let yearOptions = [];
+                let isGradeDisabled = false;
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {/* Program */}
-                    <SelectField
-                        label="Admission Program"
-                        name="programId" // Changed from 'program' to 'programId'
-                        value={formData.programId || ''}
-                        onChange={handleChange}
-                        options={programOptions.length > 0 ? programOptions : [{ value: '', label: 'Loading...' }]}
-                        required
-                    />
+                if (enrollment.status && enrollment.status !== 'Active') {
+                    yearOptions = [enrollment.status];
+                    isGradeDisabled = true;
+                } else {
+                    if (selectedProgram) {
+                        const durationNum = parseInt(selectedProgram.duration) || 5;
+                        yearOptions = Array.from({ length: durationNum }, (_, i) => `Grade ${i + 1}`);
+                    } else {
+                        yearOptions = ['Select Program First'];
+                    }
+                }
 
-                    {/* Session */}
-                    <SelectField
-                        label="Session / Batch Year"
-                        name="session"
-                        value={formData.session}
-                        onChange={handleChange}
-                        options={sessionYears}
-                        required
-                    />
+                return (
+                    <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 relative">
+                        <div className="flex justify-between items-center border-b border-gray-100 pb-3 mb-5">
+                            <h3 className="text-base font-bold text-gray-800 flex items-center gap-2">
+                                <BookOpen className="text-[#EB8A33]" size={18} />
+                                {index === 0 ? "Academic Admission (Primary)" : `Program #${index + 1}`}
+                            </h3>
+                            {formData.enrollments.length > 1 && (
+                                <button
+                                    onClick={() => removeEnrollment(index)}
+                                    className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50"
+                                    title="Remove Program"
+                                >
+                                    <Trash2 size={18} />
+                                </button>
+                            )}
+                        </div>
 
-                    {/* STATUS SELECT இங்கே இல்லை - Personal Info-ல் உள்ளது */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {/* Program */}
+                            <SelectField
+                                label="Admission Program"
+                                name="programId"
+                                value={enrollment.programId || ''}
+                                onChange={(e) => handleEnrollmentChange(index, "programId", e.target.value)}
+                                options={programOptions.length > 0 ? programOptions : [{ value: '', label: 'Loading...' }]}
+                                required
+                            />
 
-                    {/* Dynamic Grade Field (Status-ஐப் பொறுத்து மாறும்) */}
-                    <SelectField
-                        label="Current Grade / Year"
-                        name="currentYear"
-                        // Active இல்லையென்றால் Status-ஐயே Value-ஆகக் காட்டும்
-                        value={formData.status !== 'Active' ? formData.status : formData.currentYear}
-                        onChange={handleChange}
-                        options={yearOptions}
-                        disabled={isGradeDisabled} // Lock if not Active
-                        required
-                    />
-                </div>
+                            {/* Session */}
+                            <SelectField
+                                label="Session / Batch Year"
+                                name="session"
+                                value={enrollment.session}
+                                onChange={(e) => handleEnrollmentChange(index, "session", e.target.value)}
+                                options={sessionYears}
+                                required
+                            />
+
+                            {/* Admission Date */}
+                            <InputField
+                                label="Admission Date"
+                                name="admissionDate"
+                                type="date"
+                                value={enrollment.admissionDate}
+                                onChange={(e) => handleEnrollmentChange(index, "admissionDate", e.target.value)}
+                                required
+                            />
+
+                            {/* Dynamic Grade Field */}
+                            <SelectField
+                                label="Current Grade / Year"
+                                name="currentYear"
+                                value={enrollment.status !== 'Active' ? enrollment.status : enrollment.currentYear}
+                                onChange={(e) => handleEnrollmentChange(index, "currentYear", e.target.value)}
+                                options={yearOptions}
+                                disabled={isGradeDisabled}
+                                required
+                            />
+
+                            {/* Status Explicitly Here for Enrollments? Or assume Active? 
+                                 Ideally we should allow setting status per enrollment. 
+                                 Let's add it if space permits, or assume inherited from top? 
+                                 Actually AddStudent has 'status' in top level state, but multi-program implies per-program status.
+                                 Let's add a Status selector.
+                             */}
+                            <SelectField
+                                label="Status"
+                                name="status"
+                                value={enrollment.status}
+                                onChange={(e) => handleEnrollmentChange(index, "status", e.target.value)}
+                                options={['Active', 'Graduated', 'Dropped', 'Suspended']}
+                                required
+                            />
+
+                        </div>
+                    </div>
+                );
+            })}
+
+            {/* Add Program Button */}
+            <div className="flex justify-end">
+                <button
+                    onClick={addEnrollment}
+                    type="button" // Important preventing submit
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 font-semibold text-sm transition-colors"
+                >
+                    <Plus size={16} /> Add Another Program
+                </button>
             </div>
 
-            {/* Previous Education History (UI அப்படியே உள்ளது) */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+
+            {/* Previous Education History */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mt-8">
                 <h3 className="text-base font-bold text-gray-800 mb-5 flex items-center gap-2 border-b border-gray-100 pb-3">
                     <GraduationCap className="text-[#EB8A33]" size={18} /> Previous Education
                 </h3>

@@ -117,7 +117,14 @@ const ExamsList = () => {
                             </div>
                         </div>
 
-                        <h3 className="font-bold text-lg text-slate-800 mb-1 line-clamp-1">{exam.title}</h3>
+                        <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-bold text-lg text-slate-800 line-clamp-1">{exam.title}</h3>
+                            {exam.exam_type === 'Multi' && (
+                                <span className="bg-purple-100 text-purple-700 text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wide shrink-0">
+                                    Multi-Part
+                                </span>
+                            )}
+                        </div>
                         <p className="text-sm text-green-600 font-medium mb-4">{exam.program_name} • {exam.subject_name}</p>
 
                         <div className="mt-auto space-y-3">

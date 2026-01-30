@@ -44,9 +44,6 @@ const StudentGrid = ({ students, cardSize, currentPage, totalPages, onPageChange
                                     <p className="text-[10px] text-gray-400 font-mono bg-gray-50 px-1.5 py-0.5 rounded w-fit mt-0.5">#{student.id}</p>
                                 </div>
                             </div>
-                            <span className={`border rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${getStatusColor(student.status)}`}>
-                                {student.status}
-                            </span>
                         </div>
 
                         {/* Card Details */}
@@ -55,11 +52,29 @@ const StudentGrid = ({ students, cardSize, currentPage, totalPages, onPageChange
                                 {/* Program */}
                                 <div className="mb-2">
                                     <p className="text-[10px] text-gray-400 uppercase font-bold flex items-center gap-1">
-                                        <GraduationCap size={10} /> Program
+                                        <GraduationCap size={10} /> Programs
                                     </p>
-                                    <p className={`font-semibold text-gray-800 truncate ${cardSize === 'large' ? 'text-sm' : 'text-xs'}`}>
-                                        {student.program}
-                                    </p>
+                                    <div className="flex flex-col gap-1 mt-1">
+                                        {student.enrollments_summary && student.enrollments_summary.length > 0 ? (
+                                            student.enrollments_summary.slice(0, 2).map((e, idx) => (
+                                                <div key={idx} className="flex justify-between items-center bg-white px-2 py-1 rounded border border-gray-100 shadow-sm">
+                                                    <span className={`font-semibold text-gray-800 truncate ${cardSize === 'large' ? 'text-xs' : 'text-[10px]'}`} title={e.program}>
+                                                        {e.program}
+                                                    </span>
+                                                    <span className={`ml-2 text-[9px] px-1.5 rounded uppercase font-bold ${getStatusColor(e.status)}`}>
+                                                        {e.status || 'Active'}
+                                                    </span>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <p className={`font-semibold text-gray-800 truncate ${cardSize === 'large' ? 'text-sm' : 'text-xs'}`}>
+                                                {student.program}
+                                            </p>
+                                        )}
+                                        {student.enrollments_summary && student.enrollments_summary.length > 2 && (
+                                            <p className="text-[9px] text-gray-400 text-center">+{student.enrollments_summary.length - 2} more</p>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {/* Batch & Year Badges */}

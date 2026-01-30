@@ -29,7 +29,7 @@ const ViewStudent = () => {
             setLoading(true);
             try {
                 // Fetch basic student info
-                const sRes = await fetch(`${API_URL}/api/students/${id}`);
+                const sRes = await fetch(`${API_URL}/api/students/${id}?t=${Date.now()}`);
 
                 if (!sRes.ok) {
                     console.error("Student not found");
@@ -38,6 +38,7 @@ const ViewStudent = () => {
                 }
 
                 const sData = await sRes.json();
+
 
                 // Fetch Attendance for stats
                 const attRes = await fetch(`${API_URL}/api/attendance?studentId=${id}`);
@@ -76,6 +77,7 @@ const ViewStudent = () => {
                     // Personal - Map fields from DB columns
                     firstName: sData.name ? sData.name.split(' ')[0] : '',
                     lastName: sData.name ? sData.name.split(' ').slice(1).join(' ') : '',
+                    name: sData.name || '', // Add name explicitly
                     image: sData.photo_url
                         ? `${API_URL}${sData.photo_url}`
                         : null,
@@ -83,13 +85,16 @@ const ViewStudent = () => {
                     gender: sData.gender || 'Male',
                     nic: sData.nic || 'N/A',
                     email: sData.email || 'N/A',
+                    email: sData.email || 'N/A',
                     phone: sData.contact_number || sData.phone || 'N/A',
+                    whatsapp: sData.whatsapp || sData.contact_number || 'N/A', // Add whatsapp explicit mapping, fallback to phone
 
                     // Location
+                    city: sData.city || '', // Add city explicitly
                     province: sData.province || 'N/A',
                     district: sData.district || 'N/A',
-                    dsDivision: 'N/A', // Not in DB yet
-                    gnDivision: 'N/A', // Not in DB yet
+                    dsDivision: sData.ds_division || 'N/A',
+                    gnDivision: sData.gn_division || 'N/A',
                     address: sData.address || 'Address not set',
                     googleMapLink: sData.google_map_link || '',
                     latitude: sData.latitude || '',
@@ -99,12 +104,28 @@ const ViewStudent = () => {
                     guardianName: sData.guardian_name || 'N/A',
                     guardianRelation: sData.guardian_relation || 'N/A',
                     guardianPhone: sData.guardian_phone || 'N/A',
-                    guardianEmail: '', // Not in schema for guardian email specifically if not reused
+                    guardianEmail: sData.guardian_email || 'N/A',
                     guardianOccupation: sData.guardian_occupation || 'N/A',
                     guardianPhoto: sData.guardian_photo ? `${API_URL}${sData.guardian_photo}` : null,
 
+                    // Enrollments
+                    enrollments: sData.enrollments && sData.enrollments.length > 0 ? sData.enrollments.map(e => ({
+                        program: e.program,
+                        year: e.year,
+                        session: e.session,
+                        status: e.status,
+                        admissionDate: e.admission_date ? e.admission_date.split('T')[0] : 'N/A'
+                    })) : [{
+                        // Fallback logic if array empty (but with migration it shouldn't be)
+                        program: sData.program_name || sData.program,
+                        year: sData.current_year,
+                        session: sData.session_year,
+                        status: sData.status || 'Active',
+                        admissionDate: sData.admission_date ? sData.admission_date.split('T')[0] : 'N/A'
+                    }],
+
                     // Academic
-                    program: sData.program_name || sData.program,
+                    program: sData.program_name || sData.program, // Keep for backward compat defaults
                     year: sData.current_year,
                     session: sData.session_year,
                     admissionDate: sData.admission_date ? sData.admission_date.split('T')[0] : 'N/A',
@@ -112,8 +133,8 @@ const ViewStudent = () => {
 
                     // Extra Data
                     previousSchool: sData.previous_school || 'N/A',
-                    lastStudiedGrade: '', // Not in DB
-                    previousCollegeName: '', // Not in DB
+                    lastStudiedGrade: sData.last_studied_grade || 'N/A',
+                    previousCollegeName: sData.previous_college || 'N/A',
                     mediumOfStudy: sData.medium_of_study || 'N/A',
 
                     documents: docs,

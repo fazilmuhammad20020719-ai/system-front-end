@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Save, Users, Check, AlertCircle, CheckCircle, Plus, Minus, Calendar, Clock, MapPin } from 'lucide-react';
 import { API_URL } from '../config';
 
@@ -45,31 +46,70 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot, examToEdit = null }) =
                         fetch(`${API_URL}/api/teachers`)
                     ]);
 
-                    if (subRes.ok) setSubjects(await subRes.json());
+                    let fetchedSubjects = [];
+                    if (subRes.ok) {
+                        fetchedSubjects = await subRes.json();
+                        setSubjects(fetchedSubjects);
+                    }
                     if (stuRes.ok) setStudents(await stuRes.json());
                     if (progRes.ok) setPrograms(await progRes.json());
                     if (teachRes.ok) setTeachers(await teachRes.json());
 
-                    if (teachRes.ok) setTeachers(await teachRes.json());
-
                     // Populate or Reset
                     if (examToEdit) {
+                        try {
+                            const detailsRes = await fetch(`${API_URL}/api/exams/${examToEdit.id}/details`);
+                            if (detailsRes.ok) {
+                                const details = await detailsRes.json();
+                                const assignedIds = details.students.map(s => s.id);
+                                setSelectedStudentIds(assignedIds);
+                            }
+                        } catch (err) {
+                            console.error("Error fetching existing students:", err);
+                        }
+
+                        // Infer Grade from Subject
+                        const relatedSubject = fetchedSubjects.find(s => s.id === examToEdit.subject_id);
+                        let inferredGrade = '';
+                        if (relatedSubject) {
+                            // Normalize '1' to 'Grade 1' or keep 'Grade 1'
+                            inferredGrade = relatedSubject.year.toString().startsWith('Grade')
+                                ? relatedSubject.year
+                                : `Grade ${relatedSubject.year}`;
+                        }
+
                         setFormData({
                             title: examToEdit.title,
-                            grade: '', // Needs manual selection or inference to be safe
+                            grade: inferredGrade,
                             subjectId: examToEdit.subject_id,
-                            description: '',
-                            examType: 'Single',
+                            description: examToEdit.description || '',
+                            examType: examToEdit.exam_type || (examToEdit.parts && examToEdit.parts.length > 1 ? 'Multi' : 'Single'),
                             supervisorId: examToEdit.supervisor_id || ''
                         });
-                        setParts([{
-                            name: 'Main Exam',
-                            date: examToEdit.exam_date ? examToEdit.exam_date.split('T')[0] : '',
-                            startTime: examToEdit.start_time,
-                            endTime: examToEdit.end_time,
-                            venue: examToEdit.venue
-                        }]);
-                        setSelectedStudentIds([]); // Do not auto-select to avoid override issues
+
+                        if (examToEdit.parts && examToEdit.parts.length > 0) {
+                            setParts(examToEdit.parts.map(p => ({
+                                name: p.name,
+                                date: p.exam_date ? p.exam_date.split('T')[0] : '',
+                                startTime: p.start_time,
+                                endTime: p.end_time,
+                                venue: p.venue
+                            })));
+                            setPartCount(examToEdit.parts.length);
+                        } else {
+                            // Fallback for legacy single exams without parts table data
+                            setParts([{
+                                name: 'Main Exam',
+                                date: examToEdit.exam_date ? examToEdit.exam_date.split('T')[0] : '',
+                                startTime: examToEdit.start_time,
+                                endTime: examToEdit.end_time,
+                                venue: examToEdit.venue
+                            }]);
+                            setPartCount(1);
+                        }
+
+                        // Student selection is handled by the fetch above
+                        // setSelectedStudentIds([]); // Do not reset here
                     } else {
                         setFormData({
                             title: '',
@@ -282,8 +322,8 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot, examToEdit = null }) =
 
     if (showSummary) {
         const selectedSubject = subjects.find(s => s.id === parseInt(formData.subjectId));
-        return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        return createPortal(
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
                 <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
                     <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-green-50/50">
                         <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
@@ -330,12 +370,13 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot, examToEdit = null }) =
                         </button>
                     </div>
                 </div>
-            </div>
+            </div>,
+            document.body
         );
     }
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+    return createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
 
                 {/* Header */}
@@ -608,7 +649,8 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot, examToEdit = null }) =
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

@@ -1,4 +1,4 @@
-import { User, Calendar, Mail, Phone, Hash, CreditCard } from 'lucide-react';
+import { User, Calendar, Mail, Phone, Hash, CreditCard, MessageCircle } from 'lucide-react';
 import { InputField, SelectField, FileUploadField } from './FormComponents';
 import { API_URL } from '../config'; // <--- முக்கியம்
 
@@ -49,6 +49,7 @@ const StudentPersonalInfo = ({ formData, handleChange, handleStatusChange }) => 
                     <InputField label="NIC Number (Optional)" name="nic" value={formData.nic} onChange={handleChange} placeholder="987654321V" icon={CreditCard} />
                     <InputField label="Email Address" name="email" type="email" value={formData.email} onChange={handleChange} placeholder="student@example.com" icon={Mail} />
                     <InputField label="Phone Number" name="phone" value={formData.phone} onChange={handleChange} placeholder="+94 77 123 4567" icon={Phone} />
+                    <InputField label="WhatsApp Number" name="whatsapp" value={formData.whatsapp} onChange={handleChange} placeholder="+94 77 123 4567" icon={MessageCircle} />
                 </div>
             </div>
         </div>

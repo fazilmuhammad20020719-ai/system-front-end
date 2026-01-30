@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Search, Calendar, UserCheck, XCircle, CheckCircle, Clock } from 'lucide-react';
 import { API_URL } from '../config';
 
-const ExaminationAttendance = () => {
+const ExaminationAttendance = ({ exams: propExams }) => {
     // --- State ---
     const [selectedExamId, setSelectedExamId] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
@@ -14,6 +14,11 @@ const ExaminationAttendance = () => {
 
     // --- Data Loading ---
     useEffect(() => {
+        if (propExams) {
+            setExams(propExams);
+            return;
+        }
+
         // Fetch Exams
         const fetchExams = async () => {
             try {
@@ -24,7 +29,7 @@ const ExaminationAttendance = () => {
             }
         };
         fetchExams();
-    }, []);
+    }, [propExams]);
 
     useEffect(() => {
         if (!selectedExamId) {

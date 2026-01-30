@@ -22,11 +22,14 @@ const EditStudent = () => {
     const { notify } = useNotification();
 
     const [formData, setFormData] = useState({
-        studentPhoto: null, indexNumber: '', firstName: '', lastName: '', dob: '', gender: 'Male', nic: '', email: '', phone: '',
+        studentPhoto: null, indexNumber: '', firstName: '', lastName: '', dob: '', gender: 'Male', nic: '', email: '', phone: '', whatsapp: '',
         status: 'Active',
         province: '', district: '', dsDivision: '', gnDivision: '', address: '', googleMapLink: '', latitude: '', longitude: '',
         guardianName: '', guardianRelation: 'Father', guardianOccupation: '', guardianPhone: '', guardianEmail: '',
-        programId: '', session: '', currentYear: '', admissionDate: '', lastStudiedGrade: '', previousSchoolName: '', previousCollegeName: '', mediumOfStudy: 'Tamil',
+        // Legacy fields + Enrollments
+        programId: '', session: '', currentYear: '', admissionDate: '', status: 'Active',
+        enrollments: [], // Multi-Program Support
+        lastStudiedGrade: '', previousSchoolName: '', previousCollegeName: '', mediumOfStudy: 'Tamil',
         nicFront: null, nicBack: null, studentSignature: null, birthCertificate: null,
         medicalReport: null, guardianNic: null, guardianPhoto: null, leavingCertificate: null
     });
@@ -47,6 +50,26 @@ const EditStudent = () => {
                     const fName = nameParts[0];
                     const lName = nameParts.slice(1).join(' ');
 
+                    let loadedEnrollments = [];
+                    if (data.enrollments && Array.isArray(data.enrollments) && data.enrollments.length > 0) {
+                        loadedEnrollments = data.enrollments.map(e => ({
+                            programId: e.program_id,
+                            session: e.session || e.session_year,
+                            currentYear: e.year || e.current_year,
+                            status: e.status,
+                            admissionDate: e.admission_date ? e.admission_date.split('T')[0] : ''
+                        }));
+                    } else {
+                        // Fallback logic
+                        loadedEnrollments = [{
+                            programId: data.program_id,
+                            session: data.session_year,
+                            currentYear: data.current_year,
+                            status: data.status,
+                            admissionDate: data.admission_date ? data.admission_date.split('T')[0] : ''
+                        }];
+                    }
+
                     setFormData({
                         indexNumber: data.id,
                         firstName: fName,
@@ -56,11 +79,14 @@ const EditStudent = () => {
                         nic: data.nic || '',
                         email: data.email || '',
                         phone: data.contact_number || '',
+                        whatsapp: data.whatsapp || '',
                         status: data.status || 'Active',
                         address: data.address || '',
                         city: data.city || '',
                         district: data.district || '',
                         province: data.province || '',
+                        dsDivision: data.ds_division || '',
+                        gnDivision: data.gn_division || '',
                         googleMapLink: data.google_map_link || '',
                         latitude: data.latitude || '',
                         longitude: data.longitude || '',
@@ -68,14 +94,20 @@ const EditStudent = () => {
                         guardianRelation: data.guardian_relation || 'Father',
                         guardianOccupation: data.guardian_occupation || '',
                         guardianPhone: data.guardian_phone || '',
+                        guardianEmail: data.guardian_email || '',
                         programId: data.program_id || '',
                         session: data.session_year || '',
                         currentYear: data.current_year || '',
                         admissionDate: data.admission_date ? data.admission_date.split('T')[0] : '',
+                        enrollments: loadedEnrollments, // Use the prepared variable
                         previousSchoolName: data.previous_school || '',
+                        lastStudiedGrade: data.last_studied_grade || '',
+                        previousCollegeName: data.previous_college || '',
                         mediumOfStudy: data.medium_of_study || 'Tamil',
                         studentPhoto: null,
-                        photoUrl: data.photo_url || null // Set existing photo URL for preview
+                        photoUrl: data.photo_url ? `${API_URL}${data.photo_url}` : null,
+                        guardianPhoto: null,
+                        guardianPhotoUrl: data.guardian_photo ? `${API_URL}${data.guardian_photo}` : null
                     });
                 } else {
                     notify('error', "Student not found!", 'Error');
@@ -111,7 +143,9 @@ const EditStudent = () => {
 
         // 2. State-ல் உள்ள தரவுகளை இதில் ஏற்றுதல்
         for (const key in formData) {
-            if (formData[key] !== null && formData[key] !== '') {
+            if (key === 'enrollments') {
+                data.append('enrollments', JSON.stringify(formData.enrollments));
+            } else if (formData[key] !== null && formData[key] !== '') {
                 data.append(key, formData[key]);
             }
         }
@@ -125,7 +159,7 @@ const EditStudent = () => {
             if (response.ok) {
                 notify('success', "Student Updated Successfully", 'Success');
                 setTimeout(() => {
-                    navigate('/students');
+                    navigate(`/students/${formData.indexNumber}`);
                 }, 1500);
             } else {
                 const errData = await response.json();
@@ -179,7 +213,7 @@ const EditStudent = () => {
                         )}
                         {activeTab === 'guardian' && <StudentGuardianInfo formData={formData} handleChange={handleChange} />}
                         {activeTab === 'academic' && (
-                            <StudentAcademicInfo formData={formData} handleChange={handleChange} programs={programOptions} />
+                            <StudentAcademicInfo formData={formData} handleChange={handleChange} programs={programOptions} setFormData={setFormData} />
                         )}
                         {activeTab === 'documents' && <StudentUploads formData={formData} handleChange={handleChange} />}
                     </div>

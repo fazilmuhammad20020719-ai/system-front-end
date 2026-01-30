@@ -54,13 +54,37 @@ const StudentList = ({ students }) => {
                     </div>
                 </div>
             </td>
-            <td className="py-3 px-4 text-sm text-gray-600">{student.program}</td>
-            <td className="py-3 px-4 text-sm text-gray-600">{student.currentYear || 'N/A'}</td>
+            <td className="py-3 px-4 text-sm text-gray-600">
+                {student.enrollments_summary && student.enrollments_summary.length > 0 ? (
+                    <div className="flex flex-col gap-1">
+                        {student.enrollments_summary.map((e, idx) => (
+                            <div key={idx} className="flex items-center gap-2">
+                                <span className="font-semibold text-xs">{e.program}</span>
+                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${e.status === 'Active' ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                                    {e.status}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <>
+                        <p>{student.program}</p>
+                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${student.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                            {student.status}
+                        </span>
+                    </>
+                )}
+            </td>
+            <td className="py-3 px-4 text-sm text-gray-600">
+                {/* Display Latest Grade/Year */}
+                {student.enrollments_summary && student.enrollments_summary.length > 0
+                    ? student.enrollments_summary[0].year
+                    : student.currentYear || 'N/A'}
+            </td>
             <td className="py-3 px-4">
-                <span className={`px-2 py-1 rounded-full text-xs font-bold ${student.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                    }`}>
-                    {student.status}
-                </span>
+                {/* Status Column removed/merged into program column for cleaner lookup, or keep general? */}
+                {/* Keeping empty or generalized status if needed, but better to show per program above */}
+                <span className="text-xs text-gray-400">See Program</span>
             </td>
             <td className="py-3 px-4 text-sm text-gray-600">{student.contact}</td>
             <td className="py-3 px-4">

@@ -26,13 +26,13 @@ const ViewStudentInfo = ({ student }) => {
                 <ActionButton
                     icon={Phone}
                     label="Call"
-                    onClick={() => window.open(`tel:${student.contact_number}`)}
+                    onClick={() => window.open(`tel:${student.phone}`)}
                     color="text-gray-600 bg-gray-50 hover:bg-blue-50 hover:text-blue-600"
                 />
                 <ActionButton
                     icon={MessageCircle}
                     label="WhatsApp"
-                    onClick={() => openWhatsApp(student.contact_number)}
+                    onClick={() => openWhatsApp(student.whatsapp)}
                     color="text-gray-600 bg-gray-50 hover:bg-green-50 hover:text-green-600"
                 />
                 {student.email && (
@@ -55,7 +55,8 @@ const ViewStudentInfo = ({ student }) => {
                         <DetailRow label="Gender" value={student.gender} />
                         <DetailRow label="NIC Number" value={student.nic} />
                         <DetailRow label="Email" value={student.email} />
-                        <DetailRow label="Mobile" value={student.contact_number} />
+                        <DetailRow label="Mobile" value={student.phone} />
+                        <DetailRow label="Last Studied Grade" value={student.lastStudiedGrade || student.last_studied_grade} />
                     </div>
                 </SectionCard>
 
@@ -65,6 +66,8 @@ const ViewStudentInfo = ({ student }) => {
                         <DetailRow label="Permanent Address" value={student.address} />
                         <DetailRow label="City" value={student.city} />
                         <DetailRow label="District" value={student.district} />
+                        <DetailRow label="DS Division" value={student.dsDivision} />
+                        <DetailRow label="GN Division" value={student.gnDivision} />
                         <DetailRow label="Province" value={student.province} />
                     </div>
                 </SectionCard>
@@ -73,21 +76,60 @@ const ViewStudentInfo = ({ student }) => {
                 <SectionCard title="Academic Information" icon={BookOpen} color="text-purple-600" bg="bg-purple-50">
                     <div className="space-y-0.5">
                         <DetailRow label="Program" value={student.program_name || student.program} highlight />
-                        <DetailRow label="Current Year" value={student.current_year} />
-                        <DetailRow label="Session / Batch" value={student.session_year} />
-                        <DetailRow label="Admission Date" value={formatDate(student.admission_date)} />
-                        <DetailRow label="Previous School" value={student.previous_school} />
-                        <DetailRow label="Medium" value={student.medium_of_study} />
+                        <DetailRow label="Current Year" value={student.year || student.current_year} />
+                        <DetailRow label="Session / Batch" value={student.session || student.session_year} />
+                        <DetailRow label="Admission Date" value={(student.admissionDate && student.admissionDate !== 'N/A') ? formatDate(student.admissionDate) : (student.admission_date ? formatDate(student.admission_date) : '—')} />
+                        <DetailRow label="Previous School" value={student.previousSchool || student.previous_school} />
+                        <DetailRow label="Previous School" value={student.previousSchool || student.previous_school} />
+
+                        <DetailRow label="Medium" value={student.mediumOfStudy || student.medium_of_study} />
                     </div>
                 </SectionCard>
 
                 {/* 4. Guardian Information */}
                 <SectionCard title="Guardian Information" icon={Users} color="text-green-600" bg="bg-green-50">
-                    <div className="space-y-0.5">
-                        <DetailRow label="Guardian Name" value={student.guardian_name} highlight />
-                        <DetailRow label="Relationship" value={student.guardian_relation} />
-                        <DetailRow label="Occupation" value={student.guardian_occupation} />
-                        <DetailRow label="Phone" value={student.guardian_phone} />
+                    <div className="flex flex-col gap-4">
+                        {/* Guardian Photo & Actions */}
+                        <div className="flex items-center gap-4">
+                            {student.guardianPhoto ? (
+                                <img
+                                    src={student.guardianPhoto}
+                                    alt="Guardian"
+                                    className="w-16 h-16 rounded-full object-cover border-2 border-green-100"
+                                />
+                            ) : (
+                                <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center text-green-300">
+                                    <Users size={32} />
+                                </div>
+                            )}
+
+                            <div className="flex flex-wrap gap-2">
+                                {(student.guardianPhone || student.guardian_phone) && (
+                                    <>
+                                        <ActionButton
+                                            icon={Phone}
+                                            label="Call"
+                                            onClick={() => window.open(`tel:${student.guardianPhone || student.guardian_phone}`)}
+                                            color="text-gray-600 bg-gray-50 hover:bg-blue-50 hover:text-blue-600"
+                                        />
+                                        <ActionButton
+                                            icon={MessageCircle}
+                                            label="WhatsApp"
+                                            onClick={() => openWhatsApp(student.guardianPhone || student.guardian_phone)}
+                                            color="text-gray-600 bg-gray-50 hover:bg-green-50 hover:text-green-600"
+                                        />
+                                    </>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="space-y-0.5">
+                            <DetailRow label="Guardian Name" value={student.guardianName || student.guardian_name} highlight />
+                            <DetailRow label="Relationship" value={student.guardianRelation || student.guardian_relation} />
+                            <DetailRow label="Occupation" value={student.guardianOccupation || student.guardian_occupation} />
+                            <DetailRow label="Phone" value={student.guardianPhone || student.guardian_phone} />
+                            <DetailRow label="Email" value={student.guardianEmail || student.guardian_email} />
+                        </div>
                     </div>
                 </SectionCard>
 

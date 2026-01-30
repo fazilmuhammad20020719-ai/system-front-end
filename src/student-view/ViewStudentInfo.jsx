@@ -56,6 +56,12 @@ const ViewStudentInfo = ({ student }) => {
                         <DetailRow label="NIC Number" value={student.nic} />
                         <DetailRow label="Email" value={student.email} />
                         <DetailRow label="Mobile" value={student.phone} />
+                        <DetailRow
+                            label="Programs"
+                            value={student.enrollments && student.enrollments.length > 0
+                                ? student.enrollments.map(e => e.program).join(', ')
+                                : (student.program || 'N/A')}
+                        />
                         <DetailRow label="Last Studied Grade" value={student.lastStudiedGrade || student.last_studied_grade} />
                     </div>
                 </SectionCard>
@@ -74,15 +80,27 @@ const ViewStudentInfo = ({ student }) => {
 
                 {/* 3. Academic Information */}
                 <SectionCard title="Academic Information" icon={BookOpen} color="text-purple-600" bg="bg-purple-50">
-                    <div className="space-y-0.5">
-                        <DetailRow label="Program" value={student.program_name || student.program} highlight />
-                        <DetailRow label="Current Year" value={student.year || student.current_year} />
-                        <DetailRow label="Session / Batch" value={student.session || student.session_year} />
-                        <DetailRow label="Admission Date" value={(student.admissionDate && student.admissionDate !== 'N/A') ? formatDate(student.admissionDate) : (student.admission_date ? formatDate(student.admission_date) : '—')} />
-                        <DetailRow label="Previous School" value={student.previousSchool || student.previous_school} />
-                        <DetailRow label="Previous School" value={student.previousSchool || student.previous_school} />
+                    <div className="space-y-4">
+                        {student.enrollments && student.enrollments.map((enrollment, index) => (
+                            <div key={index} className="space-y-0.5 border-b border-gray-100 last:border-0 pb-3 last:pb-0">
+                                {student.enrollments.length > 1 && (
+                                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">
+                                        Program #{index + 1}
+                                    </h4>
+                                )}
+                                <DetailRow label="Program" value={enrollment.program} highlight />
+                                <DetailRow label="Current Year" value={enrollment.year} />
+                                <DetailRow label="Session / Batch" value={enrollment.session} />
+                                <DetailRow label="Status" value={enrollment.status} />
+                                <DetailRow label="Admission Date" value={formatDate(enrollment.admissionDate)} />
+                            </div>
+                        ))}
 
-                        <DetailRow label="Medium" value={student.mediumOfStudy || student.medium_of_study} />
+                        <div className="pt-2 border-t border-gray-100">
+                            <DetailRow label="Previous School" value={student.previousSchool || student.previous_school} />
+                            <DetailRow label="Previous Madrasa" value={student.previousCollegeName} />
+                            <DetailRow label="Medium" value={student.mediumOfStudy || student.medium_of_study} />
+                        </div>
                     </div>
                 </SectionCard>
 

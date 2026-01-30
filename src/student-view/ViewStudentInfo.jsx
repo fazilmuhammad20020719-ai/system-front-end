@@ -35,6 +35,17 @@ const ViewStudentInfo = ({ student }) => {
                     onClick={() => openWhatsApp(student.whatsapp)}
                     color="text-gray-600 bg-gray-50 hover:bg-green-50 hover:text-green-600"
                 />
+                {/* Google Map Button */}
+                {/* Google Map Button */}
+                <ActionButton
+                    icon={MapPin}
+                    label="Location"
+                    onClick={() => {
+                        const url = student.googleMapLink || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(student.city || student.address || '')}`;
+                        window.open(url, '_blank');
+                    }}
+                    color="text-gray-600 bg-gray-50 hover:bg-red-50 hover:text-red-600"
+                />
                 {student.email && (
                     <ActionButton
                         icon={Mail}
@@ -45,112 +56,101 @@ const ViewStudentInfo = ({ student }) => {
                 )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col md:flex-row gap-6 items-start">
 
-                {/* 1. Personal Details */}
-                <SectionCard title="Personal Details" icon={User} color="text-blue-600" bg="bg-blue-50">
-                    <div className="space-y-0.5">
-                        <DetailRow label="Full Name" value={student.name} highlight />
-                        <DetailRow label="Date of Birth" value={formatDate(student.dob)} />
-                        <DetailRow label="Gender" value={student.gender} />
-                        <DetailRow label="NIC Number" value={student.nic} />
-                        <DetailRow label="Email" value={student.email} />
-                        <DetailRow label="Mobile" value={student.phone} />
-                        <DetailRow
-                            label="Programs"
-                            value={student.enrollments && student.enrollments.length > 0
-                                ? student.enrollments.map(e => e.program).join(', ')
-                                : (student.program || 'N/A')}
-                        />
-                        <DetailRow label="Last Studied Grade" value={student.lastStudiedGrade || student.last_studied_grade} />
-                    </div>
-                </SectionCard>
+                {/* Left Column */}
+                <div className="flex-1 space-y-6 w-full">
 
-                {/* 2. Address & Location */}
-                <SectionCard title="Address & Location" icon={MapPin} color="text-red-600" bg="bg-red-50">
-                    <div className="space-y-0.5">
-                        <DetailRow label="Permanent Address" value={student.address} />
-                        <DetailRow label="City" value={student.city} />
-                        <DetailRow label="District" value={student.district} />
-                        <DetailRow label="DS Division" value={student.dsDivision} />
-                        <DetailRow label="GN Division" value={student.gnDivision} />
-                        <DetailRow label="Province" value={student.province} />
-                    </div>
-                </SectionCard>
-
-                {/* 3. Academic Information */}
-                <SectionCard title="Academic Information" icon={BookOpen} color="text-purple-600" bg="bg-purple-50">
-                    <div className="space-y-4">
-                        {student.enrollments && student.enrollments.map((enrollment, index) => (
-                            <div key={index} className="space-y-0.5 border-b border-gray-100 last:border-0 pb-3 last:pb-0">
-                                {student.enrollments.length > 1 && (
-                                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">
-                                        Program #{index + 1}
-                                    </h4>
-                                )}
-                                <DetailRow label="Program" value={enrollment.program} highlight />
-                                <DetailRow label="Current Year" value={enrollment.year} />
-                                <DetailRow label="Session / Batch" value={enrollment.session} />
-                                <DetailRow label="Status" value={enrollment.status} />
-                                <DetailRow label="Admission Date" value={formatDate(enrollment.admissionDate)} />
-                            </div>
-                        ))}
-
-                        <div className="pt-2 border-t border-gray-100">
-                            <DetailRow label="Previous School" value={student.previousSchool || student.previous_school} />
-                            <DetailRow label="Previous Madrasa" value={student.previousCollegeName} />
-                            <DetailRow label="Medium" value={student.mediumOfStudy || student.medium_of_study} />
-                        </div>
-                    </div>
-                </SectionCard>
-
-                {/* 4. Guardian Information */}
-                <SectionCard title="Guardian Information" icon={Users} color="text-green-600" bg="bg-green-50">
-                    <div className="flex flex-col gap-4">
-                        {/* Guardian Photo & Actions */}
-                        <div className="flex items-center gap-4">
-                            {student.guardianPhoto ? (
-                                <img
-                                    src={student.guardianPhoto}
-                                    alt="Guardian"
-                                    className="w-16 h-16 rounded-full object-cover border-2 border-green-100"
-                                />
-                            ) : (
-                                <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center text-green-300">
-                                    <Users size={32} />
-                                </div>
-                            )}
-
-                            <div className="flex flex-wrap gap-2">
-                                {(student.guardianPhone || student.guardian_phone) && (
-                                    <>
-                                        <ActionButton
-                                            icon={Phone}
-                                            label="Call"
-                                            onClick={() => window.open(`tel:${student.guardianPhone || student.guardian_phone}`)}
-                                            color="text-gray-600 bg-gray-50 hover:bg-blue-50 hover:text-blue-600"
-                                        />
-                                        <ActionButton
-                                            icon={MessageCircle}
-                                            label="WhatsApp"
-                                            onClick={() => openWhatsApp(student.guardianPhone || student.guardian_phone)}
-                                            color="text-gray-600 bg-gray-50 hover:bg-green-50 hover:text-green-600"
-                                        />
-                                    </>
-                                )}
-                            </div>
-                        </div>
-
+                    {/* 1. Personal Details */}
+                    <SectionCard title="Personal Details" icon={User} color="text-blue-600" bg="bg-blue-50">
                         <div className="space-y-0.5">
-                            <DetailRow label="Guardian Name" value={student.guardianName || student.guardian_name} highlight />
-                            <DetailRow label="Relationship" value={student.guardianRelation || student.guardian_relation} />
-                            <DetailRow label="Occupation" value={student.guardianOccupation || student.guardian_occupation} />
-                            <DetailRow label="Phone" value={student.guardianPhone || student.guardian_phone} />
-                            <DetailRow label="Email" value={student.guardianEmail || student.guardian_email} />
+                            <DetailRow label="Full Name" value={student.name} highlight />
+                            <DetailRow label="Date of Birth" value={formatDate(student.dob)} />
+                            <DetailRow label="Gender" value={student.gender} />
+                            <DetailRow label="NIC Number" value={student.nic} />
+                            <DetailRow label="Email" value={student.email} />
+                            <DetailRow label="Mobile" value={student.phone} />
+                            <DetailRow label="Address" value={student.address} />
+                            <DetailRow label="Location" value={[student.city, student.district].filter(Boolean).join(', ') || student.city || student.district} />
                         </div>
-                    </div>
-                </SectionCard>
+                    </SectionCard>
 
+                    {/* 2. Guardian Information */}
+                    <SectionCard title="Guardian Information" icon={Users} color="text-green-600" bg="bg-green-50">
+                        <div className="flex flex-col gap-4">
+                            {/* Guardian Photo & Actions */}
+                            <div className="flex items-center gap-4">
+                                {student.guardianPhoto ? (
+                                    <img
+                                        src={student.guardianPhoto}
+                                        alt="Guardian"
+                                        className="w-16 h-16 rounded-full object-cover border-2 border-green-100"
+                                    />
+                                ) : (
+                                    <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center text-green-300">
+                                        <Users size={32} />
+                                    </div>
+                                )}
+
+                                <div className="flex flex-wrap gap-2">
+                                    {(student.guardianPhone || student.guardian_phone) && (
+                                        <>
+                                            <ActionButton
+                                                icon={Phone}
+                                                label="Call"
+                                                onClick={() => window.open(`tel:${student.guardianPhone || student.guardian_phone}`)}
+                                                color="text-gray-600 bg-gray-50 hover:bg-blue-50 hover:text-blue-600"
+                                            />
+                                            <ActionButton
+                                                icon={MessageCircle}
+                                                label="WhatsApp"
+                                                onClick={() => openWhatsApp(student.guardianPhone || student.guardian_phone)}
+                                                color="text-gray-600 bg-gray-50 hover:bg-green-50 hover:text-green-600"
+                                            />
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="space-y-0.5">
+                                <DetailRow label="Guardian Name" value={student.guardianName || student.guardian_name} highlight />
+                                <DetailRow label="Relationship" value={student.guardianRelation || student.guardian_relation} />
+                                <DetailRow label="Occupation" value={student.guardianOccupation || student.guardian_occupation} />
+                                <DetailRow label="Phone" value={student.guardianPhone || student.guardian_phone} />
+                                <DetailRow label="Email" value={student.guardianEmail || student.guardian_email} />
+                            </div>
+                        </div>
+                    </SectionCard>
+                </div>
+
+                {/* Right Column */}
+                <div className="flex-1 space-y-6 w-full">
+                    {/* 3. Academic Information */}
+                    <SectionCard title="Academic Information" icon={BookOpen} color="text-purple-600" bg="bg-purple-50">
+                        <div className="space-y-4">
+                            {student.enrollments && student.enrollments.map((enrollment, index) => (
+                                <div key={index} className="space-y-0.5 border-b border-gray-100 last:border-0 pb-3 last:pb-0">
+                                    {student.enrollments.length > 1 && (
+                                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">
+                                            Program #{index + 1}
+                                        </h4>
+                                    )}
+                                    <DetailRow label="Program" value={enrollment.program} highlight />
+                                    <DetailRow label="Current Year" value={enrollment.year} />
+                                    <DetailRow label="Session / Batch" value={enrollment.session} />
+                                    <DetailRow label="Status" value={enrollment.status} />
+                                    <DetailRow label="Admission Date" value={formatDate(enrollment.admissionDate)} />
+                                </div>
+                            ))}
+
+                            <div className="pt-2 border-t border-gray-100">
+                                <DetailRow label="Previous School" value={student.previousSchool || student.previous_school} />
+                                <DetailRow label="Previous Madrasa" value={student.previousCollegeName} />
+                                <DetailRow label="Medium" value={student.mediumOfStudy || student.medium_of_study} />
+                            </div>
+                        </div>
+                    </SectionCard>
+                </div>
             </div>
         </div>
     );
@@ -159,7 +159,7 @@ const ViewStudentInfo = ({ student }) => {
 // --- Styled Components (Reused from Teacher View) ---
 
 const SectionCard = ({ title, icon: Icon, color, bg, children }) => (
-    <div className="bg-white rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-gray-100 overflow-hidden flex flex-col h-full hover:border-gray-200 transition-colors">
+    <div className="bg-white rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-gray-100 overflow-hidden flex flex-col hover:border-gray-200 transition-colors">
         <div className="px-6 py-4 border-b border-gray-50 flex items-center gap-3">
             <div className={`p-2 rounded-lg ${bg} ${color}`}>
                 <Icon size={18} />

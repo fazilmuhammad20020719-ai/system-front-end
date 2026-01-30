@@ -37,6 +37,7 @@ const ExamsLayout = lazy(() => import('./exams/ExamsLayout'));
 // Others
 const Attendance = lazy(() => import('./Attendance'));
 const Documents = lazy(() => import('./Documents'));
+const Subscription = lazy(() => import('./Subscription'));
 
 function App() {
   return (
@@ -79,6 +80,7 @@ function App() {
               {/* Attendance & Documents */}
               <Route path="/attendance" element={<Attendance />} />
               <Route path="/documents" element={<Documents />} />
+              <Route path="/subscription" element={<Subscription />} />
 
               {/* Catch-all */}
               <Route path="*" element={<Navigate to="/dashboard" replace />} />

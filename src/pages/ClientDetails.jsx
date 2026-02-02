@@ -1,12 +1,20 @@
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { Users, Activity, BookOpen, Server, Settings, Database, UploadCloud, Calendar } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 
 const ClientDetails = () => {
     const { id } = useParams();
-    const [activeTab, setActiveTab] = useState('Overview');
+    const location = useLocation();
+    const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'Overview');
+
+    // Update state if location state changes (for internal navigation consistency)
+    React.useEffect(() => {
+        if (location.state?.activeTab) {
+            setActiveTab(location.state.activeTab);
+        }
+    }, [location.state]);
 
     // MOCK DATA - In a real app, fetch based on ID
     const client = {

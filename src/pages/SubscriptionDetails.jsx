@@ -1,12 +1,22 @@
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { CreditCard, Calendar, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import Topbar from '../components/Topbar';
 
 const SubscriptionDetails = () => {
     const { id } = useParams();
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('Subscription');
+
+    const handleTabChange = (tab) => {
+        if (!id) return;
+        if (tab === 'Subscription') {
+            setActiveTab('Subscription');
+        } else {
+            navigate(`/client/${id}`, { state: { activeTab: tab } });
+        }
+    };
 
     // MOCK DATA - Should fetch based on ID
     const client = {
@@ -33,7 +43,7 @@ const SubscriptionDetails = () => {
     return (
         <div className="flex h-screen bg-slate-900 font-sans text-slate-100 overflow-hidden">
             {/* Modular Sidebar */}
-            <Sidebar client={client} activeTab={activeTab} setActiveTab={setActiveTab} />
+            <Sidebar client={client} activeTab={activeTab} setActiveTab={handleTabChange} />
 
             {/* MAIN CONTENT */}
             <main className="flex-1 flex flex-col h-full overflow-hidden relative">

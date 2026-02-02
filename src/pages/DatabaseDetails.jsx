@@ -16,9 +16,7 @@ const DatabaseDetails = () => {
             setActiveTab('Database');
         } else {
             // Navigate back to the main client details page for other tabs
-            // Pass the selected tab as state or query param if we wanted to open that specific tab, 
-            // but for now just going back to Overview is consistent with default behavior.
-            navigate(`/client/${id}`);
+            navigate(`/client/${id}`, { state: { activeTab: tab } });
         }
     };
 

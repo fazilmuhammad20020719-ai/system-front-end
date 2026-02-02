@@ -15,7 +15,7 @@ const SystemLogs = () => {
         if (tab === 'Logs') {
             setActiveTab('Logs');
         } else {
-            navigate(`/client/${id}`);
+            navigate(`/client/${id}`, { state: { activeTab: tab } });
         }
     };
 
@@ -100,8 +100,8 @@ const SystemLogs = () => {
                                                     <div className="flex items-center gap-2">
                                                         {getIcon(log.type)}
                                                         <span className={`capitalize font-medium ${log.type === 'error' ? 'text-red-400' :
-                                                                log.type === 'warning' ? 'text-orange-400' :
-                                                                    log.type === 'success' ? 'text-green-400' : 'text-blue-400'
+                                                            log.type === 'warning' ? 'text-orange-400' :
+                                                                log.type === 'success' ? 'text-green-400' : 'text-blue-400'
                                                             }`}>{log.type}</span>
                                                     </div>
                                                 </td>

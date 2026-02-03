@@ -1,32 +1,40 @@
-import { useState } from 'react';
-import { CreditCard, Download, Eye, Plus, Filter, Upload, X, Trash2, Edit2, Lock } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { CreditCard, Download, Plus, Upload, X, Trash2, Edit2, Lock, Check, Settings } from 'lucide-react';
 import jsPDF from 'jspdf';
+import { API_URL } from '../config';
 
-const ViewStudentFees = ({ fees: initialFees }) => {
+const ViewStudentFees = ({ studentId, admissionDate, monthlyFee: initialMonthlyFee }) => {
     // --- State Management ---
-    const [fees, setFees] = useState(initialFees || {
-        pending: "Rs. 15,000",
-        paid: "Rs. 45,000",
-        history: []
-    });
+    const [fees, setFees] = useState([]); // Real DB records
+    const [monthlyFeeRate, setMonthlyFeeRate] = useState(initialMonthlyFee || 0);
+    const [loading, setLoading] = useState(false);
 
-    const [showModal, setShowModal] = useState(false);
+    // Modals
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [showRateModal, setShowRateModal] = useState(false);
     const [showPasswordModal, setShowPasswordModal] = useState(false);
-    const [modalMode, setModalMode] = useState('add');
+
+    // Form & Filters
     const [filterStatus, setFilterStatus] = useState('All');
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+    const [selectedMonth, setSelectedMonth] = useState('All');
+    const [modalMode, setModalMode] = useState('add'); // 'add' (pay), 'edit'
 
     // Temp Data
     const [tempPaymentData, setTempPaymentData] = useState(null);
+    const [tempRate, setTempRate] = useState(monthlyFeeRate);
     const [passwordInput, setPasswordInput] = useState('');
     const [passwordError, setPasswordError] = useState('');
+    const [passwordAction, setPasswordAction] = useState(null); // 'save_payment', 'delete_payment', 'update_rate'
+    const [deleteId, setDeleteId] = useState(null);
 
     // Form Data
     const [formData, setFormData] = useState({
         id: '',
         month: '',
-        year: new Date().getFullYear().toString(), // Default to current year
+        year: '',
         amount: '',
-        date: '',
+        date: new Date().toISOString().split('T')[0],
         receipt: null,
         receiptUrl: null,
         status: 'Paid'
@@ -37,176 +45,371 @@ const ViewStudentFees = ({ fees: initialFees }) => {
         "July", "August", "September", "October", "November", "December"
     ];
 
-    // Generate last 5 years for selection
-    const currentYear = new Date().getFullYear();
-    const yearsList = Array.from({ length: 5 }, (_, i) => (currentYear - 2 + i).toString());
+    // Generate Year List (Admission Year -> Current + 1)
+    const yearList = useMemo(() => {
+        const current = new Date().getFullYear();
+        const start = admissionDate ? new Date(admissionDate).getFullYear() : current - 2;
+        const years = [];
+        for (let y = start; y <= current + 1; y++) {
+            years.push(y.toString());
+        }
+        return years.sort((a, b) => b - a); // Descending
+    }, [admissionDate]);
 
-    // --- Actions ---
-
-    const handleDownloadReceipt = (record) => {
-        const doc = new jsPDF();
-
-        doc.setFillColor(235, 138, 51);
-        doc.rect(0, 0, 210, 40, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(22);
-        doc.text("OFFICIAL PAYMENT RECEIPT", 105, 25, null, null, "center");
-
-        doc.setTextColor(0, 0, 0);
-        doc.setFontSize(12);
-
-        let yPos = 60;
-        const addLine = (label, value) => {
-            doc.setFont("helvetica", "bold");
-            doc.text(`${label}:`, 20, yPos);
-            doc.setFont("helvetica", "normal");
-            doc.text(`${value}`, 80, yPos);
-            yPos += 15;
-        };
-
-        addLine("Invoice ID", record.id);
-        addLine("Month & Year", `${record.month} ${record.year}`); // Included Year
-        addLine("Payment Date", record.date);
-        addLine("Amount Paid", record.amount);
-        addLine("Status", "PAID");
-
-        doc.setLineWidth(0.5);
-        doc.line(20, 140, 190, 140);
-        doc.setFontSize(10);
-        doc.text("Authorized Signature & System Generated Stamp", 105, 150, null, null, "center");
-
-        doc.save(`Receipt_${record.id}.pdf`);
-    };
-
-    const handleDelete = (id) => {
-        if (window.confirm("Are you sure you want to delete this payment record permanently?")) {
-            setFees(prev => ({
-                ...prev,
-                history: prev.history.filter(rec => rec.id !== id)
-            }));
+    // --- Fetch Real Fees ---
+    const fetchFees = async () => {
+        if (!studentId) return;
+        setLoading(true);
+        try {
+            const response = await fetch(`${API_URL}/api/students/${studentId}/fees`);
+            if (response.ok) {
+                const data = await response.json();
+                setFees(data);
+            }
+        } catch (error) {
+            console.error("Error fetching fees:", error);
+        } finally {
+            setLoading(false);
         }
     };
+
+    useEffect(() => {
+        fetchFees();
+        setMonthlyFeeRate(initialMonthlyFee);
+    }, [studentId, initialMonthlyFee]);
+
+    // --- Generate Automated Rows (Jan-Dec for Selected Year) ---
+    const feeRows = useMemo(() => {
+        const rows = [];
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonthIdx = now.getMonth(); // 0-11
+
+        // Iterate Jan (0) to Dec (11)
+        for (let i = 0; i < 12; i++) {
+            const monthName = academicMonths[i];
+            const yearStr = selectedYear;
+            const yearInt = parseInt(yearStr);
+
+            // Find all payment records for this month/year
+            const monthTxns = fees.filter(f => f.month === monthName && f.year === yearStr);
+
+            const totalPaidAmount = monthTxns.reduce((sum, txn) => sum + parseFloat(txn.amount), 0);
+            const balance = Math.max(0, monthlyFeeRate - totalPaidAmount);
+
+            // Latest record info (for date/receipt display)
+            const latestTxn = monthTxns.length > 0 ? monthTxns[0] : null;
+            // Note: DB sorts by created_at DESC, so [0] is latest
+
+            // Determine Status
+            let status = 'Pending';
+
+            if (balance <= 0) {
+                status = 'Paid';
+            } else {
+                // Balance > 0
+                if (yearInt > currentYear) {
+                    status = 'Coming';
+                } else if (yearInt === currentYear) {
+                    if (i > currentMonthIdx) { // Future month in current year
+                        status = 'Coming';
+                    }
+                    // Else: Current or Past month with balance -> Pending
+                }
+            }
+
+            rows.push({
+                sysId: `${monthName}-${yearStr}`, // Unique Key
+                month: monthName,
+                year: yearStr,
+                paidAmount: totalPaidAmount,
+                balance: balance,
+                status: status,
+
+                // Display Info (from latest txn or empty)
+                date: latestTxn ? (latestTxn.paid_date ? latestTxn.paid_date.split('T')[0] : '') : '',
+                receiptUrl: latestTxn ? (latestTxn.receipt_url ? `${API_URL}${latestTxn.receipt_url}` : null) : null,
+
+                // Data for Actions
+                txns: monthTxns,
+                hasTxns: monthTxns.length > 0,
+
+                // Original needed for helpers
+                amount: totalPaidAmount // for visual compatibility
+            });
+        }
+
+        return rows;
+    }, [fees, selectedYear, monthlyFeeRate]);
+
+    const filteredRows = feeRows.filter(row => {
+        if (filterStatus !== 'All' && row.status !== filterStatus) return false;
+        if (selectedMonth !== 'All' && row.month !== selectedMonth) return false;
+        return true;
+    });
+
+    // Stats (Annual)
+    const totalPaid = feeRows
+        .reduce((sum, row) => sum + row.paidAmount, 0);
+
+    const totalPending = feeRows
+        .filter(row => row.status === 'Pending')
+        .reduce((sum, row) => sum + row.balance, 0);
+
+
+
+    // --- Handlers ---
 
     const openAddModal = () => {
         setModalMode('add');
         setFormData({
             id: '',
-            month: '',
+            month: academicMonths[new Date().getMonth()],
             year: new Date().getFullYear().toString(),
-            amount: '',
-            date: '',
+            amount: monthlyFeeRate,
+            date: new Date().toISOString().split('T')[0],
             receipt: null,
             receiptUrl: null,
             status: 'Paid'
         });
-        setShowModal(true);
+        setShowPaymentModal(true);
     };
 
-    const openEditModal = (record) => {
+    // 1. Pay / Add Handler
+    const handlePayClick = (row) => {
+        setModalMode('add');
+        setFormData({
+            id: '',
+            month: row.month,
+            year: row.year,
+            amount: row.balance > 0 ? row.balance : monthlyFeeRate, // Default to balance
+            date: new Date().toISOString().split('T')[0],
+            receipt: null,
+            receiptUrl: null,
+            status: 'Paid'
+        });
+        setShowPaymentModal(true);
+    };
+
+    // 2. Edit Handler (Edits the latest transaction by default)
+    const handleEditClick = (row) => {
+        if (!row.hasTxns) return;
+        const record = row.txns[0]; // Edit the latest one
         setModalMode('edit');
-        setFormData({ ...record, receipt: null });
-        setShowModal(true);
+        setFormData({
+            id: record.id,
+            month: record.month,
+            year: record.year,
+            amount: record.amount,
+            date: record.paid_date ? record.paid_date.split('T')[0] : '',
+            receipt: null,
+            receiptUrl: record.receipt_url ? `${API_URL}${record.receipt_url}` : null,
+            status: record.status
+        });
+        setShowPaymentModal(true);
     };
 
-    // --- Form & Password ---
-
-    const handleFormSubmit = (e) => {
-        e.preventDefault();
-        if (!formData.month || !formData.year || !formData.amount) {
-            alert("Please fill in required fields (Month, Year, Amount).");
-            return;
-        }
-        // If status is Paid, date is required
-        if (formData.status === 'Paid' && !formData.date) {
-            alert("Please select the payment date.");
-            return;
-        }
-
-        setTempPaymentData(formData);
-        setShowModal(false);
+    // 3. Delete Handler (Initiate)
+    const handleDeleteClick = (id) => {
+        setDeleteId(id);
+        setPasswordAction('delete_payment');
         setShowPasswordModal(true);
         setPasswordInput('');
         setPasswordError('');
     };
 
-    const verifyPasswordAndSave = () => {
-        if (passwordInput === 'admin123') {
-            if (modalMode === 'add') {
-                const newRecord = {
-                    id: `INV-${Math.floor(Math.random() * 100000)}`,
-                    month: tempPaymentData.month,
-                    year: tempPaymentData.year,
-                    amount: tempPaymentData.amount,
-                    status: tempPaymentData.status,
-                    date: tempPaymentData.status === 'Paid' ? tempPaymentData.date : '',
-                    receiptUrl: tempPaymentData.receipt ? URL.createObjectURL(tempPaymentData.receipt) : null
-                };
-                setFees(prev => ({ ...prev, history: [newRecord, ...prev.history] }));
-            } else {
-                setFees(prev => ({
-                    ...prev,
-                    history: prev.history.map(item => item.id === tempPaymentData.id ? {
-                        ...tempPaymentData,
-                        date: tempPaymentData.status === 'Paid' ? tempPaymentData.date : '',
-                        receiptUrl: tempPaymentData.receipt ? URL.createObjectURL(tempPaymentData.receipt) : tempPaymentData.receiptUrl
-                    } : item)
-                }));
-            }
-            setShowPasswordModal(false);
-            setTempPaymentData(null);
-        } else {
-            setPasswordError("Incorrect Password! Access Denied.");
+    // 4. Rate Update Handler (Initiate)
+    const handleUpdateRateClick = () => {
+        setTempRate(monthlyFeeRate);
+        setShowRateModal(true);
+    };
+
+    const confirmUpdateRate = () => {
+        setPasswordAction('update_rate');
+        setShowRateModal(false);
+        setShowPasswordModal(true);
+        setPasswordInput('');
+        setPasswordError('');
+    };
+
+    // 5. Form Submit (Direct Save)
+    const handlePaymentFormSubmit = (e) => {
+        e.preventDefault();
+        if (!formData.amount) {
+            alert("Amount is required.");
+            return;
+        }
+        executeSavePayment(formData);
+        setShowPaymentModal(false);
+    };
+
+    // --- Execute Actions (After Password) ---
+
+    // Execute Delete
+    const executeDelete = async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/students/${studentId}/fees/${deleteId}`, {
+                method: 'DELETE'
+            });
+            if (response.ok) fetchFees();
+            else alert("Failed to delete.");
+        } catch (error) {
+            console.error(error);
         }
     };
 
-    // --- Helpers ---
+    // Execute Save Payment
+    const executeSavePayment = async (dataOverride) => {
+        const data = dataOverride || tempPaymentData;
+        if (!data) return;
 
-    const filteredHistory = fees.history.filter(record => {
-        if (filterStatus === 'All') return true;
-        return record.status === filterStatus;
-    });
+        const submitData = new FormData();
+        submitData.append('month', data.month);
+        submitData.append('year', data.year);
+        submitData.append('amount', data.amount);
+        submitData.append('status', data.status);
+        if (data.date) submitData.append('date', data.date);
+        if (data.receipt) submitData.append('document', data.receipt);
+
+        try {
+            let url = `${API_URL}/api/students/${studentId}/fees`;
+            let method = 'POST';
+
+            if (modalMode === 'edit') {
+                url = `${API_URL}/api/students/${studentId}/fees/${data.id}`;
+                method = 'PUT';
+            }
+
+            const response = await fetch(url, { method, body: submitData });
+            if (response.ok) {
+                fetchFees();
+            } else {
+                alert("Failed to save.");
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    // Execute Update Rate
+    const executeUpdateRate = async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/students/${studentId}/monthly-fee`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ monthlyFee: tempRate })
+            });
+
+            if (response.ok) {
+                setMonthlyFeeRate(tempRate);
+            } else {
+                alert("Failed to update rate.");
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    const verifyPassword = () => {
+        if (passwordInput === 'admin123') {
+            setShowPasswordModal(false);
+            if (passwordAction === 'delete_payment') executeDelete();
+            if (passwordAction === 'save_payment') executeSavePayment();
+            if (passwordAction === 'update_rate') executeUpdateRate();
+        } else {
+            setPasswordError("Incorrect Password!");
+        }
+    };
+
+    // Receipt PDF
+    const handleDownloadReceipt = (record) => {
+        const doc = new jsPDF();
+        doc.setFillColor(235, 138, 51);
+        doc.rect(0, 0, 210, 40, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(22);
+        doc.text("PAYMENT RECEIPT", 105, 25, null, null, "center");
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(12);
+
+        let y = 60;
+        const line = (l, v) => { doc.setFont("helvetica", "bold"); doc.text(`${l}:`, 20, y); doc.setFont("helvetica", "normal"); doc.text(`${v}`, 80, y); y += 15; };
+
+        // For aggregated, show summary
+        const txnId = record.txns && record.txns.length > 0 ? record.txns[0].id : "N/A";
+
+        line("Invoice ID", `INV-${txnId}`);
+        line("Student ID", studentId);
+        line("Month", `${record.month} ${record.year}`);
+        line("Date", record.date);
+        line("Total Paid", `Rs. ${record.paidAmount}`);
+        line("Status", record.status.toUpperCase());
+
+        doc.save(`Receipt_${record.month}_${record.year}.pdf`);
+    };
 
     return (
         <div className="space-y-6">
-
             {/* Header Stats */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div className="grid grid-cols-2 gap-4 w-full md:w-auto">
-                    <div className="bg-red-50 px-6 py-4 rounded-xl border border-red-100">
-                        <p className="text-xs text-red-500 font-bold uppercase tracking-wider">Pending Dues</p>
-                        <h3 className="text-xl font-bold text-red-700 mt-1">{fees.pending}</h3>
+            <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full xl:w-auto">
+                    <div className="bg-red-50 px-5 py-3 rounded-xl border border-red-100 min-w-[200px]">
+                        <p className="text-xs text-red-500 font-bold uppercase tracking-wider">Pending ({selectedYear})</p>
+                        <h3 className="text-xl font-bold text-red-700 mt-1">Rs. {totalPending.toLocaleString()}</h3>
                     </div>
-                    <div className="bg-green-50 px-6 py-4 rounded-xl border border-green-100">
-                        <p className="text-xs text-green-500 font-bold uppercase tracking-wider">Total Paid</p>
-                        <h3 className="text-xl font-bold text-green-700 mt-1">{fees.paid}</h3>
+                    <div className="bg-green-50 px-5 py-3 rounded-xl border border-green-100 min-w-[200px]">
+                        <p className="text-xs text-green-500 font-bold uppercase tracking-wider">Paid ({selectedYear})</p>
+                        <h3 className="text-xl font-bold text-green-700 mt-1">Rs. {totalPaid.toLocaleString()}</h3>
+                    </div>
+                    <div className="bg-blue-50 px-5 py-3 rounded-xl border border-blue-100 min-w-[200px] flex justify-between items-center group cursor-pointer hover:bg-blue-100 transition-colors" onClick={handleUpdateRateClick}>
+                        <div>
+                            <p className="text-xs text-blue-500 font-bold uppercase tracking-wider">Monthly Rate</p>
+                            <h3 className="text-xl font-bold text-blue-700 mt-1">Rs. {monthlyFeeRate}</h3>
+                        </div>
+                        <Settings size={18} className="text-blue-400 group-hover:text-blue-600 group-hover:rotate-90 transition-all" />
                     </div>
                 </div>
 
-                <button
-                    onClick={openAddModal}
-                    className="bg-[#EB8A33] hover:bg-[#d97d2a] text-white px-5 py-3 rounded-lg font-semibold flex items-center gap-2 transition-colors shadow-sm whitespace-nowrap"
-                >
-                    <Plus size={20} /> Add Payment
-                </button>
+                <div className="flex gap-2">
+                    <button onClick={openAddModal} className="bg-[#EB8A33] hover:bg-[#d97d2a] text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors shadow-sm text-sm">
+                        <Plus size={18} /> Manual Payment
+                    </button>
+                </div>
             </div>
 
-            {/* Payment History Table */}
+            {/* Table */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
                     <div className="flex items-center gap-2">
                         <CreditCard className="text-green-600" size={20} />
-                        <h3 className="font-bold text-gray-800">Payment History</h3>
+                        <h3 className="font-bold text-gray-800">Fee Records</h3>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Filter size={16} className="text-gray-400" />
+                        {/* Month Filter */}
                         <select
+                            value={selectedMonth}
+                            onChange={e => setSelectedMonth(e.target.value)}
                             className="bg-gray-50 border border-gray-200 text-sm rounded-lg px-3 py-2 outline-none focus:border-[#EB8A33]"
-                            value={filterStatus}
-                            onChange={(e) => setFilterStatus(e.target.value)}
                         >
-                            <option value="All">All Transactions</option>
-                            <option value="Paid">Paid Only</option>
-                            <option value="Pending">Pending Only</option>
+                            <option value="All">All Months</option>
+                            {academicMonths.map(m => <option key={m} value={m}>{m}</option>)}
+                        </select>
+
+                        {/* Year Filter */}
+                        <select
+                            value={selectedYear}
+                            onChange={e => setSelectedYear(e.target.value)}
+                            className="bg-gray-50 border border-gray-200 text-sm rounded-lg px-3 py-2 outline-none focus:border-[#EB8A33] font-semibold"
+                        >
+                            {yearList.map(y => <option key={y} value={y}>{y}</option>)}
+                        </select>
+
+                        {/* Status Filter */}
+                        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="bg-gray-50 border border-gray-200 text-sm rounded-lg px-3 py-2 outline-none focus:border-[#EB8A33]">
+                            <option value="All">All Status</option>
+                            <option value="Paid">Paid</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Coming">Coming</option>
                         </select>
                     </div>
                 </div>
@@ -215,98 +418,80 @@ const ViewStudentFees = ({ fees: initialFees }) => {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-gray-50 text-xs uppercase text-gray-500 font-semibold">
-                                <th className="px-6 py-4">Month & Year</th>
-                                <th className="px-6 py-4">Paid Date</th>
-                                <th className="px-6 py-4">Amount</th>
+                                <th className="px-6 py-4">Month</th>
+                                <th className="px-6 py-4">Date</th>
+                                <th className="px-6 py-4">Paid Amount</th>
                                 <th className="px-6 py-4">Status</th>
                                 <th className="px-6 py-4 text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 text-sm">
-                            {filteredHistory.length > 0 ? (
-                                filteredHistory.map((record, i) => {
-                                    const isPaid = record.status === 'Paid';
-                                    return (
-                                        <tr key={i} className="hover:bg-gray-50/50 transition-colors">
-                                            {/* MONTH & YEAR SECTION */}
-                                            <td className="px-6 py-4 font-medium text-gray-900 capitalize">
-                                                {record.month} <span className="text-gray-500 font-normal">{record.year}</span>
-                                            </td>
+                            {filteredRows.length > 0 ? (
+                                filteredRows.map((row, i) => (
+                                    <tr key={i} className={`hover:bg-gray-50/50 transition-colors ${row.balance > 0 ? 'bg-red-50/10' : ''}`}>
+                                        <td className="px-6 py-4 font-medium text-gray-900 capitalize">
+                                            {row.month} <span className="text-gray-400 font-normal ml-1">{row.year}</span>
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-500 font-mono">
+                                            {row.date || <span className="text-gray-300">-</span>}
+                                        </td>
+                                        <td className="px-6 py-4 font-bold text-gray-800">
+                                            Rs. {row.paidAmount}
+                                            {row.balance > 0 && <span className="text-[10px] text-red-500 block font-normal">Due: Rs. {row.balance}</span>}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${row.status === 'Paid' ? 'bg-green-100 text-green-700' :
+                                                row.status === 'Coming' ? 'bg-gray-100 text-gray-600' :
+                                                    'bg-red-100 text-red-700'
+                                                }`}>
+                                                {row.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center justify-center gap-2">
+                                                {/* Edit/Delete/View controls if Txns exist */}
+                                                {row.hasTxns && (
+                                                    <>
 
-                                            {/* DATE SECTION: Only Show Date if Paid */}
-                                            <td className="px-6 py-4 text-gray-500 font-mono">
-                                                {isPaid ? record.date : <span className="text-gray-300">-</span>}
-                                            </td>
-
-                                            <td className="px-6 py-4 font-bold text-gray-800">{record.amount}</td>
-
-                                            <td className="px-6 py-4">
-                                                <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${isPaid ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                                                    }`}>
-                                                    {record.status}
-                                                </span>
-                                            </td>
-
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center justify-center min-h-[40px]">
-                                                    {isPaid ? (
-                                                        <div className="flex items-center gap-2">
-                                                            {/* View */}
-                                                            {record.receiptUrl ? (
-                                                                <a
-                                                                    href={record.receiptUrl}
-                                                                    target="_blank"
-                                                                    rel="noreferrer"
-                                                                    className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg"
-                                                                >
-                                                                    <Eye size={18} />
-                                                                </a>
-                                                            ) : (
-                                                                <span className="p-2 text-gray-300"><Eye size={18} /></span>
-                                                            )}
-
-                                                            {/* Download */}
-                                                            <button
-                                                                onClick={() => handleDownloadReceipt(record)}
-                                                                className="p-2 text-green-600 hover:bg-green-50 rounded-lg"
-                                                            >
-                                                                <Download size={18} />
-                                                            </button>
-
-                                                            {/* Edit */}
-                                                            <button
-                                                                onClick={() => openEditModal(record)}
-                                                                className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg"
-                                                            >
-                                                                <Edit2 size={18} />
-                                                            </button>
-
-                                                            {/* Delete */}
-                                                            <button
-                                                                onClick={() => handleDelete(record.id)}
-                                                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
-                                                            >
-                                                                <Trash2 size={18} />
-                                                            </button>
-                                                        </div>
-                                                    ) : (
                                                         <button
-                                                            onClick={() => openEditModal(record)}
-                                                            className="flex items-center gap-1 bg-[#EB8A33] hover:bg-[#d97d2a] text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm"
+                                                            onClick={() => handleDownloadReceipt(row)}
+                                                            title="Download Receipt"
+                                                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                                                         >
-                                                            add payment
+                                                            <Download size={18} />
                                                         </button>
-                                                    )}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    );
-                                })
+                                                        <button
+                                                            onClick={() => handleEditClick(row)}
+                                                            title="Edit Payment"
+                                                            className="p-2 text-orange-500 hover:bg-orange-50 rounded-lg transition-colors"
+                                                        >
+                                                            <Edit2 size={18} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteClick(row.txns[0].id)}
+                                                            title="Cancel Payment"
+                                                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                        >
+                                                            <X size={18} />
+                                                        </button>
+                                                    </>
+                                                )}
+
+                                                {/* Pay Button if Balance > 0 */}
+                                                {/* If Status is Pending, we allow payment */}
+                                                {/* Even if partial records exist, we can Add Payment (Pay Balance) */}
+                                                {row.balance > 0 && row.status !== 'Coming' && (
+                                                    <button onClick={() => handlePayClick(row)} className="flex items-center gap-1 bg-green-600/10 hover:bg-green-600 text-green-700 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all ml-2">
+                                                        {row.hasTxns ? 'Pay Balance' : 'Pay Now'}
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
                             ) : (
                                 <tr>
-                                    <td colSpan="5" className="px-6 py-8 text-center text-gray-400 italic">
-                                        No payment records found.
-                                    </td>
+                                    <td colSpan="5" className="px-6 py-8 text-center text-gray-400 italic">No records found</td>
                                 </tr>
                             )}
                         </tbody>
@@ -314,130 +499,86 @@ const ViewStudentFees = ({ fees: initialFees }) => {
                 </div>
             </div>
 
-            {/* MODAL (Add/Edit) */}
-            {showModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+            {/* PAYMENT MODAL */}
+            {showPaymentModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in zoom-in duration-200">
                     <div className="bg-white rounded-2xl w-full max-w-md shadow-xl overflow-hidden">
                         <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                            <h3 className="font-bold text-gray-800 text-lg">
-                                {modalMode === 'add' ? 'Add Monthly Payment' : 'Edit Payment Details'}
-                            </h3>
-                            <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-red-500 transition-colors">
-                                <X size={20} />
-                            </button>
+                            <h3 className="font-bold text-gray-800">{modalMode === 'add' ? 'Record Payment' : 'Edit Payment'}</h3>
+                            <button onClick={() => setShowPaymentModal(false)}><X size={20} className="text-gray-400 hover:text-red-500" /></button>
                         </div>
-
-                        <form onSubmit={handleFormSubmit} className="p-6 space-y-4">
+                        <form onSubmit={handlePaymentFormSubmit} className="p-6 space-y-4">
                             <div className="grid grid-cols-2 gap-4">
-                                {/* Month Selection */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Select Month</label>
-                                    <select
-                                        required
-                                        className="w-full border border-gray-200 rounded-lg px-4 py-2.5 outline-none focus:border-[#EB8A33] text-sm bg-white"
-                                        value={formData.month}
-                                        onChange={e => setFormData({ ...formData, month: e.target.value })}
-                                    >
-                                        <option value="">-- Month --</option>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Month</label>
+                                    <select required value={formData.month} onChange={e => setFormData({ ...formData, month: e.target.value })} className="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-green-500 text-sm">
+                                        <option value="">Select</option>
                                         {academicMonths.map(m => <option key={m} value={m}>{m}</option>)}
                                     </select>
                                 </div>
-
-                                {/* Year Selection */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Select Year</label>
-                                    <select
-                                        required
-                                        className="w-full border border-gray-200 rounded-lg px-4 py-2.5 outline-none focus:border-[#EB8A33] text-sm bg-white"
-                                        value={formData.year}
-                                        onChange={e => setFormData({ ...formData, year: e.target.value })}
-                                    >
-                                        {yearsList.map(y => <option key={y} value={y}>{y}</option>)}
-                                    </select>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Year</label>
+                                    <input type="number" required value={formData.year} onChange={e => setFormData({ ...formData, year: e.target.value })} className="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-green-500 text-sm" />
                                 </div>
                             </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        placeholder="5000"
-                                        className="w-full border border-gray-200 rounded-lg px-4 py-2.5 outline-none focus:border-[#EB8A33] text-sm"
-                                        value={formData.amount}
-                                        onChange={e => setFormData({ ...formData, amount: e.target.value })}
-                                    />
-                                </div>
-
-                                {/* Status Selection */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                                    <select
-                                        className="w-full border border-gray-200 rounded-lg px-4 py-2.5 outline-none focus:border-[#EB8A33] text-sm bg-white"
-                                        value={formData.status}
-                                        onChange={e => setFormData({ ...formData, status: e.target.value })}
-                                    >
-                                        <option value="Paid">Paid</option>
-                                        <option value="Pending">Pending</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            {/* Date Field - Only show if Paid */}
-                            {formData.status === 'Paid' && (
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Paid Date</label>
-                                    <input
-                                        type="date"
-                                        required
-                                        className="w-full border border-gray-200 rounded-lg px-4 py-2.5 outline-none focus:border-[#EB8A33] text-sm text-gray-600"
-                                        value={formData.date}
-                                        onChange={e => setFormData({ ...formData, date: e.target.value })}
-                                    />
-                                </div>
-                            )}
-
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Upload Receipt (Photo)</label>
-                                <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer relative">
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                        onChange={e => setFormData({ ...formData, receipt: e.target.files[0] })}
-                                    />
-                                    <div className="flex flex-col items-center justify-center text-gray-400 gap-2">
-                                        <Upload size={24} />
-                                        <span className="text-xs text-center px-2">
-                                            {formData.receipt ? formData.receipt.name : (formData.receiptUrl ? "Update Receipt (File Selected)" : "Click to upload receipt photo")}
-                                        </span>
-                                    </div>
-                                </div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Amount (Rs.)</label>
+                                <input type="number" required value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} className="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-green-500 text-sm" />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Payment Date</label>
+                                <input type="date" required value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} className="w-full border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-green-500 text-sm" />
                             </div>
 
-                            <div className="pt-2">
-                                <button
-                                    type="submit"
-                                    className="w-full bg-[#EB8A33] hover:bg-[#d97d2a] text-white py-3 rounded-lg font-bold transition-colors shadow-sm"
-                                >
-                                    {modalMode === 'add' ? 'Proceed to Save' : 'Update Payment'}
-                                </button>
-                            </div>
+
+
+                            <button type="submit" className="w-full bg-[#EB8A33] hover:bg-[#d97d2a] text-white py-3 rounded-lg font-bold shadow-sm mt-2">Proceed</button>
                         </form>
                     </div>
                 </div>
             )}
 
-            {/* PASSWORD MODAL */}
+            {/* RATE MODAL */}
+            {showRateModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in zoom-in duration-200">
+                    <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl p-6">
+                        <div className="text-center mb-6">
+                            <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <Settings size={22} />
+                            </div>
+                            <h3 className="font-bold text-gray-800 text-lg">Update Monthly Fee</h3>
+                            <p className="text-sm text-gray-500">Set the default monthly fee for this student.</p>
+                        </div>
+                        <input
+                            type="number"
+                            className="w-full border border-gray-300 rounded-lg px-4 py-3 text-center text-xl font-bold text-gray-800 outline-none focus:border-blue-500 mb-6"
+                            value={tempRate}
+                            onChange={(e) => setTempRate(e.target.value)}
+                            autoFocus
+                        />
+                        <div className="flex gap-3">
+                            <button onClick={() => setShowRateModal(false)} className="flex-1 py-2 rounded-lg border border-gray-200 font-semibold text-gray-600">Cancel</button>
+                            <button onClick={confirmUpdateRate} className="flex-1 py-2 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700">Update</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Password Modal - Dynamic Title */}
             {showPasswordModal && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
                     <div className="bg-white rounded-xl w-full max-w-sm shadow-2xl p-6 text-center animate-in zoom-in duration-200">
                         <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
                             <Lock className="text-green-600" size={24} />
                         </div>
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">Admin Verification</h3>
-                        <p className="text-sm text-gray-500 mb-6">Enter password to confirm.</p>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">
+                            {passwordAction === 'delete_payment' ? 'Cancel Payment' : 'Admin Verification'}
+                        </h3>
+                        <p className="text-sm text-gray-500 mb-6">
+                            {passwordAction === 'delete_payment'
+                                ? 'Are you sure you want to cancel this payment? Enter password to confirm.'
+                                : 'Enter password to confirm action.'}
+                        </p>
 
                         <input
                             type="password"
@@ -451,8 +592,10 @@ const ViewStudentFees = ({ fees: initialFees }) => {
                         {passwordError && <p className="text-red-500 text-xs font-bold mb-3">{passwordError}</p>}
 
                         <div className="flex gap-3 mt-4">
-                            <button onClick={() => setShowPasswordModal(false)} className="flex-1 py-2.5 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-gray-50">Cancel</button>
-                            <button onClick={verifyPasswordAndSave} className="flex-1 py-2.5 bg-[#EB8A33] text-white rounded-lg font-bold hover:bg-[#d97d2a]">Confirm</button>
+                            <button onClick={() => setShowPasswordModal(false)} className="flex-1 py-2.5 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-gray-50">Back</button>
+                            <button onClick={verifyPassword} className={`flex-1 py-1 rounded-lg font-bold text-white ${passwordAction === 'delete_payment' ? 'bg-red-500 hover:bg-red-600' : 'bg-[#EB8A33] hover:bg-[#d97d2a]'}`}>
+                                {passwordAction === 'delete_payment' ? 'Cancel Payment' : 'Confirm'}
+                            </button>
                         </div>
                     </div>
                 </div>

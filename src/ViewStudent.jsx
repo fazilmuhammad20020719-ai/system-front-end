@@ -136,6 +136,7 @@ const ViewStudent = () => {
                     lastStudiedGrade: sData.last_studied_grade || 'N/A',
                     previousCollegeName: sData.previous_college || 'N/A',
                     mediumOfStudy: sData.medium_of_study || 'N/A',
+                    monthlyFee: sData.monthly_fee || '0',
 
                     documents: docs,
                     attendanceStats: { present, absent, late: 0, total },
@@ -192,10 +193,10 @@ const ViewStudent = () => {
                     {/* 3. Tab Content Render */}
                     <div className="space-y-6">
                         {activeTab === 'personal' && <ViewStudentInfo student={student} />}
-                        {activeTab === 'documents' && <ViewStudentDocuments documents={student.documents} />}
+                        {activeTab === 'documents' && <ViewStudentDocuments documents={student.documents} studentId={student.id} />}
                         {activeTab === 'attendance' && <ViewStudentAttendance stats={student.attendanceStats} />}
                         {activeTab === 'results' && <ViewStudentResults results={student.results} />}
-                        {activeTab === 'fees' && <ViewStudentFees fees={student.fees} />}
+                        {activeTab === 'fees' && <ViewStudentFees studentId={student.id} admissionDate={student.admissionDate} monthlyFee={student.monthlyFee} />}
                         {activeTab === 'timeline' && <ViewStudentTimeline />}
                     </div>
                 </main>

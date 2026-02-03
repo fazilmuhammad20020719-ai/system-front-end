@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { CreditCard, Download, Plus, Upload, X, Trash2, Edit2, Lock, Check, Settings } from 'lucide-react';
+import { CreditCard, Download, Eye, Plus, Upload, X, Trash2, Edit2, Lock, Check, Settings } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { API_URL } from '../config';
 
@@ -232,15 +232,19 @@ const ViewStudentFees = ({ studentId, admissionDate, monthlyFee: initialMonthlyF
         setPasswordError('');
     };
 
-    // 5. Form Submit (Direct Save)
+    // 5. Form Submit (Initiate Password)
     const handlePaymentFormSubmit = (e) => {
         e.preventDefault();
         if (!formData.amount) {
             alert("Amount is required.");
             return;
         }
-        executeSavePayment(formData);
+        setTempPaymentData(formData);
         setShowPaymentModal(false);
+        setPasswordAction('save_payment');
+        setShowPasswordModal(true);
+        setPasswordInput('');
+        setPasswordError('');
     };
 
     // --- Execute Actions (After Password) ---
@@ -259,24 +263,21 @@ const ViewStudentFees = ({ studentId, admissionDate, monthlyFee: initialMonthlyF
     };
 
     // Execute Save Payment
-    const executeSavePayment = async (dataOverride) => {
-        const data = dataOverride || tempPaymentData;
-        if (!data) return;
-
+    const executeSavePayment = async () => {
         const submitData = new FormData();
-        submitData.append('month', data.month);
-        submitData.append('year', data.year);
-        submitData.append('amount', data.amount);
-        submitData.append('status', data.status);
-        if (data.date) submitData.append('date', data.date);
-        if (data.receipt) submitData.append('document', data.receipt);
+        submitData.append('month', tempPaymentData.month);
+        submitData.append('year', tempPaymentData.year);
+        submitData.append('amount', tempPaymentData.amount);
+        submitData.append('status', tempPaymentData.status);
+        if (tempPaymentData.date) submitData.append('date', tempPaymentData.date);
+        if (tempPaymentData.receipt) submitData.append('document', tempPaymentData.receipt);
 
         try {
             let url = `${API_URL}/api/students/${studentId}/fees`;
             let method = 'POST';
 
             if (modalMode === 'edit') {
-                url = `${API_URL}/api/students/${studentId}/fees/${data.id}`;
+                url = `${API_URL}/api/students/${studentId}/fees/${tempPaymentData.id}`;
                 method = 'PUT';
             }
 
@@ -452,7 +453,15 @@ const ViewStudentFees = ({ studentId, admissionDate, monthlyFee: initialMonthlyF
                                                 {/* Edit/Delete/View controls if Txns exist */}
                                                 {row.hasTxns && (
                                                     <>
-
+                                                        {row.receiptUrl && (
+                                                            <button
+                                                                onClick={() => window.open(row.receiptUrl, '_blank')}
+                                                                title="View Receipt"
+                                                                className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                                                            >
+                                                                <Eye size={18} />
+                                                            </button>
+                                                        )}
                                                         <button
                                                             onClick={() => handleDownloadReceipt(row)}
                                                             title="Download Receipt"

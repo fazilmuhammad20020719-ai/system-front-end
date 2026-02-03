@@ -20,10 +20,13 @@ const AddStudent = () => {
     const [programOptions, setProgramOptions] = useState([]);
 
     const [formData, setFormData] = useState({
-        studentPhoto: null, indexNumber: '', firstName: '', lastName: '', dob: '', gender: 'Male', nic: '', email: '', phone: '',
+        studentPhoto: null, indexNumber: '', firstName: '', lastName: '', dob: '', gender: 'Male', nic: '', email: '', phone: '', whatsapp: '',
         province: '', district: '', dsDivision: '', gnDivision: '', address: '', googleMapLink: '', latitude: '', longitude: '',
         guardianName: '', guardianRelation: 'Father', guardianOccupation: '', guardianPhone: '', guardianEmail: '',
-        programId: '', session: '2025', currentYear: '', status: 'Active', admissionDate: '', lastStudiedGrade: '', previousSchoolName: '', previousCollegeName: '', mediumOfStudy: 'Tamil',
+        // Legacy fields (kept for safety during transition, but UI will use enrollments)
+        programId: '', session: '2025', currentYear: '', status: 'Active', admissionDate: '',
+        enrollments: [{ programId: '', session: '2025', currentYear: '', status: 'Active', admissionDate: '' }],
+        lastStudiedGrade: '', previousSchoolName: '', previousCollegeName: '', mediumOfStudy: 'Tamil',
         nicFront: null, nicBack: null, studentSignature: null, birthCertificate: null,
         medicalReport: null, guardianNic: null, guardianPhoto: null, leavingCertificate: null
     });
@@ -53,7 +56,9 @@ const AddStudent = () => {
 
         const data = new FormData();
         for (const key in formData) {
-            if (formData[key] !== null && formData[key] !== '') {
+            if (key === 'enrollments') {
+                data.append('enrollments', JSON.stringify(formData.enrollments));
+            } else if (formData[key] !== null && formData[key] !== '') {
                 data.append(key, formData[key]);
             }
         }
@@ -117,7 +122,7 @@ const AddStudent = () => {
                         )}
                         {activeTab === 'guardian' && <StudentGuardianInfo formData={formData} handleChange={handleChange} />}
                         {activeTab === 'academic' && (
-                            <StudentAcademicInfo formData={formData} handleChange={handleChange} programs={programOptions} />
+                            <StudentAcademicInfo formData={formData} handleChange={handleChange} programs={programOptions} setFormData={setFormData} />
                         )}
                         {activeTab === 'documents' && <StudentUploads formData={formData} handleChange={handleChange} />}
                     </div>

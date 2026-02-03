@@ -1,184 +1,105 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import Sidebar from './Sidebar';
-import {
-    CreditCard, Clock, CheckCircle, AlertCircle, Calendar,
-    Download, ChevronRight, History, Shield, Upload, FileText, Menu
-} from 'lucide-react';
+import { Check, Crown, Server, Globe, HardDrive, Settings, ShieldCheck, Mail } from 'lucide-react';
 
 const Subscription = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-    // --- Mock Data ---
-    const [currentPlan, setCurrentPlan] = useState({
-        name: "College Management Pro",
-        price: "LKR 5,000",
-        status: "Overdue", // Payment நிலுவையில் உள்ளது என்று வைத்துக்கொள்வோம்
-        activatedOn: "2025-12-01",
-        expiresOn: "2026-01-01",
-        daysLeft: 0,
-        totalDays: 30
-    });
 
-    const [paymentMethod, setPaymentMethod] = useState('bank'); // Default to Bank Transfer
-    const [uploading, setUploading] = useState(false);
-
-    // Bank Payment Form State
-    const [paymentForm, setPaymentForm] = useState({
-        refNo: '',
-        date: new Date().toISOString().split('T')[0],
-        slip: null
-    });
-
-    const handleFileChange = (e) => {
-        setPaymentForm({ ...paymentForm, slip: e.target.files[0] });
-    };
-
-    const handleSubmitPayment = (e) => {
-        e.preventDefault();
-        if (!paymentForm.refNo) return alert("Please enter the Reference Number");
-
-        setUploading(true);
-
-        // --- Backend Call Simulation ---
-        setTimeout(() => {
-            setUploading(false);
-            alert("Payment Submitted! We will verify and activate your account shortly.");
-
-            // Reset Form & Update Status (Simulated)
-            setCurrentPlan(prev => ({ ...prev, status: 'Pending Verification' }));
-            setPaymentForm({ refNo: '', date: '', slip: null });
-        }, 2000);
-    };
+    const features = [
+        { icon: Server, text: "High-Performance Server" },
+        { icon: Globe, text: "Domain Name Management" },
+        { icon: HardDrive, text: "Secure Cloud Storage" },
+        { icon: Settings, text: "System Fees & Maintenance" },
+        { icon: ShieldCheck, text: "Premium Service & Support" }
+    ];
 
     return (
-        <div className="min-h-screen bg-[#F3F4F6] font-sans flex">
-            {/* SIDEBAR */}
+        <div className="min-h-screen bg-gray-50 flex font-sans text-gray-900">
             <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
 
-            {/* MAIN CONTENT */}
             <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "md:ml-64" : "md:ml-20"} ml-0`}>
-                <div className="p-6 max-w-5xl mx-auto space-y-8 w-full">
+                <main className="p-4 md:p-8 flex-1 flex flex-col items-center justify-center relative overflow-hidden">
 
-                    {/* Header */}
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                        <div className="flex items-center gap-3">
-                            <button
-                                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                                className="p-2 bg-white rounded-lg shadow-sm border border-gray-200 text-gray-600 md:hidden"
-                            >
-                                <Menu size={20} />
-                            </button>
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-800">Subscription & Billing</h1>
-                                <p className="text-gray-500">Manual Payment Gateway (Bank Transfer)</p>
-                            </div>
-                        </div>
+                    {/* Background Decorative Elements */}
+                    <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+                        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-200/30 rounded-full blur-[100px]"></div>
+                        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-200/30 rounded-full blur-[100px]"></div>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="relative z-10 w-full max-w-4xl grid md:grid-cols-2 gap-8 items-center">
 
-                        {/* LEFT: Plan Status */}
-                        <div className="lg:col-span-2 space-y-6">
-                            {/* Status Card */}
-                            <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 text-white shadow-xl relative overflow-hidden">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <p className="text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">Current Plan</p>
-                                        <h2 className="text-3xl font-bold">{currentPlan.name}</h2>
-                                        <p className="text-2xl font-medium text-orange-400 mt-2">{currentPlan.price} <span className="text-sm text-slate-400">/ month</span></p>
-                                    </div>
-                                    <span className={`px-4 py-1.5 rounded-full text-sm font-bold border ${currentPlan.status === 'Active' ? 'bg-green-500/20 border-green-500 text-green-400' :
-                                        currentPlan.status === 'Pending Verification' ? 'bg-blue-500/20 border-blue-500 text-blue-400' :
-                                            'bg-red-500/20 border-red-500 text-red-400'
-                                        }`}>
-                                        {currentPlan.status}
-                                    </span>
-                                </div>
-
-                                <div className="mt-8 pt-6 border-t border-slate-700/50 flex gap-8">
-                                    <div>
-                                        <p className="text-slate-400 text-xs uppercase">Expires On</p>
-                                        <p className="font-mono">{currentPlan.expiresOn}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-slate-400 text-xs uppercase">Days Left</p>
-                                        <p className="font-mono">{currentPlan.daysLeft} Days</p>
-                                    </div>
-                                </div>
+                        {/* LEFT COLUMN: Text Content */}
+                        <div className="text-left space-y-6">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-bold uppercase tracking-wider">
+                                <Crown size={14} className="fill-yellow-500 text-yellow-600" />
+                                Premium Plan
                             </div>
+                            <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight">
+                                Unlock the Full Power of <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">FMAC System</span>
+                            </h1>
+                            <p className="text-lg text-gray-600 leading-relaxed">
+                                Ensure smooth operations with our all-inclusive comprehensive subscription. We handle the technical heavy lifting so you can focus on education.
+                            </p>
 
-                            {/* Payment Instruction */}
-                            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-                                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                                    <CreditCard className="text-[#ea8933]" /> How to Pay?
-                                </h3>
-                                <ol className="list-decimal list-inside space-y-3 text-gray-600 text-sm">
-                                    <li>Transfer <strong>LKR 5,000</strong> to the bank account shown.</li>
-                                    <li>Use your <strong>College Name</strong> as the reference.</li>
-                                    <li>Take a <strong>screenshot</strong> or photo of the receipt.</li>
-                                    <li>Fill the form on the right and submit.</li>
-                                </ol>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+                                {features.map((feature, idx) => (
+                                    <div key={idx} className="flex items-center gap-3 text-gray-700 font-medium">
+                                        <div className="p-2 rounded-lg bg-white shadow-sm text-blue-600">
+                                            <feature.icon size={18} />
+                                        </div>
+                                        {feature.text}
+                                    </div>
+                                ))}
                             </div>
                         </div>
 
-                        {/* RIGHT: Payment Form */}
-                        <div className="lg:col-span-1">
-                            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-lg h-full">
-                                <h3 className="font-bold text-gray-800 mb-4">Submit Payment Details</h3>
+                        {/* RIGHT COLUMN: Pricing Card */}
+                        <div className="relative group">
+                            <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+                            <div className="relative bg-white rounded-2xl shadow-xl border border-gray-100 p-8 flex flex-col items-center text-center">
 
-                                {/* 1. Bank Account Details */}
-                                <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 mb-6">
-                                    <p className="text-xs text-orange-600 font-bold uppercase mb-2">Bank Details</p>
-                                    <div className="space-y-1 text-sm text-gray-700">
-                                        <p><span className="font-medium">Bank:</span> Commercial Bank</p>
-                                        <p><span className="font-medium">Branch:</span> Eravur</p>
-                                        <p><span className="font-medium">Account Name:</span> S. Fazil Muhammad</p>
-                                        <p><span className="font-medium font-mono text-lg text-gray-900">8002567890</span></p>
-                                    </div>
+                                <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 mb-6 transform rotate-3 group-hover:rotate-6 transition-transform">
+                                    <Crown size={32} />
                                 </div>
 
-                                {/* 2. Submission Form */}
-                                {currentPlan.status === 'Pending Verification' ? (
-                                    <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-300">
-                                        <CheckCircle className="mx-auto text-green-500 mb-2" size={40} />
-                                        <p className="text-gray-800 font-medium">Payment Submitted!</p>
-                                        <p className="text-xs text-gray-500 mt-1">Waiting for admin approval.</p>
-                                    </div>
-                                ) : (
-                                    <form onSubmit={handleSubmitPayment} className="space-y-4">
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-700 mb-1">Transfer Date</label>
-                                            <input type="date" required
-                                                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-[#ea8933] outline-none"
-                                                value={paymentForm.date} onChange={e => setPaymentForm({ ...paymentForm, date: e.target.value })} />
-                                        </div>
+                                <h3 className="text-xl font-bold text-gray-400 uppercase tracking-widest mb-2">Monthly Subscription</h3>
+                                <div className="flex items-baseline gap-1 mb-2">
+                                    <span className="text-2xl font-bold text-gray-500">LKR</span>
+                                    <span className="text-5xl font-black text-gray-900 tracking-tighter">9,000</span>
+                                </div>
+                                <p className="text-sm text-gray-400 mb-8">Billed monthly • Cancel anytime</p>
 
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-700 mb-1">Reference No / Transaction ID</label>
-                                            <input type="text" required placeholder="e.g. REF12345678"
-                                                className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-[#ea8933] outline-none font-mono"
-                                                value={paymentForm.refNo} onChange={e => setPaymentForm({ ...paymentForm, refNo: e.target.value })} />
-                                        </div>
+                                <ul className="space-y-4 w-full text-left mb-8 border-t border-b border-gray-100 py-6">
+                                    <li className="flex items-center gap-3">
+                                        <Check size={18} className="text-green-500 flex-shrink-0" />
+                                        <span className="text-gray-700">Dedicated <b>Server Hosting</b></span>
+                                    </li>
+                                    <li className="flex items-center gap-3">
+                                        <Check size={18} className="text-green-500 flex-shrink-0" />
+                                        <span className="text-gray-700">Premium <b>Domain Name</b></span>
+                                    </li>
+                                    <li className="flex items-center gap-3">
+                                        <Check size={18} className="text-green-500 flex-shrink-0" />
+                                        <span className="text-gray-700">Daily <b>Cloud Backups</b></span>
+                                    </li>
+                                    <li className="flex items-center gap-3">
+                                        <Check size={18} className="text-green-500 flex-shrink-0" />
+                                        <span className="text-gray-700">24/7 <b>Priority Support</b></span>
+                                    </li>
+                                </ul>
 
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-700 mb-1">Upload Receipt (Optional)</label>
-                                            <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:bg-gray-50 transition-colors cursor-pointer">
-                                                <input type="file" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*,application/pdf" />
-                                                <Upload className="mx-auto text-gray-400 mb-2" size={20} />
-                                                <span className="text-xs text-gray-500">{paymentForm.slip ? paymentForm.slip.name : "Click to upload slip"}</span>
-                                            </div>
-                                        </div>
+                                <button className="w-full py-4 px-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 transition-all transform hover:-translate-y-1 active:translate-y-0 text-lg flex items-center justify-center gap-2">
+                                    Subscribe Now
+                                </button>
 
-                                        <button type="submit" disabled={uploading}
-                                            className="w-full py-3 bg-[#ea8933] hover:bg-[#d67b2b] text-white rounded-xl font-bold shadow-lg shadow-orange-200 transition-all flex justify-center items-center gap-2">
-                                            {uploading ? 'Submitting...' : 'Submit Payment'}
-                                        </button>
-                                    </form>
-                                )}
+                                <p className="mt-4 text-xs text-center text-gray-400">
+                                    By subscribing, you agree to our Terms of Service.
+                                </p>
                             </div>
                         </div>
 
                     </div>
-                </div>
+                </main>
             </div>
         </div>
     );

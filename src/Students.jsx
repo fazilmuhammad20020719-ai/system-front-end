@@ -102,8 +102,12 @@ const Students = () => {
             String(student.id).includes(searchTerm);
         const matchesYear = selectedYear ? student.currentYear === selectedYear : true;
         const matchesBatch = selectedBatch ? student.session === selectedBatch : true;
-        const matchesProgram = selectedProgram ? student.program === selectedProgram : true;
-        const matchesStatus = selectedStatus ? student.status === selectedStatus : true;
+        const matchesProgram = selectedProgram
+            ? (student.program === selectedProgram || (student.enrollments_summary && student.enrollments_summary.some(e => e.program === selectedProgram)))
+            : true;
+        const matchesStatus = selectedStatus
+            ? (student.status === selectedStatus || (student.enrollments_summary && student.enrollments_summary.some(e => e.status === selectedStatus)))
+            : true;
 
         return matchesSearch && matchesYear && matchesBatch && matchesProgram && matchesStatus;
     });

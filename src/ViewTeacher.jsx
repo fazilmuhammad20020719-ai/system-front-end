@@ -140,7 +140,7 @@ const ViewTeacher = () => {
                     <div className="space-y-6">
                         {activeTab === 'overview' && <TeacherOverview teacher={teacher} stats={teacher.stats} />}
                         {activeTab === 'schedule' && <TeacherSchedule schedule={teacher.schedule} />}
-                        {activeTab === 'attendance' && <TeacherAttendanceView stats={teacher.attendanceStats} />}
+                        {activeTab === 'attendance' && <TeacherAttendanceView stats={teacher.attendanceStats} teacherId={teacher.id} />}
                         {activeTab === 'schedule' && <TeacherSchedule schedule={teacher.schedule} />}
                         {activeTab === 'payroll' && <TeacherPayroll teacher={teacher} />}
                         {activeTab === 'documents' && <TeacherDocuments documents={teacher.documents} teacherId={teacher.id} refreshTeacher={() => navigate(0)} />}

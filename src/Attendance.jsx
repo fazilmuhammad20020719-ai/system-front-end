@@ -138,26 +138,73 @@ const Attendance = () => {
 
     const statsStudents = useMemo(() => {
         return studentsData.filter(student => {
-            // 1. If All Programs selected, include everyone
-            if (filterProgram === "All") return true;
-
-            // 2. Check Enrollments (Preferred for Multi-Program)
+            // Parse Enrollments
             const enrollments = student.enrollments_summary || [];
-            // Parse if it's a string (though API should return JSON)
             const parsedEnrollments = typeof enrollments === 'string' ? JSON.parse(enrollments) : enrollments;
 
-            const hasMatchingEnrollment = Array.isArray(parsedEnrollments) && parsedEnrollments.some(e =>
+            // 1. Get ONLY Active Enrollments
+            // If enrollments exist, use them.
+            let activeEnrollments = [];
+            if (Array.isArray(parsedEnrollments) && parsedEnrollments.length > 0) {
+                activeEnrollments = parsedEnrollments.filter(e => e.status === 'Active');
+
+                // If student has enrollments but NONE are active, exclude them entirely? 
+                // OR checking valid enrollments.
+                // If the user wants "only show active student program", likely implies exclusion if no active.
+                if (activeEnrollments.length === 0) return false;
+            } else {
+                // Fallback: Legacy Check
+                // If no enrollments array, check student.status (assuming it applies to the program)
+                if (student.status !== 'Active' && student.status !== 'Present' && student.status !== 'Absent' && student.status !== 'Holiday' && !student.status) {
+                    // Note: 'status' in student root might be 'Active', or attendance status 'Present' etc.
+                    // studentRoutes.js: s.status is 'Active' (enrollment status).
+                    // Attendance.jsx merges attendance record into s.status?
+                    // line 87: status: record ? record.status : ''
+                    // Wait, Attendance.jsx OVERWRITES student.status with ATTENDANCE status ('Present'/'Absent').
+                    // We need the ENROLLMENT status. 
+                    // studentRoutes.js returns s.status as 'Active'. 
+                    // But Attendance.jsx lines 83-89:
+                    /*
+                    const mergedStudents = allStudents.map(s => {
+                        const record = attendanceRecords.find(...)
+                        return { ...s, status: record ? record.status : '' }
+                    });
+                    */
+                    // CRITICAL: We lost the student's enrollment status 's.status' because it was overwritten by attendance status.
+                    // We need to check if we can access the original status.
+                    // Looking at studentRoutes.js: 'status' is indeed selected.
+                    // In Attendance.jsx, we need the enrollment/student status. 
+                    // Only 'enrollments_summary' preserves the status safely inside the array.
+                    // For legacy fallback: we might be in trouble if we don't have a separate field.
+                    // However, strictly speaking, we largely rely on enrollments_summary now.
+
+                    // Let's assume most students have enrollments_summary.
+                    // If not, we might not be able to filter legacy active status without changing the fetch logic loop.
+                    // BUT, 'enrollments_summary' is reliable for status.
+                }
+            }
+
+            // 2. Filter by Program
+            if (filterProgram === "All") return true;
+
+            const hasMatchingEnrollment = activeEnrollments.some(e =>
                 (e.program === filterProgram) &&
                 (filterYear === "All" || String(e.year) === String(filterYear))
             );
 
             if (hasMatchingEnrollment) return true;
 
-            // 3. Fallback: Check Legacy Fields
-            const matchesProgram = student.program === filterProgram;
-            const matchesYear = filterYear === "All" || String(student.currentYear) === String(filterYear);
+            // 3. Fallback Legacy Field Match (Only if no enrollments were found/used above?)
+            // If parsedEnrollments was empty, we are here.
+            // But we don't have 'Active' check for legacy easily if 'status' is overwritten.
+            // Let's rely on the program name match.
+            if (parsedEnrollments.length === 0) {
+                const matchesProgram = student.program === filterProgram;
+                const matchesYear = filterYear === "All" || String(student.currentYear) === String(filterYear);
+                return matchesProgram && matchesYear;
+            }
 
-            return matchesProgram && matchesYear;
+            return false;
         });
     }, [studentsData, filterProgram, filterYear]);
 

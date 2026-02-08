@@ -22,10 +22,15 @@ const AttendanceTable = ({ students, onStatusChange, isEditing }) => {
                         if (typeof enrollments === 'string') {
                             try { enrollments = JSON.parse(enrollments); } catch (e) { enrollments = []; }
                         }
-                        // Fallback if empty (using legacy fields)
-                        if (!enrollments.length && student.program) {
-                            enrollments = [{ program: student.program, year: student.year || student.currentYear }];
+
+                        // Filter ONLY Active Programs
+                        if (Array.isArray(enrollments)) {
+                            enrollments = enrollments.filter(e => e.status === 'Active');
                         }
+
+                        // Fallback: If no enrollments found at all (and legacy exists), we might check legacy.
+                        // But since we want to HIDE inactive, and legacy doesn't guarantee status, we skip fallback to be safe.
+                        // If they have no active enrollments, this list is empty.
 
                         return (
                             <div key={student.id} className="grid grid-cols-12 p-3 items-center hover:bg-gray-50 transition-colors group">

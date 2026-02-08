@@ -25,8 +25,17 @@ const Attendance = () => {
     // -- MAIN TOGGLE STATE --
     const [activeTab, setActiveTab] = useState(location.state?.tab || 'students'); // 'students' or 'teachers'
 
+    // Helper to get local date string YYYY-MM-DD
+    const getLocalTodayString = () => {
+        const d = new Date();
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
     // -- COMMON STATE --
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    const [selectedDate, setSelectedDate] = useState(getLocalTodayString());
     const [isPinModalOpen, setIsPinModalOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false); // New Edit Mode State
@@ -111,7 +120,7 @@ const Attendance = () => {
         fetchData();
 
         // Auto-unlock for Today, Lock for Past Dates
-        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStr = getLocalTodayString();
         if (selectedDate === todayStr) {
             setIsEditing(true);
         } else {
@@ -129,8 +138,25 @@ const Attendance = () => {
 
     const statsStudents = useMemo(() => {
         return studentsData.filter(student => {
-            const matchesProgram = filterProgram === "All" || student.program === filterProgram;
-            const matchesYear = filterYear === "All" || student.year === filterYear;
+            // 1. If All Programs selected, include everyone
+            if (filterProgram === "All") return true;
+
+            // 2. Check Enrollments (Preferred for Multi-Program)
+            const enrollments = student.enrollments_summary || [];
+            // Parse if it's a string (though API should return JSON)
+            const parsedEnrollments = typeof enrollments === 'string' ? JSON.parse(enrollments) : enrollments;
+
+            const hasMatchingEnrollment = Array.isArray(parsedEnrollments) && parsedEnrollments.some(e =>
+                (e.program === filterProgram) &&
+                (filterYear === "All" || String(e.year) === String(filterYear))
+            );
+
+            if (hasMatchingEnrollment) return true;
+
+            // 3. Fallback: Check Legacy Fields
+            const matchesProgram = student.program === filterProgram;
+            const matchesYear = filterYear === "All" || String(student.currentYear) === String(filterYear);
+
             return matchesProgram && matchesYear;
         });
     }, [studentsData, filterProgram, filterYear]);
@@ -159,12 +185,19 @@ const Attendance = () => {
     }, [statsStudents]);
 
     // Dynamic Years Calculation
+    // Dynamic Grades (renamed from Years)
     const dynamicYears = useMemo(() => {
-        if (filterProgram === "All") return ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7"];
+        if (filterProgram === "All") return []; // Empty if no program selected
+
         const selectedProg = programs.find(p => p.name === filterProgram);
         const duration = selectedProg ? (parseInt(selectedProg.duration) || 5) : 5;
         return Array.from({ length: duration }, (_, i) => `Grade ${i + 1}`);
     }, [filterProgram, programs]);
+
+    // Reset Grade filter when Program changes
+    useEffect(() => {
+        setFilterYear("All");
+    }, [filterProgram]);
 
 
     // ==========================================
@@ -332,6 +365,7 @@ const Attendance = () => {
                                 filterStatus={filterStatus} setFilterStatus={setFilterStatus}
                                 searchQuery={searchQuery} setSearchQuery={setSearchQuery}
                                 onBulkAction={handleBulkAction}
+                                onLoadData={fetchData}
                                 programs={programs}
                                 years={dynamicYears}
                             />
@@ -349,6 +383,7 @@ const Attendance = () => {
                                 filterStatus={teacherFilterStatus} setFilterStatus={setTeacherFilterStatus}
                                 searchQuery={teacherSearchQuery} setSearchQuery={setTeacherSearchQuery}
                                 onBulkAction={handleBulkAction}
+                                onLoadData={fetchData}
                                 programs={programs}
                             />
                             <TeacherAttendanceTable

@@ -7,8 +7,9 @@ const AttendanceFilters = ({
     filterStatus, setFilterStatus,
     searchQuery, setSearchQuery,
     onBulkAction,
+    onLoadData, // Added prop
     programs = [],
-    years = [] // New Prop
+    years = []
 }) => {
     return (
         <div className="bg-white rounded-lg shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] p-4 md:p-5 mb-6">
@@ -41,15 +42,22 @@ const AttendanceFilters = ({
                     </select>
                 </div>
 
-                {/* Year */}
+                {/* Grade (Dependent on Program) */}
                 <div className="flex-1 min-w-[140px]">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block tracking-wider">Year</label>
+                    <label className="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block tracking-wider">Grade</label>
                     <select
                         value={filterYear}
                         onChange={(e) => setFilterYear(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-gray-700 focus:outline-none focus:border-green-500 bg-white"
+                        disabled={filterProgram === "All"}
+                        className={`w-full px-3 py-2 border rounded text-sm focus:outline-none focus:border-green-500 transition-colors
+                            ${filterProgram === "All"
+                                ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                                : "bg-white text-gray-700 border-gray-300"
+                            }`}
                     >
-                        <option value="All">All Years</option>
+                        <option value="All">
+                            {filterProgram === "All" ? "Select Program First" : "All Grades"}
+                        </option>
                         {years.map(year => (
                             <option key={year} value={year}>{year}</option>
                         ))}
@@ -79,13 +87,17 @@ const AttendanceFilters = ({
                         placeholder="Name or ID..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
+                        autoComplete="off"
                         className="w-full px-3 py-2 border border-gray-300 rounded text-sm text-gray-700 focus:outline-none focus:border-green-500 placeholder-gray-400"
                     />
                 </div>
 
                 {/* Load Button */}
                 <div className="w-full md:w-auto">
-                    <button className="w-full md:w-auto bg-[#1f2937] hover:bg-gray-800 text-white px-4 py-2 rounded text-sm font-medium flex justify-center items-center gap-2 transition-colors h-[38px]">
+                    <button
+                        onClick={onLoadData}
+                        className="w-full md:w-auto bg-[#1f2937] hover:bg-gray-800 text-white px-4 py-2 rounded text-sm font-medium flex justify-center items-center gap-2 transition-colors h-[38px]"
+                    >
                         <RotateCcw size={14} /> Load Data
                     </button>
                 </div>

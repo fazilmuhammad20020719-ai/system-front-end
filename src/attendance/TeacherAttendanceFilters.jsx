@@ -6,7 +6,8 @@ const TeacherAttendanceFilters = ({
     filterStatus, setFilterStatus,
     searchQuery, setSearchQuery,
     onBulkAction,
-    programs = [] // New Prop
+    onLoadData, // Added prop
+    programs = []
 }) => {
     return (
         <div className="bg-white rounded-lg shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] p-4 md:p-5 mb-6">
@@ -70,7 +71,10 @@ const TeacherAttendanceFilters = ({
 
                 {/* Load Button */}
                 <div className="w-full md:w-auto">
-                    <button className="w-full md:w-auto bg-[#1f2937] hover:bg-gray-800 text-white px-4 py-2 rounded text-sm font-medium flex justify-center items-center gap-2 transition-colors h-[38px]">
+                    <button
+                        onClick={onLoadData}
+                        className="w-full md:w-auto bg-[#1f2937] hover:bg-gray-800 text-white px-4 py-2 rounded text-sm font-medium flex justify-center items-center gap-2 transition-colors h-[38px]"
+                    >
                         <RotateCcw size={14} /> Load Data
                     </button>
                 </div>

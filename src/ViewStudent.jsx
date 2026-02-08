@@ -125,11 +125,14 @@ const ViewStudent = () => {
                     }],
 
                     // Academic
-                    program: sData.program_name || sData.program, // Keep for backward compat defaults
-                    year: sData.current_year,
-                    session: sData.session_year,
-                    admissionDate: sData.admission_date ? sData.admission_date.split('T')[0] : 'N/A',
-                    status: sData.status || 'Active',
+                    // FIX: Use the latest enrollment (first in list) as the primary program info
+                    program: (sData.enrollments && sData.enrollments.length > 0) ? sData.enrollments[0].program : (sData.program_name || sData.program),
+                    year: (sData.enrollments && sData.enrollments.length > 0) ? sData.enrollments[0].year : sData.current_year,
+                    session: (sData.enrollments && sData.enrollments.length > 0) ? sData.enrollments[0].session : sData.session_year,
+                    admissionDate: (sData.enrollments && sData.enrollments.length > 0 && sData.enrollments[0].admissionDate)
+                        ? sData.enrollments[0].admissionDate.split('T')[0]
+                        : (sData.admission_date ? sData.admission_date.split('T')[0] : 'N/A'),
+                    status: (sData.enrollments && sData.enrollments.length > 0) ? sData.enrollments[0].status : (sData.status || 'Active'),
 
                     // Extra Data
                     previousSchool: sData.previous_school || 'N/A',

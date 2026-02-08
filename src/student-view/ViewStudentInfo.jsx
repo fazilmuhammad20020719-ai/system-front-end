@@ -136,7 +136,9 @@ const ViewStudentInfo = ({ student }) => {
                                         </h4>
                                     )}
                                     <DetailRow label="Program" value={enrollment.program} highlight />
-                                    <DetailRow label="Current Year" value={enrollment.year} />
+                                    {enrollment.status !== 'Graduated' && enrollment.status !== 'Completed' && (
+                                        <DetailRow label="Current Year" value={enrollment.year} />
+                                    )}
                                     <DetailRow label="Session / Batch" value={enrollment.session} />
                                     <DetailRow label="Status" value={enrollment.status} />
                                     <DetailRow label="Admission Date" value={formatDate(enrollment.admissionDate)} />

@@ -92,11 +92,13 @@ const StudentProfileHeader = ({ student }) => {
                                     </span>
                                 </div>
 
-                                {/* Grade / Year */}
-                                <div className="flex items-center gap-1.5 text-gray-500">
-                                    <GraduationCap size={14} className="text-blue-500" />
-                                    <span className="text-xs font-medium">{enr.year}</span>
-                                </div>
+                                {/* Grade / Year - Hide if Graduated/Completed */}
+                                {enr.status !== 'Graduated' && enr.status !== 'Completed' && (
+                                    <div className="flex items-center gap-1.5 text-gray-500">
+                                        <GraduationCap size={14} className="text-blue-500" />
+                                        <span className="text-xs font-medium">{enr.year}</span>
+                                    </div>
+                                )}
 
                                 {/* Status Badge (Auto Color) */}
                                 <span className={`ml-auto sm:ml-2 px-2 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wide border flex items-center gap-1 ${getStatusColor(enr.status)}`}>
@@ -112,7 +114,7 @@ const StudentProfileHeader = ({ student }) => {
             {/* Right Side: Actions */}
             <div className="flex gap-3 w-full md:w-auto mt-2 md:mt-0 self-start md:self-center">
                 <button
-                    onClick={() => navigate(`/students/edit/${student.id}`)}
+                    onClick={() => navigate(`/edit-student/${student.id}`)}
                     className="flex-1 md:flex-none px-4 py-2 border border-gray-300 hover:border-[#ea8933] hover:text-[#ea8933] text-gray-600 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 bg-white shadow-sm"
                 >
                     <Edit size={16} /> Edit

@@ -54,38 +54,54 @@ const StudentGrid = ({ students, cardSize, currentPage, totalPages, onPageChange
                                     <p className="text-[10px] text-gray-400 uppercase font-bold flex items-center gap-1">
                                         <GraduationCap size={10} /> Programs
                                     </p>
-                                    <div className="flex flex-col gap-1 mt-1">
+                                    <div className="flex flex-col gap-2 mt-1">
                                         {student.enrollments_summary && student.enrollments_summary.length > 0 ? (
                                             student.enrollments_summary.slice(0, 2).map((e, idx) => (
-                                                <div key={idx} className="flex justify-between items-center bg-white px-2 py-1 rounded border border-gray-100 shadow-sm">
-                                                    <span className={`font-semibold text-gray-800 truncate ${cardSize === 'large' ? 'text-xs' : 'text-[10px]'}`} title={e.program}>
-                                                        {e.program}
-                                                    </span>
-                                                    <span className={`ml-2 text-[9px] px-1.5 rounded uppercase font-bold ${getStatusColor(e.status)}`}>
-                                                        {e.status || 'Active'}
-                                                    </span>
+                                                <div key={idx} className="bg-white px-2 py-1.5 rounded border border-gray-100 shadow-sm flex flex-col gap-1">
+                                                    <div className="flex justify-between items-start gap-2">
+                                                        <span className={`font-semibold text-gray-800 line-clamp-1 ${cardSize === 'large' ? 'text-xs' : 'text-[10px]'}`} title={e.program}>
+                                                            {e.program}
+                                                        </span>
+                                                        <span className={`shrink-0 text-[9px] px-1.5 rounded uppercase font-bold ${getStatusColor(e.status)}`}>
+                                                            {e.status || 'Active'}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Batch & Year for this Program */}
+                                                    <div className="flex items-center gap-2">
+                                                        {e.session && (
+                                                            <span className="inline-flex items-center gap-1 text-[9px] text-gray-500 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-200">
+                                                                <Calendar size={8} /> {e.session}
+                                                            </span>
+                                                        )}
+                                                        {/* Hide Grade if Graduated/Completed */}
+                                                        {e.year && e.status !== 'Graduated' && e.status !== 'Completed' && (
+                                                            <span className="inline-flex items-center text-[9px] font-bold text-[#EB8A33] bg-orange-50 px-1.5 py-0.5 rounded border border-orange-100">
+                                                                {e.year}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             ))
                                         ) : (
-                                            <p className={`font-semibold text-gray-800 truncate ${cardSize === 'large' ? 'text-sm' : 'text-xs'}`}>
-                                                {student.program}
-                                            </p>
+                                            <div className="bg-white px-2 py-1.5 rounded border border-gray-100 shadow-sm flex flex-col gap-1">
+                                                <p className={`font-semibold text-gray-800 truncate ${cardSize === 'large' ? 'text-sm' : 'text-xs'}`}>
+                                                    {student.program}
+                                                </p>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="inline-flex items-center gap-1 text-[9px] text-gray-500 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-200">
+                                                        <Calendar size={8} /> {student.session}
+                                                    </span>
+                                                    <span className="inline-flex items-center text-[9px] font-bold text-[#EB8A33] bg-orange-50 px-1.5 py-0.5 rounded border border-orange-100">
+                                                        {student.currentYear}
+                                                    </span>
+                                                </div>
+                                            </div>
                                         )}
                                         {student.enrollments_summary && student.enrollments_summary.length > 2 && (
                                             <p className="text-[9px] text-gray-400 text-center">+{student.enrollments_summary.length - 2} more</p>
                                         )}
                                     </div>
-                                </div>
-
-                                {/* Batch & Year Badges */}
-                                <div className="flex items-center gap-2">
-                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-white border border-gray-200 text-gray-600 shadow-sm">
-                                        <Calendar size={10} className="text-gray-400" />
-                                        Batch {student.session}
-                                    </span>
-                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-orange-50 border border-orange-100 text-[#EB8A33]">
-                                        {student.currentYear}
-                                    </span>
                                 </div>
                             </div>
 

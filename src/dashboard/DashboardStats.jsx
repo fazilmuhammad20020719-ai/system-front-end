@@ -39,22 +39,22 @@ const DashboardStats = ({ stats }) => {
             />
 
             <StatCard
-                title="Active Students"
+                title="Today Student Attendance"
                 value={stats.studentAttendance}
-                subText={`${stats.activeStudents || 0} / ${stats.students || 0} Active`}
+                subText={`${stats.activeStudents || 0} / ${stats.students || 0} Present`}
                 icon={CalendarCheck}
                 iconColor="text-green-600"
                 iconBg="bg-green-100"
-                onClick={() => navigate('/students')}
+                onClick={() => navigate('/attendance', { state: { tab: 'students' } })}
             />
             <StatCard
-                title="Active Teachers"
+                title="Today Teacher Attendance"
                 value={stats.teacherAttendance}
-                subText={`${stats.activeTeachers || 0} / ${stats.teachers || 0} Active`}
+                subText={`${stats.activeTeachers || 0} / ${stats.teachers || 0} Present`}
                 icon={Users}
                 iconColor="text-blue-600"
                 iconBg="bg-blue-100"
-                onClick={() => navigate('/teachers')}
+                onClick={() => navigate('/attendance', { state: { tab: 'teachers' } })}
             />
             <StatCard
                 title="Documents"

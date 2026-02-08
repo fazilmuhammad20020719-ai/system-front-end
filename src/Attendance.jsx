@@ -1,3 +1,4 @@
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useState, useMemo, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import { API_URL } from './config';
@@ -17,11 +18,12 @@ import TeacherAttendanceTable from './attendance/TeacherAttendanceTable';
 import Loader from './components/Loader';
 
 const Attendance = () => {
+    const location = useLocation();
     // Default: Open on PC (width >= 768), Closed on Mobile
     const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
 
     // -- MAIN TOGGLE STATE --
-    const [activeTab, setActiveTab] = useState('students'); // 'students' or 'teachers'
+    const [activeTab, setActiveTab] = useState(location.state?.tab || 'students'); // 'students' or 'teachers'
 
     // -- COMMON STATE --
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
@@ -107,8 +109,14 @@ const Attendance = () => {
 
     useEffect(() => {
         fetchData();
-        // Reset Edit Mode when date changes to prevent editing wrong date by mistake
-        setIsEditing(false);
+
+        // Auto-unlock for Today, Lock for Past Dates
+        const todayStr = new Date().toISOString().split('T')[0];
+        if (selectedDate === todayStr) {
+            setIsEditing(true);
+        } else {
+            setIsEditing(false);
+        }
     }, [selectedDate]);
 
     // ==========================================

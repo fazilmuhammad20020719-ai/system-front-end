@@ -5,7 +5,7 @@ import DashboardStats from './dashboard/DashboardStats';
 import QuickActions from './dashboard/QuickActions';
 import RecentActivities from './dashboard/RecentActivities';
 import AlertsModal from './dashboard/AlertsModal';
-import UpcomingAlerts from './dashboard/UpcomingAlerts';
+
 import Sidebar from './Sidebar';
 import Loader from './components/Loader';
 
@@ -65,17 +65,10 @@ const Dashboard = () => {
 
                     <QuickActions />
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        {/* Activities takes 2 columns */}
-                        <div className="lg:col-span-2">
-                            <RecentActivities activities={dashboardData.activities} />
-                        </div>
 
-                        {/* Upcoming Alerts takes 1 column */}
-                        <div className="lg:col-span-1">
-                            <UpcomingAlerts alerts={dashboardData.alerts} />
-                        </div>
-                    </div>
+                    <RecentActivities activities={dashboardData.activities} />
+
+
                 </main>
             </div>
 

@@ -25,10 +25,16 @@ const AttendancePopup = ({ isOpen, onClose, slot, subjects, onSave, onCancel }) 
     // 3. Load & Filter Students on Mount
     useEffect(() => {
         const fetchStudentsAndAttendance = async () => {
-            if (subject && isAuthenticated) { // Only fetch if authenticated
+            if (!subject) {
+                console.warn("AttendancePopup: No subject found for slot", slot);
+                return;
+            }
+
+            if (isAuthenticated) { // Only fetch if authenticated
                 setLoading(true);
                 try {
                     // Fetch all students
+                    console.log("Fetching students...");
                     const studentsRes = await fetch(`${API_URL}/api/students`);
 
                     // Fetch existing attendance for this schedule slot
@@ -43,22 +49,44 @@ const AttendancePopup = ({ isOpen, onClose, slot, subjects, onSave, onCancel }) 
                             existingAttendance = await attendanceRes.json();
                         }
 
+                        if (!Array.isArray(allStudents)) {
+                            console.error("API Error: Students response is not an array", allStudents);
+                            setLoading(false);
+                            return;
+                        }
+
+                        console.log(`Loaded ${allStudents.length} students. Filtering for Subject:`, subject);
+
                         // Filter Logic:
                         const classStudents = allStudents.filter(student => {
-                            // 1. Match Program
-                            const programMatch = parseInt(student.program_id) === parseInt(subject.program_id);
+                            if (!student) return false;
 
-                            // 2. Match Grade/Year
-                            const normalize = (val) => String(val || '').toLowerCase().replace(/grade\s*|year\s*/g, '').trim();
-                            const studentGrade = normalize(student.currentYear || student.year);
-                            const subjectGrade = normalize(subject.year);
+                            try {
+                                // 1. Match Program
+                                const studentProgramId = parseInt(student.program_id);
+                                const subjectProgramId = parseInt(subject.program_id);
+                                const programMatch = !isNaN(studentProgramId) && !isNaN(subjectProgramId) && studentProgramId === subjectProgramId;
 
-                            const gradeMatch =
-                                subject.year === 'General' ||
-                                subjectGrade === 'general' ||
-                                studentGrade === subjectGrade;
+                                // 2. Match Grade/Year
+                                const normalize = (val) => String(val || '').toLowerCase().replace(/grade\s*|year\s*/g, '').trim();
+                                const studentGrade = normalize(student.currentYear || student.year);
+                                const subjectGrade = normalize(subject.year);
 
-                            return programMatch && gradeMatch;
+                                const gradeMatch =
+                                    subject.year === 'General' ||
+                                    subjectGrade === 'general' ||
+                                    studentGrade === subjectGrade;
+
+                                if (!programMatch && gradeMatch) {
+                                    // Debug info for partial matches if needed
+                                    // console.log(`Skipping student ${student.name}: Program Match ${programMatch} (Std: ${studentProgramId} vs Sub: ${subjectProgramId}), Grade Match ${gradeMatch}`);
+                                }
+
+                                return programMatch && gradeMatch;
+                            } catch (e) {
+                                console.error("Error filtering student:", student, e);
+                                return false;
+                            }
                         }).map(s => {
                             // Check if student has existing status
                             const record = existingAttendance.find(r => r.student_id == s.id); // Loose equality for string/int IDs
@@ -69,7 +97,10 @@ const AttendancePopup = ({ isOpen, onClose, slot, subjects, onSave, onCancel }) 
                             };
                         });
 
+                        console.log(`Filtered down to ${classStudents.length} students for this class.`);
                         setAttendanceList(classStudents);
+                    } else {
+                        console.error("Failed to fetch students. Status:", studentsRes.status);
                     }
                 } catch (err) {
                     console.error("Error fetching data:", err);

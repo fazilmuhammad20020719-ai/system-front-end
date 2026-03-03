@@ -12,7 +12,8 @@ import {
     Briefcase,
     X,
     ClipboardList,
-    Crown
+    Crown,
+    Activity
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, toggleSidebar }) => {
@@ -170,6 +171,13 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                                 text="Subscription"
                                 to="/subscription"
                                 active={isActive('/subscription')}
+                                isOpen={isOpen}
+                            />
+                            <SidebarItem
+                                icon={Activity}
+                                text="Activity Log"
+                                to="/activity"
+                                active={isActive('/activity')}
                                 isOpen={isOpen}
                             />
                         </div>

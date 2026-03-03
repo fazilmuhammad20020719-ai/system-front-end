@@ -11,6 +11,7 @@ const Dashboard = lazy(() => import('./Dashboard'));
 const Calendar = lazy(() => import('./Calendar'));
 const Schedule = lazy(() => import('./schedule/Schedule'));
 
+
 // Student Routes
 const Students = lazy(() => import('./Students'));
 const AddStudent = lazy(() => import('./AddStudent'));
@@ -38,6 +39,7 @@ const ExamsLayout = lazy(() => import('./exams/ExamsLayout'));
 const Attendance = lazy(() => import('./Attendance'));
 const Documents = lazy(() => import('./Documents'));
 const Subscription = lazy(() => import('./Subscription'));
+const Activity = lazy(() => import('./Activity'));
 
 function App() {
   return (
@@ -57,6 +59,8 @@ function App() {
               <Route path="/add-student" element={<AddStudent />} />
               <Route path="/edit-student/:id" element={<EditStudent />} />
               <Route path="/view-student/:id" element={<ViewStudent />} />
+
+
 
               {/* Teacher Routes */}
               <Route path="/teachers" element={<Teachers />} />
@@ -81,6 +85,7 @@ function App() {
               <Route path="/attendance" element={<Attendance />} />
               <Route path="/documents" element={<Documents />} />
               <Route path="/subscription" element={<Subscription />} />
+              <Route path="/activity" element={<Activity />} />
 
               {/* Catch-all */}
               <Route path="*" element={<Navigate to="/dashboard" replace />} />

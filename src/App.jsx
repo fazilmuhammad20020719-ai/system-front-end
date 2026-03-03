@@ -42,6 +42,10 @@ const Subscription = lazy(() => import('./Subscription'));
 const Activity = lazy(() => import('./Activity'));
 const AdminProfile = lazy(() => import('./AdminProfile'));
 
+// Developer Controller
+const ControllerLogin = lazy(() => import('./controller/ControllerLogin'));
+const ControllerDashboard = lazy(() => import('./controller/ControllerDashboard'));
+
 function App() {
   return (
     <BrowserRouter>
@@ -88,6 +92,10 @@ function App() {
               <Route path="/subscription" element={<Subscription />} />
               <Route path="/activity" element={<Activity />} />
               <Route path="/admin-profile" element={<AdminProfile />} />
+
+              {/* Developer Controller */}
+              <Route path="/controller" element={<ControllerLogin />} />
+              <Route path="/controller/dashboard" element={<ControllerDashboard />} />
 
               {/* Catch-all */}
               <Route path="*" element={<Navigate to="/dashboard" replace />} />

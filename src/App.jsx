@@ -45,6 +45,7 @@ const AdminProfile = lazy(() => import('./AdminProfile'));
 // Developer Controller
 const ControllerLogin = lazy(() => import('./controller/ControllerLogin'));
 const ControllerDashboard = lazy(() => import('./controller/ControllerDashboard'));
+const ControllerLogs = lazy(() => import('./controller/ControllerLogs'));
 
 function App() {
   return (
@@ -96,6 +97,7 @@ function App() {
               {/* Developer Controller */}
               <Route path="/controller" element={<ControllerLogin />} />
               <Route path="/controller/dashboard" element={<ControllerDashboard />} />
+              <Route path="/controller/logs" element={<ControllerLogs />} />
 
               {/* Catch-all */}
               <Route path="*" element={<Navigate to="/dashboard" replace />} />

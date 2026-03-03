@@ -40,6 +40,7 @@ const Attendance = lazy(() => import('./Attendance'));
 const Documents = lazy(() => import('./Documents'));
 const Subscription = lazy(() => import('./Subscription'));
 const Activity = lazy(() => import('./Activity'));
+const AdminProfile = lazy(() => import('./AdminProfile'));
 
 function App() {
   return (
@@ -86,6 +87,7 @@ function App() {
               <Route path="/documents" element={<Documents />} />
               <Route path="/subscription" element={<Subscription />} />
               <Route path="/activity" element={<Activity />} />
+              <Route path="/admin-profile" element={<AdminProfile />} />
 
               {/* Catch-all */}
               <Route path="*" element={<Navigate to="/dashboard" replace />} />

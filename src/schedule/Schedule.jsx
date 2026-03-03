@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, MapPin, User, Plus, Edit2, ClipboardCheck, ChevronDown, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { Clock, MapPin, User, Plus, Edit2, ClipboardCheck, ChevronDown, ChevronLeft, ChevronRight, Calendar, Menu } from 'lucide-react';
 import Sidebar from '../Sidebar';
 import ScheduleModal from './ScheduleModal';
 import AttendancePopup from './AttendancePopup';
@@ -341,35 +341,45 @@ const Schedule = () => {
             <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
 
             <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "md:ml-64" : "md:ml-20"} ml-0`}>
-                <main className="p-4 md:p-8">
-                    {/* Header */}
-                    <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                        <div>
-                            <h1 className="text-2xl font-bold text-gray-800">Weekly Schedule</h1>
-                            <p className="text-gray-500 text-sm mt-1">Manage class timetables and attendance</p>
-                        </div>
 
-                        {/* Week Picker */}
-                        <div className="flex items-center gap-4 bg-gray-50 p-2 rounded-xl border border-gray-100">
-                            <button onClick={handlePrevWeek} className="p-2 hover:bg-white hover:shadow-sm rounded-lg text-gray-600 transition-all">
-                                <ChevronLeft size={20} />
-                            </button>
-                            <div className="flex items-center gap-2 px-2">
-                                <Calendar size={18} className="text-blue-600" />
-                                <span className="font-bold text-gray-700 text-sm">
-                                    {currentWeekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} -{' '}
-                                    {(() => {
-                                        const end = new Date(currentWeekStart);
-                                        end.setDate(end.getDate() + 6);
-                                        return end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                                    })()}
-                                </span>
-                            </div>
-                            <button onClick={handleNextWeek} className="p-2 hover:bg-white hover:shadow-sm rounded-lg text-gray-600 transition-all">
-                                <ChevronRight size={20} />
-                            </button>
+                {/* Sticky Top Bar */}
+                <header className="sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm px-6 md:px-8 h-20 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={toggleSidebar}
+                            className="p-2 bg-white rounded-lg shadow-sm border border-gray-200 text-gray-600 md:hidden"
+                        >
+                            <Menu size={20} />
+                        </button>
+                        <div>
+                            <h1 className="text-xl md:text-2xl font-bold text-gray-800 leading-tight">Weekly Schedule</h1>
+                            <p className="text-gray-400 text-xs hidden md:block">Manage class timetables and attendance</p>
                         </div>
                     </div>
+
+                    {/* Week Picker */}
+                    <div className="flex items-center gap-2 bg-gray-50 p-1.5 rounded-xl border border-gray-100">
+                        <button onClick={handlePrevWeek} className="p-2 hover:bg-white hover:shadow-sm rounded-lg text-gray-600 transition-all">
+                            <ChevronLeft size={18} />
+                        </button>
+                        <div className="flex items-center gap-2 px-2">
+                            <Calendar size={16} className="text-blue-600" />
+                            <span className="font-bold text-gray-700 text-sm whitespace-nowrap">
+                                {currentWeekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} -{' '}
+                                {(() => {
+                                    const end = new Date(currentWeekStart);
+                                    end.setDate(end.getDate() + 6);
+                                    return end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                                })()}
+                            </span>
+                        </div>
+                        <button onClick={handleNextWeek} className="p-2 hover:bg-white hover:shadow-sm rounded-lg text-gray-600 transition-all">
+                            <ChevronRight size={18} />
+                        </button>
+                    </div>
+                </header>
+
+                <main className="p-4 md:p-8">
 
                     <div className="space-y-8">
                         {(!programs || programs.length === 0) && !loading && (
@@ -457,7 +467,7 @@ const Schedule = () => {
                                     </div>
 
                                     {/* Schedule Grid */}
-                                    <div className="p-4 overflow-x-auto">
+                                    <div className="p-4 overflow-x-auto flex justify-center">
                                         <div className="grid grid-cols-7 min-w-[1200px] gap-3">
                                             {days.map((day, dayIndex) => {
                                                 const currentDayDate = getDateForDay(dayIndex);
@@ -487,11 +497,11 @@ const Schedule = () => {
 
                                                 return (
                                                     <div key={day} className="flex flex-col gap-2">
-                                                        <div className="text-center py-2 bg-gray-50 rounded-lg flex flex-col justify-center h-14 relative group/header">
+                                                        <div className="text-center py-2 bg-gray-50 rounded-lg flex flex-col items-center justify-center h-14 relative group/header">
                                                             <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">{day.substring(0, 3)}</div>
                                                             <div className="absolute top-0.5 right-0.5 flex gap-0.5 opacity-0 group-hover/header:opacity-100 transition-opacity">
                                                                 <button
-                                                                    onClick={() => handleAddClick(program, day, true)} // True for Break
+                                                                    onClick={() => handleAddClick(program, day, true)}
                                                                     className="p-1 text-gray-400 hover:text-orange-500 hover:bg-white rounded-md transition-all"
                                                                     title="Add Break"
                                                                 >
@@ -505,7 +515,7 @@ const Schedule = () => {
                                                                     <Plus size={12} strokeWidth={3} />
                                                                 </button>
                                                             </div>
-                                                            <div className={`text-xs font-bold ${currentDayDate.toDateString() === new Date().toDateString() ? 'text-blue-600' : 'text-gray-600'}`}>
+                                                            <div className={`text-xs font-bold text-center ${currentDayDate.toDateString() === new Date().toDateString() ? 'text-blue-600' : 'text-gray-600'}`}>
                                                                 {currentDayDate.getDate()}
                                                             </div>
                                                         </div>

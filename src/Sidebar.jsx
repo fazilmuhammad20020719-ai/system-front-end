@@ -12,7 +12,6 @@ import {
     Briefcase,
     X,
     ClipboardList,
-    Crown,
     Activity
 } from 'lucide-react';
 
@@ -45,7 +44,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                 {/* LOGO SECTION */}
                 <div className="h-20 flex items-center justify-between px-6 border-b border-green-400/30">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center p-1">
+                        <Link to="/admin-profile" className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center p-1 hover:bg-white/30 transition-colors">
                             {/* Ensure you have a logo.png in your public folder or change this source */}
                             <img
                                 src="/logo.png"
@@ -53,7 +52,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                                 className="w-full h-full rounded-full object-cover"
                                 onError={(e) => { e.target.src = 'https://via.placeholder.com/40'; }}
                             />
-                        </div>
+                        </Link>
                         {isOpen && (
                             <div>
                                 <h1 className="text-xl font-bold leading-tight">FMAC <span className="font-medium opacity-90">Central</span></h1>
@@ -167,13 +166,6 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                                 isOpen={isOpen}
                             />
                             <SidebarItem
-                                icon={Crown}
-                                text="Subscription"
-                                to="/subscription"
-                                active={isActive('/subscription')}
-                                isOpen={isOpen}
-                            />
-                            <SidebarItem
                                 icon={Activity}
                                 text="Activity Log"
                                 to="/activity"
@@ -187,19 +179,24 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                 {/* FOOTER USER PROFILE */}
                 <div className="p-4 border-t border-green-400/30 bg-green-700">
                     <div className={`flex items-center gap-3 ${!isOpen && "justify-center"}`}>
-                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-green-600 font-bold shadow-sm uppercase">
-                            {user?.username?.charAt(0) || 'A'}
-                        </div>
-
-                        {isOpen && (
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-bold truncate capitalize">{user?.username || 'Administrator'}</p>
-                                <p className="text-xs text-green-200 truncate capitalize">{user?.role || 'Super Admin'}</p>
+                        <Link
+                            to="/admin-profile"
+                            className={`flex items-center gap-3 flex-1 min-w-0 hover:opacity-80 transition-opacity ${!isOpen && "justify-center"}`}
+                        >
+                            <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-green-600 font-bold shadow-sm uppercase flex-shrink-0">
+                                {user?.username?.charAt(0) || 'A'}
                             </div>
-                        )}
+
+                            {isOpen && (
+                                <div className="min-w-0">
+                                    <p className="text-sm font-bold truncate capitalize">{user?.username || 'Administrator'}</p>
+                                    <p className="text-xs text-green-200 truncate capitalize">{user?.role || 'Super Admin'}</p>
+                                </div>
+                            )}
+                        </Link>
 
                         {isOpen && (
-                            <Link to="/" onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('user'); }} className="text-green-200 hover:text-white transition-colors">
+                            <Link to="/" onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('user'); }} className="text-green-200 hover:text-white transition-colors flex-shrink-0">
                                 <LogOut size={20} />
                             </Link>
                         )}

@@ -3,13 +3,17 @@ import { API_URL } from './config';
 import DashboardHeader from './dashboard/DashboardHeader';
 import Sidebar from './Sidebar';
 import Loader from './components/Loader';
-import { Activity as ActivityIcon, Calendar, Clock, Filter, UserPlus, FileText, Upload, Edit, Trash2 } from 'lucide-react';
+import { Activity as ActivityIcon, Calendar, Clock, Filter, UserPlus, FileText, Upload, Edit, Trash2, DollarSign, BookOpen, Key, Settings } from 'lucide-react';
 
 const Activity = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [activities, setActivities] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('30days'); // Default to last 30 days
+
+    // Programs State
+    const [programs, setPrograms] = useState([]);
+    const [selectedProgram, setSelectedProgram] = useState(''); // '' means all
 
     const filterOptions = [
         { id: 'today', label: 'Today' },
@@ -18,10 +22,14 @@ const Activity = () => {
         { id: '30days', label: 'Last 30 Days' }
     ];
 
-    const fetchActivities = async (range) => {
+    const fetchActivities = async (range, programId) => {
         setLoading(true);
         try {
-            const response = await fetch(`${API_URL}/api/activities?range=${range}`);
+            const url = programId
+                ? `${API_URL}/api/activities?range=${range}&program_id=${programId}`
+                : `${API_URL}/api/activities?range=${range}`;
+
+            const response = await fetch(url);
             if (response.ok) {
                 const data = await response.json();
                 setActivities(data);
@@ -33,9 +41,25 @@ const Activity = () => {
         }
     };
 
+    // Fetch Programs for filtering
     useEffect(() => {
-        fetchActivities(filter);
-    }, [filter]);
+        const fetchPrograms = async () => {
+            try {
+                const response = await fetch(`${API_URL}/api/programs`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setPrograms(data);
+                }
+            } catch (err) {
+                console.error("Error fetching programs:", err);
+            }
+        };
+        fetchPrograms();
+    }, []);
+
+    useEffect(() => {
+        fetchActivities(filter, selectedProgram);
+    }, [filter, selectedProgram]);
 
     // Helper to get dynamic icon based on icon_type string
     const getIcon = (type) => {
@@ -46,6 +70,10 @@ const Activity = () => {
             case 'Edit': return <Edit size={18} className="text-orange-500" />;
             case 'Trash2': return <Trash2 size={18} className="text-red-500" />;
             case 'Calendar': return <Calendar size={18} className="text-indigo-500" />;
+            case 'DollarSign': return <DollarSign size={18} className="text-emerald-500" />;
+            case 'BookOpen': return <BookOpen size={18} className="text-yellow-500" />;
+            case 'Key': return <Key size={18} className="text-pink-500" />;
+            case 'Settings': return <Settings size={18} className="text-slate-500" />;
             default: return <ActivityIcon size={18} className="text-gray-500" />;
         }
     };
@@ -102,6 +130,8 @@ const Activity = () => {
                             ))}
                         </div>
                     </div>
+
+
 
                     {/* Timeline Content */}
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-8">

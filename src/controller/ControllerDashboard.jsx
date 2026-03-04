@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Terminal, Database, Table2, ChevronDown, ChevronRight,
-    LogOut, RefreshCw, Search, Eye, Hash, Columns, LayoutGrid, AlertTriangle
+    LogOut, RefreshCw, Search, Eye, Hash, Columns, LayoutGrid, AlertTriangle,
+    Download
 } from 'lucide-react';
 import { API_URL } from '../config';
 import ControllerSidebar from './ControllerSidebar';
@@ -17,6 +18,8 @@ const ControllerDashboard = () => {
     const [expanded, setExpanded] = useState(null);        // table name with columns open
     const [previewTable, setPreviewTable] = useState(null); // { name, rows, fields }
     const [previewLoading, setPreviewLoading] = useState(false);
+    const [exportLoading, setExportLoading] = useState(false);
+    const [exportOpen, setExportOpen] = useState(false);
 
     useEffect(() => {
         if (!token) { navigate('/controller'); return; }
@@ -61,6 +64,31 @@ const ControllerDashboard = () => {
         navigate('/controller');
     };
 
+    const exportDb = async (includeData) => {
+        setExportOpen(false);
+        if (exportLoading) return;
+        setExportLoading(true);
+        try {
+            const res = await fetch(
+                `${API_URL}/api/controller/export?includeData=${includeData}`,
+                { headers: { 'Authorization': `Bearer ${token}` } }
+            );
+            if (!res.ok) { const e = await res.json(); alert('Export failed: ' + e.message); return; }
+            const blob = await res.blob();
+            const disposition = res.headers.get('Content-Disposition') || '';
+            const match = disposition.match(/filename="?([^"]+)"?/);
+            const fname = match ? match[1] : `fmac_db_export.sql`;
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = fname; a.click();
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            alert('Export error: ' + err.message);
+        } finally {
+            setExportLoading(false);
+        }
+    };
+
     const filtered = tables.filter(t => t.name.toLowerCase().includes(search.toLowerCase()));
     const totalRows = tables.reduce((sum, t) => sum + t.rowCount, 0);
     const totalCols = tables.reduce((sum, t) => sum + t.columns.length, 0);
@@ -87,11 +115,60 @@ const ControllerDashboard = () => {
                             <span className="ml-3 text-xs text-gray-500 font-mono">schema &amp; data preview</span>
                         </div>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                         <button onClick={fetchTables}
                             className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-green-400 transition-colors font-mono">
                             <RefreshCw size={13} /> Refresh
                         </button>
+
+                        {/* Export dropdown */}
+                        <div className="relative">
+                            <button
+                                onClick={() => setExportOpen(o => !o)}
+                                disabled={exportLoading}
+                                className="flex items-center gap-1.5 text-xs font-mono px-3 py-1.5 rounded-lg border border-green-500/30 text-green-400 hover:bg-green-500/10 disabled:opacity-50 transition-all"
+                            >
+                                <Download size={13} />
+                                {exportLoading ? 'Exporting…' : 'Export SQL'}
+                                <ChevronDown size={11} className={`transition-transform ${exportOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {exportOpen && (
+                                <>
+                                    {/* Click-away overlay */}
+                                    <div className="fixed inset-0 z-10" onClick={() => setExportOpen(false)} />
+                                    <div className="absolute right-0 top-full mt-1.5 w-52 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl z-20 overflow-hidden">
+                                        <div className="px-3 pt-2.5 pb-1">
+                                            <p className="text-[10px] font-mono text-gray-500 uppercase tracking-wider">Export as .sql</p>
+                                        </div>
+                                        <button
+                                            onClick={() => exportDb(false)}
+                                            className="w-full text-left px-4 py-2.5 text-sm font-mono text-gray-300 hover:bg-gray-800 flex items-center gap-2.5 transition-colors"
+                                        >
+                                            <span className="w-5 h-5 rounded bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                                                <Database size={11} className="text-purple-400" />
+                                            </span>
+                                            <div>
+                                                <p className="text-xs font-semibold text-white">Schema Only</p>
+                                                <p className="text-[10px] text-gray-500">CREATE TABLE — no data</p>
+                                            </div>
+                                        </button>
+                                        <button
+                                            onClick={() => exportDb(true)}
+                                            className="w-full text-left px-4 py-2.5 text-sm font-mono text-gray-300 hover:bg-gray-800 flex items-center gap-2.5 transition-colors border-t border-gray-800"
+                                        >
+                                            <span className="w-5 h-5 rounded bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                                                <Download size={11} className="text-green-400" />
+                                            </span>
+                                            <div>
+                                                <p className="text-xs font-semibold text-white">Schema + Data</p>
+                                                <p className="text-[10px] text-gray-500">CREATE + INSERT INTO</p>
+                                            </div>
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </header>
 

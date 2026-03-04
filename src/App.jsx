@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Loader from './components/Loader';
 import { LoaderProvider } from './context/LoaderContext';
 import { NotificationProvider } from './context/NotificationContext';
+import SystemPausedOverlay from './components/SystemPausedOverlay';
 
 // Lazy Load Components
 const Login = lazy(() => import('./login'));
@@ -50,6 +51,7 @@ const ControllerLogs = lazy(() => import('./controller/ControllerLogs'));
 function App() {
   return (
     <BrowserRouter>
+      <SystemPausedOverlay />
       <LoaderProvider>
         <NotificationProvider>
           <Suspense fallback={<Loader />}>

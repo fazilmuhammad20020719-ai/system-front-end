@@ -46,9 +46,42 @@ const AddStudent = () => {
         fetchPrograms();
     }, []);
 
+    // ✅ For simple fields like name, email, phone, etc.
     const handleChange = (e) => {
         const { name, value, type, files } = e.target;
-        setFormData({ ...formData, [name]: type === 'file' ? files[0] : value });
+
+        if (type === 'file' && files[0]) {
+            const file = files[0];
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+            const maxSizeBytes = 2 * 1024 * 1024; // 2 MB
+
+            if (!allowedTypes.includes(file.type)) {
+                notify('error', 'Only PNG or JPEG image files are allowed.', 'Invalid File Type');
+                e.target.value = ''; // reset the input
+                return;
+            }
+            if (file.size > maxSizeBytes) {
+                notify('error', 'File size must be under 2MB.', 'File Too Large');
+                e.target.value = ''; // reset the input
+                return;
+            }
+
+            setFormData(prev => ({ ...prev, [name]: file }));
+            return;
+        }
+
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    // ✅ For fields INSIDE the enrollments array
+    // Normal handleChange can't handle arrays — it needs to know:
+    //   - index: which enrollment row to update
+    //   - name: which field inside that object
+    //   - value: the new value
+    const handleEnrollmentChange = (index, name, value) => {
+        const updatedEnrollments = [...formData.enrollments];
+        updatedEnrollments[index] = { ...updatedEnrollments[index], [name]: value };
+        setFormData(prev => ({ ...prev, enrollments: updatedEnrollments }));
     };
 
     const handleSubmit = async (e) => {
@@ -122,7 +155,7 @@ const AddStudent = () => {
                         )}
                         {activeTab === 'guardian' && <StudentGuardianInfo formData={formData} handleChange={handleChange} />}
                         {activeTab === 'academic' && (
-                            <StudentAcademicInfo formData={formData} handleChange={handleChange} programs={programOptions} setFormData={setFormData} />
+                            <StudentAcademicInfo formData={formData} handleChange={handleChange} handleEnrollmentChange={handleEnrollmentChange} programs={programOptions} setFormData={setFormData} />
                         )}
                         {activeTab === 'documents' && <StudentUploads formData={formData} handleChange={handleChange} />}
                     </div>

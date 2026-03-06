@@ -1,16 +1,22 @@
 import { User, Calendar, Mail, Phone, Hash, CreditCard, MessageCircle } from 'lucide-react';
 import { InputField, SelectField, FileUploadField } from './FormComponents';
-import { API_URL } from '../config'; // <--- முக்கியம்
+import { API_URL } from '../config';
+
+// Today's date in YYYY-MM-DD for DOB max= attribute
+const todayDate = new Date().toISOString().split('T')[0];
+
+// Sri Lankan NIC: 9 digits + V/X  OR  12 digits
+const NIC_PATTERN = "^([0-9]{9}[VvXx]|[0-9]{12})$";
 
 const StudentPersonalInfo = ({ formData, handleChange, handleStatusChange }) => {
 
     // --- PHOTO PREVIEW LOGIC ---
     const getPreviewImage = () => {
-        // 1. புதிதாக Upload செய்தால் அதை காட்டு
+        // 1. If newly uploaded, show object URL
         if (formData.studentPhoto instanceof File) {
             return URL.createObjectURL(formData.studentPhoto);
         }
-        // 2. ஏற்கனவே Database-ல் இருந்தால் அதை காட்டு
+        // 2. If already in database, show it
         if (formData.photoUrl) {
             return formData.photoUrl.startsWith('http')
                 ? formData.photoUrl
@@ -32,7 +38,7 @@ const StudentPersonalInfo = ({ formData, handleChange, handleStatusChange }) => 
                         label="Student Photo"
                         name="studentPhoto"
                         onChange={handleChange}
-                        preview={getPreviewImage()} // Preview Function Call
+                        preview={getPreviewImage()}
                     />
                 </div>
 
@@ -44,12 +50,64 @@ const StudentPersonalInfo = ({ formData, handleChange, handleStatusChange }) => 
 
                     <InputField label="First Name" name="firstName" value={formData.firstName} onChange={handleChange} placeholder="Mohamed" required />
                     <InputField label="Last Name" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Rifkan" />
-                    <InputField label="Date of Birth" name="dob" type="date" value={formData.dob} onChange={handleChange} icon={Calendar} required />
+
+                    {/* DOB: max=today prevents future dates */}
+                    <InputField
+                        label="Date of Birth"
+                        name="dob"
+                        type="date"
+                        value={formData.dob}
+                        onChange={handleChange}
+                        icon={Calendar}
+                        required
+                        max={todayDate}
+                    />
+
                     <SelectField label="Gender" name="gender" value={formData.gender} onChange={handleChange} options={['Male', 'Female']} />
-                    <InputField label="NIC Number (Optional)" name="nic" value={formData.nic} onChange={handleChange} placeholder="987654321V" icon={CreditCard} />
+
+                    {/* NIC: old (9 digits + V/X) or new (12 digits) */}
+                    <InputField
+                        label="NIC Number (Optional)"
+                        name="nic"
+                        value={formData.nic}
+                        onChange={handleChange}
+                        placeholder="987654321V or 200012345678"
+                        icon={CreditCard}
+                        pattern={NIC_PATTERN}
+                        title="Enter old NIC (9 digits + V/X) or new NIC (12 digits)"
+                    />
+
                     <InputField label="Email Address" name="email" type="email" value={formData.email} onChange={handleChange} placeholder="student@example.com" icon={Mail} />
-                    <InputField label="Phone Number" name="phone" value={formData.phone} onChange={handleChange} placeholder="+94 77 123 4567" icon={Phone} />
-                    <InputField label="WhatsApp Number" name="whatsapp" value={formData.whatsapp} onChange={handleChange} placeholder="+94 77 123 4567" icon={MessageCircle} />
+
+                    {/* Phone: exactly 10 digits */}
+                    <InputField
+                        label="Phone Number"
+                        name="phone"
+                        type="tel"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        placeholder="0771234567"
+                        icon={Phone}
+                        pattern="[0-9]{10}"
+                        minLength={10}
+                        maxLength={10}
+                        title="Phone number must be exactly 10 digits"
+                    />
+
+                    {/* WhatsApp: exactly 10 digits */}
+                    <InputField
+                        label="WhatsApp Number"
+                        name="whatsapp"
+                        type="tel"
+                        value={formData.whatsapp}
+                        onChange={handleChange}
+                        placeholder="0771234567"
+                        icon={MessageCircle}
+                        pattern="[0-9]{10}"
+                        minLength={10}
+                        maxLength={10}
+                        title="WhatsApp number must be exactly 10 digits"
+                    />
                 </div>
             </div>
         </div>

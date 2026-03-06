@@ -1,4 +1,4 @@
-import { Users, Phone, Briefcase, Mail, User } from 'lucide-react'; // Added User, Mail icons
+import { Users, Phone, Briefcase, Mail, User } from 'lucide-react';
 import { InputField, SelectField } from './FormComponents';
 
 const StudentGuardianInfo = ({ formData, handleChange }) => {
@@ -13,7 +13,7 @@ const StudentGuardianInfo = ({ formData, handleChange }) => {
                 {/* Guardian Photo Upload */}
                 <div className="flex-shrink-0 flex flex-col items-center gap-3">
                     <div className="w-32 h-32 rounded-lg bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden relative group hover:border-[#EB8A33] transition-colors">
-                        {formData.guardianPhoto ? (
+                        {formData.guardianPhoto instanceof File ? (
                             <img src={URL.createObjectURL(formData.guardianPhoto)} alt="Guardian" className="w-full h-full object-cover" />
                         ) : formData.guardianPhotoUrl ? (
                             <img src={formData.guardianPhotoUrl} alt="Guardian" className="w-full h-full object-cover" />
@@ -30,20 +30,45 @@ const StudentGuardianInfo = ({ formData, handleChange }) => {
                 {/* Form Fields */}
                 <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div className="lg:col-span-2">
-                        <InputField label="Guardian Name" name="guardianName" value={formData.guardianName} onChange={handleChange} />
+                        {/* Guardian Name — required for emergency contact */}
+                        <InputField
+                            label="Guardian Name"
+                            name="guardianName"
+                            value={formData.guardianName}
+                            onChange={handleChange}
+                            icon={User}
+                            required
+                        />
                     </div>
 
+                    {/* Guardian Relation — required */}
                     <SelectField
                         label="Relationship"
                         name="guardianRelation"
                         value={formData.guardianRelation}
                         onChange={handleChange}
                         options={['Father', 'Mother', 'Brother', 'Uncle', 'Other']}
+                        required
                     />
 
                     <InputField label="Occupation" name="guardianOccupation" value={formData.guardianOccupation} onChange={handleChange} icon={Briefcase} />
-                    <InputField label="Phone Number" name="guardianPhone" value={formData.guardianPhone} onChange={handleChange} icon={Phone} />
-                    <InputField label="Guardian Email" name="guardianEmail" value={formData.guardianEmail} onChange={handleChange} icon={Mail} />
+
+                    {/* Guardian Phone — required, 10 digits */}
+                    <InputField
+                        label="Phone Number"
+                        name="guardianPhone"
+                        type="tel"
+                        value={formData.guardianPhone}
+                        onChange={handleChange}
+                        icon={Phone}
+                        required
+                        pattern="[0-9]{10}"
+                        minLength={10}
+                        maxLength={10}
+                        title="Guardian phone must be exactly 10 digits"
+                    />
+
+                    <InputField label="Guardian Email" name="guardianEmail" type="email" value={formData.guardianEmail} onChange={handleChange} icon={Mail} />
                 </div>
             </div>
         </div>

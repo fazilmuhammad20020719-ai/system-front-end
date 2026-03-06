@@ -1,7 +1,7 @@
 import { BookOpen, GraduationCap, School, MapPin, Plus, Trash2 } from 'lucide-react';
 import { InputField, SelectField } from './FormComponents';
 
-const StudentAcademicInfo = ({ formData, handleChange, programs = [], setFormData }) => {
+const StudentAcademicInfo = ({ formData, handleChange, handleEnrollmentChange, programs = [], setFormData }) => {
 
     // Safety check for programs
     const safePrograms = programs || [];
@@ -16,15 +16,8 @@ const StudentAcademicInfo = ({ formData, handleChange, programs = [], setFormDat
     // Safety check for enrollments: Default to [] if missing to avoid crash
     const enrollments = formData?.enrollments || [];
 
-    // --- Enrollment Handlers ---
-    const handleEnrollmentChange = (index, name, value) => {
-        const currentEnrollments = formData.enrollments || [];
-        if (index >= currentEnrollments.length) return; // Should not happen
-
-        const updatedEnrollments = [...currentEnrollments];
-        updatedEnrollments[index] = { ...updatedEnrollments[index], [name]: value };
-        setFormData(prev => ({ ...prev, enrollments: updatedEnrollments }));
-    };
+    // handleEnrollmentChange is passed down from AddStudent.jsx (parent)
+    // It knows which index in the enrollments array to update
 
     const addEnrollment = () => {
         setFormData(prev => ({

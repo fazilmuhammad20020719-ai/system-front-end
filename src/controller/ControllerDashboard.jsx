@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    Terminal, Database, Table2, ChevronDown, ChevronRight,
-    LogOut, RefreshCw, Search, Eye, Hash, Columns, LayoutGrid, AlertTriangle,
-    Download
+    Database, Table2, ChevronDown, ChevronRight,
+    RefreshCw, Search, Eye, Hash, Columns, LayoutGrid,
+    Download, Trash2, X, CheckCircle, AlertCircle
 } from 'lucide-react';
 import { API_URL } from '../config';
 import ControllerSidebar from './ControllerSidebar';
@@ -15,11 +15,14 @@ const ControllerDashboard = () => {
     const [tables, setTables] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
-    const [expanded, setExpanded] = useState(null);        // table name with columns open
-    const [previewTable, setPreviewTable] = useState(null); // { name, rows, fields }
+    const [expanded, setExpanded] = useState(null);
+    const [previewTable, setPreviewTable] = useState(null); // { name, rows, fields, pkColumn }
     const [previewLoading, setPreviewLoading] = useState(false);
     const [exportLoading, setExportLoading] = useState(false);
     const [exportOpen, setExportOpen] = useState(false);
+
+    // Per-row delete state: { rowIndex: 'confirming' | 'deleting' | 'done' | 'error' }
+    const [rowDeleteState, setRowDeleteState] = useState({});
 
     useEffect(() => {
         if (!token) { navigate('/controller'); return; }
@@ -42,16 +45,28 @@ const ControllerDashboard = () => {
         }
     };
 
+    // Detect PK column: prefer 'id', else first column
+    const detectPkColumn = (fields) => {
+        if (fields.includes('id')) return 'id';
+        return fields[0] || null;
+    };
+
     const fetchPreview = async (tableName) => {
-        if (previewTable?.name === tableName) { setPreviewTable(null); return; }
+        if (previewTable?.name === tableName) {
+            setPreviewTable(null);
+            setRowDeleteState({});
+            return;
+        }
         setPreviewLoading(true);
         setPreviewTable(null);
+        setRowDeleteState({});
         try {
             const res = await fetch(`${API_URL}/api/controller/table/${tableName}/data`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
-            setPreviewTable({ name: tableName, rows: data.rows, fields: data.fields });
+            const pkColumn = detectPkColumn(data.fields || []);
+            setPreviewTable({ name: tableName, rows: data.rows, fields: data.fields, pkColumn });
         } catch (err) {
             console.error(err);
         } finally {
@@ -59,9 +74,65 @@ const ControllerDashboard = () => {
         }
     };
 
-    const handleLogout = () => {
-        localStorage.removeItem('dev_token');
-        navigate('/controller');
+    // --- Delete individual row ---
+    const startRowDelete = (rowIndex) => {
+        setRowDeleteState(prev => ({ ...prev, [rowIndex]: 'confirming' }));
+    };
+
+    const cancelRowDelete = (rowIndex) => {
+        setRowDeleteState(prev => {
+            const next = { ...prev };
+            delete next[rowIndex];
+            return next;
+        });
+    };
+
+    const confirmRowDelete = async (rowIndex) => {
+        if (!previewTable?.pkColumn) return;
+        const row = previewTable.rows[rowIndex];
+        const pkValue = row[previewTable.pkColumn];
+
+        setRowDeleteState(prev => ({ ...prev, [rowIndex]: 'deleting' }));
+        try {
+            const res = await fetch(
+                `${API_URL}/api/controller/table/${previewTable.name}/row`,
+                {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ pkColumn: previewTable.pkColumn, pkValue })
+                }
+            );
+            if (res.ok) {
+                // Remove row from local state immediately for instant feedback
+                setPreviewTable(prev => ({
+                    ...prev,
+                    rows: prev.rows.filter((_, i) => i !== rowIndex)
+                }));
+                setRowDeleteState(prev => {
+                    const next = { ...prev };
+                    delete next[rowIndex];
+                    return next;
+                });
+                // Update the table row count in the sidebar list
+                setTables(prev => prev.map(t =>
+                    t.name === previewTable.name
+                        ? { ...t, rowCount: Math.max(0, t.rowCount - 1) }
+                        : t
+                ));
+            } else {
+                const err = await res.json();
+                console.error('Row delete failed:', err.message);
+                setRowDeleteState(prev => ({ ...prev, [rowIndex]: 'error' }));
+                setTimeout(() => cancelRowDelete(rowIndex), 2000);
+            }
+        } catch (err) {
+            console.error(err);
+            setRowDeleteState(prev => ({ ...prev, [rowIndex]: 'error' }));
+            setTimeout(() => cancelRowDelete(rowIndex), 2000);
+        }
     };
 
     const exportDb = async (includeData) => {
@@ -135,16 +206,13 @@ const ControllerDashboard = () => {
 
                             {exportOpen && (
                                 <>
-                                    {/* Click-away overlay */}
                                     <div className="fixed inset-0 z-10" onClick={() => setExportOpen(false)} />
                                     <div className="absolute right-0 top-full mt-1.5 w-52 bg-gray-900 border border-gray-700 rounded-xl shadow-2xl z-20 overflow-hidden">
                                         <div className="px-3 pt-2.5 pb-1">
                                             <p className="text-[10px] font-mono text-gray-500 uppercase tracking-wider">Export as .sql</p>
                                         </div>
-                                        <button
-                                            onClick={() => exportDb(false)}
-                                            className="w-full text-left px-4 py-2.5 text-sm font-mono text-gray-300 hover:bg-gray-800 flex items-center gap-2.5 transition-colors"
-                                        >
+                                        <button onClick={() => exportDb(false)}
+                                            className="w-full text-left px-4 py-2.5 text-sm font-mono text-gray-300 hover:bg-gray-800 flex items-center gap-2.5 transition-colors">
                                             <span className="w-5 h-5 rounded bg-purple-500/20 flex items-center justify-center flex-shrink-0">
                                                 <Database size={11} className="text-purple-400" />
                                             </span>
@@ -153,10 +221,8 @@ const ControllerDashboard = () => {
                                                 <p className="text-[10px] text-gray-500">CREATE TABLE — no data</p>
                                             </div>
                                         </button>
-                                        <button
-                                            onClick={() => exportDb(true)}
-                                            className="w-full text-left px-4 py-2.5 text-sm font-mono text-gray-300 hover:bg-gray-800 flex items-center gap-2.5 transition-colors border-t border-gray-800"
-                                        >
+                                        <button onClick={() => exportDb(true)}
+                                            className="w-full text-left px-4 py-2.5 text-sm font-mono text-gray-300 hover:bg-gray-800 flex items-center gap-2.5 transition-colors border-t border-gray-800">
                                             <span className="w-5 h-5 rounded bg-green-500/20 flex items-center justify-center flex-shrink-0">
                                                 <Download size={11} className="text-green-400" />
                                             </span>
@@ -219,9 +285,7 @@ const ControllerDashboard = () => {
                                                 <button
                                                     onClick={() => setExpanded(expanded === table.name ? null : table.name)}
                                                     className="text-gray-500 hover:text-green-400 transition-colors flex-shrink-0">
-                                                    {expanded === table.name
-                                                        ? <ChevronDown size={16} />
-                                                        : <ChevronRight size={16} />}
+                                                    {expanded === table.name ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                                                 </button>
                                                 <Table2 size={16} className="text-green-500 flex-shrink-0" />
                                                 <span className="font-mono text-sm font-semibold text-white">{table.name}</span>
@@ -230,18 +294,17 @@ const ControllerDashboard = () => {
                                                 </span>
                                             </div>
 
-                                            <div className="flex items-center gap-4">
-                                                {/* Row count badge */}
+                                            <div className="flex items-center gap-3">
                                                 <span className={`px-2.5 py-1 rounded-lg text-xs font-mono font-semibold
-                                            ${table.rowCount > 0 ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-gray-800 text-gray-600 border border-gray-700'}`}>
+                                                    ${table.rowCount > 0 ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-gray-800 text-gray-600 border border-gray-700'}`}>
                                                     {table.rowCount.toLocaleString()} rows
                                                 </span>
 
-                                                {/* Preview button */}
+                                                {/* Preview / Data button */}
                                                 <button
                                                     onClick={() => fetchPreview(table.name)}
                                                     className={`flex items-center gap-1.5 text-xs font-mono px-3 py-1.5 rounded-lg border transition-all
-                                                ${previewTable?.name === table.name
+                                                        ${previewTable?.name === table.name
                                                             ? 'bg-blue-500/10 border-blue-500/30 text-blue-400'
                                                             : 'border-gray-700 text-gray-500 hover:border-blue-500/30 hover:text-blue-400'}`}>
                                                     <Eye size={12} /> Data
@@ -274,9 +337,7 @@ const ControllerDashboard = () => {
                                                                             {col.is_nullable === 'YES' ? 'null' : 'not null'}
                                                                         </span>
                                                                     </td>
-                                                                    <td className="py-1.5 text-gray-600 truncate max-w-xs">
-                                                                        {col.column_default || '—'}
-                                                                    </td>
+                                                                    <td className="py-1.5 text-gray-600 truncate max-w-xs">{col.column_default || '—'}</td>
                                                                 </tr>
                                                             ))}
                                                         </tbody>
@@ -285,16 +346,22 @@ const ControllerDashboard = () => {
                                             </div>
                                         )}
 
-                                        {/* Data Preview Panel */}
+                                        {/* ── Data Preview Panel (with per-row delete) ── */}
                                         {previewTable?.name === table.name && (
                                             <div className="border-t border-blue-500/20 bg-gray-950">
                                                 <div className="px-5 py-2 flex items-center gap-2 border-b border-gray-800">
                                                     <LayoutGrid size={13} className="text-blue-400" />
                                                     <span className="text-xs font-mono text-blue-400">Data Preview</span>
                                                     <span className="text-xs font-mono text-gray-600 ml-2">
-                                                        (first {previewTable.rows.length} rows)
+                                                        ({previewTable.rows.length} rows)
                                                     </span>
+                                                    {previewTable.pkColumn && (
+                                                        <span className="ml-auto text-[10px] font-mono text-gray-600">
+                                                            pk: <span className="text-gray-500">{previewTable.pkColumn}</span>
+                                                        </span>
+                                                    )}
                                                 </div>
+
                                                 {previewLoading ? (
                                                     <div className="py-8 text-center text-gray-600 font-mono text-xs">Loading…</div>
                                                 ) : previewTable.rows.length === 0 ? (
@@ -304,26 +371,71 @@ const ControllerDashboard = () => {
                                                         <table className="text-xs font-mono w-max min-w-full">
                                                             <thead>
                                                                 <tr className="text-gray-500 border-b border-gray-800">
+                                                                    {/* Delete action column header */}
+                                                                    <th className="text-left pb-2 pr-4 text-gray-700">Del</th>
                                                                     {previewTable.fields.map(f => (
                                                                         <th key={f} className="text-left pb-2 pr-6 whitespace-nowrap">{f}</th>
                                                                     ))}
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
-                                                                {previewTable.rows.map((row, ri) => (
-                                                                    <tr key={ri} className="border-b border-gray-900 hover:bg-gray-800/30">
-                                                                        {previewTable.fields.map(f => (
-                                                                            <td key={f} className="py-1.5 pr-6 text-gray-300 whitespace-nowrap max-w-xs truncate">
-                                                                                {row[f] === null
-                                                                                    ? <span className="text-gray-700">NULL</span>
-                                                                                    : String(row[f]).length > 60
-                                                                                        ? String(row[f]).slice(0, 60) + '…'
-                                                                                        : String(row[f])
-                                                                                }
+                                                                {previewTable.rows.map((row, ri) => {
+                                                                    const state = rowDeleteState[ri]; // undefined | 'confirming' | 'deleting' | 'error'
+                                                                    return (
+                                                                        <tr key={ri} className={`border-b border-gray-900 transition-colors
+                                                                            ${state === 'confirming' ? 'bg-red-500/5' : ''}
+                                                                            ${state === 'deleting' ? 'opacity-40' : ''}
+                                                                            ${state === 'error' ? 'bg-red-500/10' : ''}
+                                                                            ${!state ? 'hover:bg-gray-800/30' : ''}`}>
+
+                                                                            {/* Delete cell */}
+                                                                            <td className="py-1.5 pr-4 whitespace-nowrap">
+                                                                                {!state && (
+                                                                                    <button
+                                                                                        onClick={() => startRowDelete(ri)}
+                                                                                        title="Delete this row"
+                                                                                        className="text-red-500/50 hover:text-red-400 transition-colors p-0.5 rounded">
+                                                                                        <Trash2 size={12} />
+                                                                                    </button>
+                                                                                )}
+                                                                                {state === 'confirming' && (
+                                                                                    <div className="flex items-center gap-1">
+                                                                                        <button
+                                                                                            onClick={() => confirmRowDelete(ri)}
+                                                                                            title="Confirm delete"
+                                                                                            className="text-red-400 hover:text-red-300 transition-colors p-0.5 rounded">
+                                                                                            <CheckCircle size={13} />
+                                                                                        </button>
+                                                                                        <button
+                                                                                            onClick={() => cancelRowDelete(ri)}
+                                                                                            title="Cancel"
+                                                                                            className="text-gray-600 hover:text-gray-400 transition-colors p-0.5 rounded">
+                                                                                            <X size={13} />
+                                                                                        </button>
+                                                                                    </div>
+                                                                                )}
+                                                                                {state === 'deleting' && (
+                                                                                    <RefreshCw size={12} className="text-gray-600 animate-spin" />
+                                                                                )}
+                                                                                {state === 'error' && (
+                                                                                    <AlertCircle size={12} className="text-red-400" />
+                                                                                )}
                                                                             </td>
-                                                                        ))}
-                                                                    </tr>
-                                                                ))}
+
+                                                                            {/* Data cells */}
+                                                                            {previewTable.fields.map(f => (
+                                                                                <td key={f} className="py-1.5 pr-6 text-gray-300 whitespace-nowrap max-w-xs truncate">
+                                                                                    {row[f] === null
+                                                                                        ? <span className="text-gray-700">NULL</span>
+                                                                                        : String(row[f]).length > 60
+                                                                                            ? String(row[f]).slice(0, 60) + '…'
+                                                                                            : String(row[f])
+                                                                                    }
+                                                                                </td>
+                                                                            ))}
+                                                                        </tr>
+                                                                    );
+                                                                })}
                                                             </tbody>
                                                         </table>
                                                     </div>

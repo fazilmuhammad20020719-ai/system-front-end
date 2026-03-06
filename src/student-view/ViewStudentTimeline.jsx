@@ -1,355 +1,437 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-    Activity, CheckCircle, AlertTriangle, Info,
-    Lock, Eye, Filter, Calendar, Search,
-    Paperclip, Mic, Image as ImageIcon, FileText,
-    MessageSquare, ChevronDown, Check, Clock,
-    MoreHorizontal, User
+    ThumbsUp, ThumbsDown, Info, Star, AlertTriangle, Pin,
+    PinOff, Edit3, Trash2, Check, X, Plus, Image as ImageIcon,
+    Loader, StickyNote, User, ChevronDown
 } from 'lucide-react';
+import { API_URL } from '../config';
 
-const ViewStudentTimeline = () => {
-    // 1. Mock Data (Ideally fetched from API)
-    const [timelineData, setTimelineData] = useState([
-        {
-            id: 1,
-            date: '2025-06-15',
-            type: 'Positive', // Positive, Warning, Notice, Achievement, Joining
-            severity: 'High', // Low, Medium, High
-            title: 'Awarded: Qiraat Winner',
-            description: '1st Place in Inter-class competition. Demonstrated excellent Tajweed.',
-            author: 'Sheikh Ahmed',
-            visibility: 'Parent', // Parent, Internal
-            actionRequired: false,
-            actionStatus: 'Done',
-            attachments: [
-                { type: 'image', url: '/certificate.jpg', name: 'Certificate.jpg' }
-            ],
-            comments: [
-                { id: 101, author: 'Admin', text: 'MashaAllah, well done!', date: '2025-06-16' }
-            ]
-        },
-        {
-            id: 2,
-            date: '2025-05-20',
-            type: 'Warning',
-            severity: 'Low',
-            title: 'Repeated Late Arrival',
-            description: 'Arrived late for 3 consecutive days. Please ensure timely drop-off.',
-            author: 'Ustadh Bilal',
-            visibility: 'Parent',
-            actionRequired: true,
-            actionStatus: 'Pending',
-            followUpDate: '2025-05-27',
-            attachments: [],
-            comments: []
-        },
-        {
-            id: 3,
-            date: '2025-04-10',
-            type: 'Notice',
-            severity: 'Medium',
-            title: 'Parent Meeting Scheduled',
-            description: 'Discussing progress in Hifz. Both parents requested to attend.',
-            author: 'Admin Office',
-            visibility: 'Internal', // Staff Only
-            actionRequired: true,
-            actionStatus: 'Pending',
-            assignedTo: 'Sheikh Ahmed',
-            attachments: [],
-            comments: []
-        },
-        {
-            id: 4,
-            date: '2025-03-01',
-            type: 'Achievement',
-            severity: 'High',
-            title: 'Exam: 1st Term Passed',
-            description: 'Passed with Grade A (88%). Strong performance in Fiqh and Aqeedah.',
-            author: 'Examination Board',
-            visibility: 'Parent',
-            actionRequired: false,
-            actionStatus: 'Done',
-            attachments: [
-                { type: 'pdf', url: '/report_card.pdf', name: 'Report_Card_Term1.pdf' }
-            ],
-            comments: []
-        },
-        {
-            id: 5,
-            date: '2025-01-15',
-            type: 'Joining',
-            severity: 'Medium',
-            title: 'Admission Joined',
-            description: 'Enrolled in Hifz ul Quran (Grade 1). Welcome to the institute!',
-            author: 'System',
-            visibility: 'Parent',
-            actionRequired: false,
-            actionStatus: 'Done',
-            attachments: [],
-            comments: []
-        }
-    ]);
+// ─── Note type config ────────────────────────────────────────────────────────
+const NOTE_TYPES = [
+    { value: 'Good', label: 'Good News', icon: ThumbsUp, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200', dot: 'bg-emerald-500' },
+    { value: 'Bad', label: 'Bad News', icon: ThumbsDown, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200', dot: 'bg-red-500' },
+    { value: 'Achievement', label: 'Achievement', icon: Star, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200', dot: 'bg-amber-500' },
+    { value: 'Warning', label: 'Warning', icon: AlertTriangle, color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-200', dot: 'bg-orange-500' },
+    { value: 'General', label: 'General', icon: Info, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200', dot: 'bg-blue-500' },
+];
 
-    // 2. Filter States
-    const [filterType, setFilterType] = useState('All');
-    const [filterSeverity, setFilterSeverity] = useState('All');
-    const [showInternal, setShowInternal] = useState(true); // Toggle for staff view
-    const [searchQuery, setSearchQuery] = useState('');
+const getTypeConfig = (value) => NOTE_TYPES.find(t => t.value === value) || NOTE_TYPES[4];
 
-    // 3. Computed Logic
-    const filteredTimeline = useMemo(() => {
-        return timelineData.filter(item => {
-            const matchesType = filterType === 'All' || item.type === filterType;
-            const matchesSeverity = filterSeverity === 'All' || item.severity === filterSeverity;
-            const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                item.description.toLowerCase().includes(searchQuery.toLowerCase());
-            const matchesVisibility = showInternal ? true : item.visibility === 'Parent';
+// ─── Main Component ──────────────────────────────────────────────────────────
+const ViewStudentTimeline = ({ studentId }) => {
+    const [notes, setNotes] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [showForm, setShowForm] = useState(false);
+    const [editingId, setEditingId] = useState(null);
+    const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
-            return matchesType && matchesSeverity && matchesSearch && matchesVisibility;
-        });
-    }, [timelineData, filterType, filterSeverity, searchQuery, showInternal]);
+    // Form state
+    const [formText, setFormText] = useState('');
+    const [formType, setFormType] = useState('General');
+    const [formPhoto, setFormPhoto] = useState(null);
+    const [formPhotoPreview, setFormPhotoPreview] = useState(null);
+    const [submitting, setSubmitting] = useState(false);
 
-    const stats = useMemo(() => {
-        return {
-            positives: timelineData.filter(i => ['Positive', 'Achievement'].includes(i.type)).length,
-            warnings: timelineData.filter(i => i.type === 'Warning').length,
-            notices: timelineData.filter(i => i.type === 'Notice').length,
-            pendingActions: timelineData.filter(i => i.actionRequired && i.actionStatus === 'Pending').length
-        };
-    }, [timelineData]);
+    const fileRef = useRef();
 
-    // Helper: Severity Styles
-    const getSeverityStyles = (type, severity) => {
-        // Base colors
-        let colors = { bg: 'bg-gray-50', border: 'border-gray-200', text: 'text-gray-600', icon: 'text-gray-400' };
-
-        if (['Positive', 'Achievement'].includes(type)) {
-            colors = { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-700', icon: 'text-green-500' };
-        } else if (type === 'Warning') {
-            if (severity === 'High') colors = { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700', icon: 'text-red-500' };
-            else colors = { bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-700', icon: 'text-orange-500' };
-        } else if (type === 'Notice') {
-            colors = { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700', icon: 'text-blue-500' };
-        } else if (type === 'Joining') {
-            colors = { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-700', icon: 'text-purple-500' };
-        }
-        return colors;
-    };
-
-    const getTypeIcon = (type) => {
-        switch (type) {
-            case 'Positive': return CheckCircle;
-            case 'Achievement': return Activity;
-            case 'Warning': return AlertTriangle;
-            case 'Notice': return Info;
-            case 'Joining': return User;
-            default: return FileText;
+    // ── Fetch notes ───────────────────────────────────────────────────────────
+    const fetchNotes = async () => {
+        if (!studentId) return;
+        try {
+            setLoading(true);
+            const res = await fetch(`${API_URL}/api/students/${studentId}/notes`);
+            if (!res.ok) throw new Error('Failed to fetch notes');
+            const data = await res.json();
+            setNotes(data);
+            setError(null);
+        } catch (e) {
+            setError(e.message);
+        } finally {
+            setLoading(false);
         }
     };
 
+    useEffect(() => { fetchNotes(); }, [studentId]);
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    const resetForm = () => {
+        setFormText('');
+        setFormType('General');
+        setFormPhoto(null);
+        setFormPhotoPreview(null);
+        setShowForm(false);
+        setEditingId(null);
+        if (fileRef.current) fileRef.current.value = '';
+    };
+
+    const handlePhotoChange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setFormPhoto(file);
+        setFormPhotoPreview(URL.createObjectURL(file));
+    };
+
+    // ── Submit (add or edit) ──────────────────────────────────────────────────
+    const handleSubmit = async () => {
+        if (!formText.trim()) return;
+        setSubmitting(true);
+
+        const fd = new FormData();
+        fd.append('note_type', formType);
+        fd.append('text', formText.trim());
+        fd.append('author', 'Admin');
+        if (formPhoto) fd.append('file', formPhoto);
+
+        try {
+            const url = editingId
+                ? `${API_URL}/api/students/${studentId}/notes/${editingId}`
+                : `${API_URL}/api/students/${studentId}/notes`;
+            const method = editingId ? 'PUT' : 'POST';
+
+            const res = await fetch(url, { method, body: fd });
+            if (!res.ok) throw new Error('Failed to save note');
+            resetForm();
+            fetchNotes();
+        } catch (e) {
+            alert(e.message);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    // ── Open edit form ────────────────────────────────────────────────────────
+    const startEdit = (note) => {
+        setEditingId(note.id);
+        setFormText(note.text);
+        setFormType(note.note_type);
+        setFormPhoto(null);
+        setFormPhotoPreview(note.photo_url ? `${API_URL}${note.photo_url}` : null);
+        setShowForm(true);
+    };
+
+    // ── Pin toggle ────────────────────────────────────────────────────────────
+    const togglePin = async (noteId) => {
+        try {
+            await fetch(`${API_URL}/api/students/${studentId}/notes/${noteId}/pin`, { method: 'PATCH' });
+            fetchNotes();
+        } catch (e) { /* silent */ }
+    };
+
+    // ── Delete ────────────────────────────────────────────────────────────────
+    const deleteNote = async (noteId) => {
+        try {
+            await fetch(`${API_URL}/api/students/${studentId}/notes/${noteId}`, { method: 'DELETE' });
+            setConfirmDeleteId(null);
+            fetchNotes();
+        } catch (e) { /* silent */ }
+    };
+
+    // ── Stats ─────────────────────────────────────────────────────────────────
+    const stats = NOTE_TYPES.map(t => ({
+        ...t,
+        count: notes.filter(n => n.note_type === t.value).length
+    })).filter(t => t.count > 0);
+
+    const pinnedNotes = notes.filter(n => n.is_pinned);
+    const regularNotes = notes.filter(n => !n.is_pinned);
+
+    // ─────────────────────────────────────────────────────────────────────────
     return (
         <div className="space-y-6">
 
-            {/* 1. Summary Cards (Gold Feature) */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <SummaryCard label="Positives" count={stats.positives} icon={CheckCircle} color="text-green-600" bg="bg-green-50" />
-                <SummaryCard label="Warnings" count={stats.warnings} icon={AlertTriangle} color="text-red-600" bg="bg-red-50" />
-                <SummaryCard label="Notices" count={stats.notices} icon={Info} color="text-blue-600" bg="bg-blue-50" />
-                <SummaryCard label="Actions Pending" count={stats.pendingActions} icon={Clock} color="text-orange-600" bg="bg-orange-50" />
-            </div>
-
-            {/* 2. Filters & Toolbar */}
-            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row gap-4 justify-between items-center sticky top-0 z-10 transition-shadow">
-                <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 scrollbar-hide">
-                    {/* Activity Type Filter */}
-                    <div className="relative">
-                        <select
-                            value={filterType}
-                            onChange={(e) => setFilterType(e.target.value)}
-                            className="appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg pl-3 pr-8 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none cursor-pointer hover:bg-gray-100 transition-colors"
-                        >
-                            <option value="All">All Activities</option>
-                            <option value="Positive">Positive</option>
-                            <option value="Warning">Warning</option>
-                            <option value="Notice">Notice</option>
-                            <option value="Achievement">Achievement</option>
-                        </select>
-                        <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            {/* ── Header toolbar ── */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-indigo-50 border border-indigo-100 rounded-xl flex items-center justify-center">
+                        <StickyNote size={20} className="text-indigo-600" />
                     </div>
-
-                    {/* Visibility Filter */}
-                    <button
-                        onClick={() => setShowInternal(!showInternal)}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${showInternal
-                            ? 'bg-purple-50 text-purple-700 border border-purple-200'
-                            : 'bg-gray-50 text-gray-500 border border-gray-200 hover:bg-gray-100'
-                            }`}
-                        title={showInternal ? "Showing Internal Notes" : "Hiding Internal Notes"}
-                    >
-                        {showInternal ? <UnlockIcon size={16} /> : <Lock size={16} />}
-                        {showInternal ? 'Staff View' : 'Parent View'}
-                    </button>
+                    <div>
+                        <h3 className="font-bold text-gray-800 text-base leading-tight">Student Notes</h3>
+                        <p className="text-xs text-gray-400">{notes.length} {notes.length === 1 ? 'note' : 'notes'} — {pinnedNotes.length} pinned</p>
+                    </div>
                 </div>
 
-                {/* Search */}
-                <div className="relative w-full md:w-64">
-                    <input
-                        type="text"
-                        placeholder="Search timeline..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all"
-                    />
-                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                </div>
+                <button
+                    onClick={() => { resetForm(); setShowForm(s => !s); }}
+                    className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-all shadow-sm hover:shadow-md active:scale-95"
+                >
+                    {showForm && !editingId ? <X size={16} /> : <Plus size={16} />}
+                    {showForm && !editingId ? 'Cancel' : 'Add Note'}
+                </button>
             </div>
 
-            {/* 3. Timeline List */}
-            <div className="relative border-l-2 border-gray-200 ml-4 md:ml-6 space-y-8 pb-8">
-                {filteredTimeline.length > 0 ? (
-                    filteredTimeline.map((item) => {
-                        const styles = getSeverityStyles(item.type, item.severity);
-                        const Icon = getTypeIcon(item.type);
-
+            {/* ── Quick stats ── */}
+            {stats.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                    {stats.map(t => {
+                        const Icon = t.icon;
                         return (
-                            <div key={item.id} className="relative pl-8 group">
-                                {/* Timeline Dot */}
-                                <span className={`absolute -left-[9px] top-6 w-4 h-4 rounded-full border-2 border-white shadow-sm transition-colors ${item.type === 'Warning' ? 'bg-red-500' :
-                                    item.type === 'Notice' ? 'bg-blue-500' :
-                                        'bg-green-500'
-                                    }`}></span>
-
-                                <div className={`bg-white rounded-xl border ${styles.border} shadow-sm hover:shadow-md transition-shadow p-5`}>
-                                    {/* Header */}
-                                    <div className="flex justify-between items-start mb-3">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <div className={`p-1.5 rounded-lg ${styles.bg} ${styles.icon}`}>
-                                                <Icon size={18} />
-                                            </div>
-                                            <div>
-                                                <h4 className="font-bold text-gray-800 text-sm md:text-base leading-tight">
-                                                    {item.title}
-                                                </h4>
-                                                <p className="text-xs text-gray-400 mt-0.5">{item.date} • {item.author}</p>
-                                            </div>
-                                        </div>
-
-                                        {/* Badges */}
-                                        <div className="flex gap-2">
-                                            {item.visibility === 'Internal' && (
-                                                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-[10px] font-bold uppercase rounded-md flex items-center gap-1 border border-gray-200">
-                                                    <Lock size={10} /> Internal
-                                                </span>
-                                            )}
-                                            {item.actionRequired && (
-                                                <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded-md flex items-center gap-1 border ${item.actionStatus === 'Pending'
-                                                    ? 'bg-orange-50 text-orange-600 border-orange-200 animate-pulse'
-                                                    : 'bg-green-50 text-green-600 border-green-200'
-                                                    }`}>
-                                                    {item.actionStatus === 'Pending' ? <Clock size={10} /> : <Check size={10} />}
-                                                    {item.actionStatus === 'Pending' ? 'Action Req' : 'Resolved'}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Content */}
-                                    <div className="pl-[38px]">
-                                        <p className="text-gray-600 text-sm leading-relaxed mb-3">
-                                            {item.description}
-                                        </p>
-
-                                        {/* Action Required Details */}
-                                        {item.actionRequired && item.actionStatus === 'Pending' && (
-                                            <div className="mb-4 bg-orange-50/50 border border-orange-100 rounded-lg p-3 flex gap-4 text-xs text-orange-800">
-                                                {item.followUpDate && (
-                                                    <span className="flex items-center gap-1 font-medium"><Calendar size={12} /> Due: {item.followUpDate}</span>
-                                                )}
-                                                {item.assignedTo && (
-                                                    <span className="flex items-center gap-1 font-medium"><User size={12} /> Assigned: {item.assignedTo}</span>
-                                                )}
-                                            </div>
-                                        )}
-
-                                        {/* Attachments */}
-                                        {item.attachments && item.attachments.length > 0 && (
-                                            <div className="flex flex-wrap gap-2 mb-4">
-                                                {item.attachments.map((att, idx) => (
-                                                    <div key={idx} className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-100 cursor-pointer transition-colors">
-                                                        {att.type === 'image' ? <ImageIcon size={14} className="text-purple-500" /> :
-                                                            att.type === 'pdf' ? <FileText size={14} className="text-red-500" /> :
-                                                                <Paperclip size={14} />}
-                                                        {att.name}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-
-                                        {/* Actions Footer */}
-                                        <div className="flex items-center justify-between pt-3 border-t border-gray-50 mt-2">
-                                            <div className="flex gap-4">
-                                                <button className="flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-green-600 transition-colors">
-                                                    <MessageSquare size={14} /> {item.comments.length} Comments
-                                                </button>
-                                                {item.type === 'Warning' && (
-                                                    <button className="flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-orange-600 transition-colors">
-                                                        <AlertTriangle size={14} /> Acknowledge
-                                                    </button>
-                                                )}
-                                            </div>
-                                            <button className="text-gray-400 hover:text-gray-600 transition-colors">
-                                                <MoreHorizontal size={16} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
+                            <div key={t.value} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${t.bg} ${t.color} border ${t.border}`}>
+                                <Icon size={12} />
+                                {t.count} {t.label}
                             </div>
                         );
-                    })
-                ) : (
-                    <div className="text-center py-12 pl-8">
-                        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
-                            <Search size={32} />
+                    })}
+                </div>
+            )}
+
+            {/* ── Add / Edit Form ── */}
+            {showForm && (
+                <div className="bg-white border border-indigo-100 rounded-2xl shadow-md overflow-hidden">
+                    {/* Color bar */}
+                    <div className={`h-1 w-full ${getTypeConfig(formType).dot}`} />
+                    <div className="p-5 space-y-4">
+                        <h4 className="font-semibold text-gray-700 text-sm">{editingId ? '✏️ Edit Note' : '📝 New Note'}</h4>
+
+                        {/* Note type selector */}
+                        <div className="flex flex-wrap gap-2">
+                            {NOTE_TYPES.map(t => {
+                                const Icon = t.icon;
+                                const active = formType === t.value;
+                                return (
+                                    <button
+                                        key={t.value}
+                                        onClick={() => setFormType(t.value)}
+                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${active ? `${t.bg} ${t.color} ${t.border} shadow-sm scale-105` : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'}`}
+                                    >
+                                        <Icon size={12} /> {t.label}
+                                    </button>
+                                );
+                            })}
                         </div>
-                        <h3 className="text-gray-500 font-medium">No timeline entries found</h3>
-                        <p className="text-gray-400 text-sm">Try adjusting your filters</p>
+
+                        {/* Text area */}
+                        <textarea
+                            rows={3}
+                            value={formText}
+                            onChange={e => setFormText(e.target.value)}
+                            placeholder="Write a note about this student..."
+                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 resize-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent outline-none transition-all placeholder-gray-400"
+                        />
+
+                        {/* Photo (optional icon/attachment) */}
+                        <div className="flex items-center gap-3">
+                            <button
+                                type="button"
+                                onClick={() => fileRef.current?.click()}
+                                className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-medium text-gray-600 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600 transition-all"
+                            >
+                                <ImageIcon size={14} /> Attach Photo
+                            </button>
+                            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
+                            {formPhotoPreview && (
+                                <div className="relative inline-block">
+                                    <img src={formPhotoPreview} alt="preview" className="w-12 h-12 rounded-lg object-cover border border-gray-200 shadow-sm" />
+                                    <button
+                                        onClick={() => { setFormPhoto(null); setFormPhotoPreview(null); if (fileRef.current) fileRef.current.value = ''; }}
+                                        className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center"
+                                    >
+                                        <X size={10} />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex gap-2 pt-1">
+                            <button
+                                onClick={handleSubmit}
+                                disabled={!formText.trim() || submitting}
+                                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-all"
+                            >
+                                {submitting ? <Loader size={14} className="animate-spin" /> : <Check size={14} />}
+                                {editingId ? 'Save Changes' : 'Save Note'}
+                            </button>
+                            <button
+                                onClick={resetForm}
+                                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-semibold rounded-lg transition-all"
+                            >
+                                Cancel
+                            </button>
+                        </div>
                     </div>
-                )}
+                </div>
+            )}
+
+            {/* ── Loading / Error ── */}
+            {loading && (
+                <div className="flex items-center justify-center py-16 text-indigo-400">
+                    <Loader size={28} className="animate-spin" />
+                </div>
+            )}
+            {error && !loading && (
+                <div className="text-center py-10 text-red-500 text-sm">{error}</div>
+            )}
+
+            {/* ── Empty State ── */}
+            {!loading && !error && notes.length === 0 && (
+                <div className="text-center py-16 space-y-3">
+                    <div className="w-16 h-16 bg-gray-50 border border-gray-100 rounded-2xl flex items-center justify-center mx-auto">
+                        <StickyNote size={28} className="text-gray-300" />
+                    </div>
+                    <h4 className="font-semibold text-gray-400">No notes yet</h4>
+                    <p className="text-gray-400 text-sm">Click <strong>Add Note</strong> to record something about this student.</p>
+                </div>
+            )}
+
+            {/* ── Pinned Notes Section ── */}
+            {!loading && pinnedNotes.length > 0 && (
+                <div className="space-y-3">
+                    <p className="text-xs font-bold uppercase tracking-widest text-gray-400 flex items-center gap-1.5"><Pin size={12} /> Pinned</p>
+                    {pinnedNotes.map(note => (
+                        <NoteCard
+                            key={note.id}
+                            note={note}
+                            onPin={togglePin}
+                            onEdit={startEdit}
+                            onDelete={id => setConfirmDeleteId(id)}
+                        />
+                    ))}
+                </div>
+            )}
+
+            {/* ── Regular Notes ── */}
+            {!loading && regularNotes.length > 0 && (
+                <div className="space-y-3">
+                    {pinnedNotes.length > 0 && (
+                        <p className="text-xs font-bold uppercase tracking-widest text-gray-400">All Notes</p>
+                    )}
+                    {regularNotes.map(note => (
+                        <NoteCard
+                            key={note.id}
+                            note={note}
+                            onPin={togglePin}
+                            onEdit={startEdit}
+                            onDelete={id => setConfirmDeleteId(id)}
+                        />
+                    ))}
+                </div>
+            )}
+
+            {/* ── Delete confirm modal ── */}
+            {confirmDeleteId && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl p-6 mx-4 max-w-sm w-full space-y-4 border border-gray-100">
+                        <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto">
+                            <Trash2 size={22} className="text-red-500" />
+                        </div>
+                        <div className="text-center">
+                            <h4 className="font-bold text-gray-800">Delete this note?</h4>
+                            <p className="text-sm text-gray-500 mt-1">This action cannot be undone.</p>
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setConfirmDeleteId(null)}
+                                className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-sm rounded-xl transition-all"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => deleteNote(confirmDeleteId)}
+                                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm rounded-xl transition-all"
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+// ─── Note Card Sub-component ─────────────────────────────────────────────────
+const NoteCard = ({ note, onPin, onEdit, onDelete }) => {
+    const cfg = getTypeConfig(note.note_type);
+    const Icon = cfg.icon;
+
+    const formatDate = (ts) => {
+        if (!ts) return '';
+        try {
+            return new Date(ts).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        } catch { return ts; }
+    };
+
+    return (
+        <div className={`relative bg-white border ${cfg.border} rounded-2xl shadow-sm hover:shadow-md transition-all overflow-hidden group`}>
+
+            {/* Left color stripe */}
+            <div className={`absolute left-0 top-0 bottom-0 w-1 ${cfg.dot}`} />
+
+            {/* Pinned indicator ribbon */}
+            {note.is_pinned && (
+                <div className="absolute top-0 right-0">
+                    <div className="w-0 h-0 border-t-[32px] border-r-[32px] border-t-amber-400 border-r-transparent" />
+                    <Pin size={11} className="absolute top-1 right-0.5 text-white -rotate-45" />
+                </div>
+            )}
+
+            <div className="pl-5 pr-4 py-4 flex gap-4">
+                {/* Icon bubble */}
+                <div className={`flex-shrink-0 w-9 h-9 rounded-xl ${cfg.bg} border ${cfg.border} flex items-center justify-center mt-0.5`}>
+                    <Icon size={16} className={cfg.color} />
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`text-xs font-bold uppercase tracking-wide ${cfg.color}`}>{cfg.label}</span>
+                            <span className="text-xs text-gray-400 flex items-center gap-1">
+                                <User size={10} /> {note.author || 'Admin'}
+                            </span>
+                        </div>
+                        {/* Actions — visible on hover */}
+                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <ActionBtn
+                                onClick={() => onPin(note.id)}
+                                title={note.is_pinned ? 'Unpin' : 'Pin'}
+                                className={note.is_pinned ? 'text-amber-500 hover:bg-amber-50' : 'text-gray-400 hover:bg-gray-100'}
+                            >
+                                {note.is_pinned ? <PinOff size={14} /> : <Pin size={14} />}
+                            </ActionBtn>
+                            <ActionBtn onClick={() => onEdit(note)} title="Edit" className="text-indigo-500 hover:bg-indigo-50">
+                                <Edit3 size={14} />
+                            </ActionBtn>
+                            <ActionBtn onClick={() => onDelete(note.id)} title="Delete" className="text-red-400 hover:bg-red-50">
+                                <Trash2 size={14} />
+                            </ActionBtn>
+                        </div>
+                    </div>
+
+                    {/* Note text */}
+                    <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap break-words">{note.text}</p>
+
+                    {/* Attached photo */}
+                    {note.photo_url && (
+                        <div className="mt-3">
+                            <img
+                                src={`${API_URL}${note.photo_url}`}
+                                alt="Note attachment"
+                                className="max-h-48 rounded-xl border border-gray-200 object-cover shadow-sm cursor-pointer hover:opacity-90 transition-opacity"
+                                onClick={() => window.open(`${API_URL}${note.photo_url}`, '_blank')}
+                            />
+                        </div>
+                    )}
+
+                    {/* Footer */}
+                    <p className="text-[10px] text-gray-400 mt-2">{formatDate(note.created_at)}{note.updated_at !== note.created_at && ' · edited'}</p>
+                </div>
             </div>
         </div>
     );
 };
 
-// Sub-component: Summary Card
-const SummaryCard = ({ label, count, icon: Icon, color, bg }) => (
-    <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center gap-3 hover:shadow-md transition-shadow">
-        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${bg} ${color}`}>
-            <Icon size={20} />
-        </div>
-        <div>
-            <h4 className="text-2xl font-bold text-gray-800">{count}</h4>
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{label}</p>
-        </div>
-    </div>
-);
-
-// Helper Icon for Unlock
-const UnlockIcon = ({ size, className }) => (
-    <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width={size}
-        height={size}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className={className}
+// Tiny icon button helper
+const ActionBtn = ({ children, onClick, title, className = '' }) => (
+    <button
+        onClick={onClick}
+        title={title}
+        className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${className}`}
     >
-        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-        <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
-    </svg>
+        {children}
+    </button>
 );
 
 export default ViewStudentTimeline;

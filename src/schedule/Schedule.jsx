@@ -153,13 +153,13 @@ const Schedule = () => {
     // --- Helpers ---
     const getSubjectColor = (subjectId) => {
         const colors = [
-            'bg-blue-50 border-blue-200 text-blue-700',
+            'bg-green-50 border-green-200 text-green-700',
             'bg-purple-50 border-purple-200 text-purple-700',
             'bg-orange-50 border-orange-200 text-orange-700',
             'bg-emerald-50 border-emerald-200 text-emerald-700',
             'bg-pink-50 border-pink-200 text-pink-700',
-            'bg-indigo-50 border-indigo-200 text-indigo-700',
-            'bg-cyan-50 border-cyan-200 text-cyan-700',
+            'bg-teal-50 border-teal-200 text-teal-700',
+            'bg-lime-50 border-lime-200 text-lime-700',
         ];
         return colors[subjectId % colors.length] || colors[0];
     };
@@ -363,7 +363,7 @@ const Schedule = () => {
                             <ChevronLeft size={18} />
                         </button>
                         <div className="flex items-center gap-2 px-2">
-                            <Calendar size={16} className="text-blue-600" />
+                            <Calendar size={16} className="text-green-600" />
                             <span className="font-bold text-gray-700 text-sm whitespace-nowrap">
                                 {currentWeekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} -{' '}
                                 {(() => {
@@ -515,7 +515,7 @@ const Schedule = () => {
                                                                     <Plus size={12} strokeWidth={3} />
                                                                 </button>
                                                             </div>
-                                                            <div className={`text-xs font-bold text-center ${currentDayDate.toDateString() === new Date().toDateString() ? 'text-blue-600' : 'text-gray-600'}`}>
+                                                            <div className={`text-xs font-bold text-center ${currentDayDate.toDateString() === new Date().toDateString() ? 'text-green-600' : 'text-gray-600'}`}>
                                                                 {currentDayDate.getDate()}
                                                             </div>
                                                         </div>
@@ -597,7 +597,7 @@ const Schedule = () => {
                                                                         </div>
 
                                                                         {slot.room && (
-                                                                            <div className="text-[10px] text-blue-600 font-medium flex items-center gap-1 truncate">
+                                                                            <div className="text-[10px] text-green-600 font-medium flex items-center gap-1 truncate">
                                                                                 <MapPin size={10} /> {slot.room}
                                                                             </div>
                                                                         )}

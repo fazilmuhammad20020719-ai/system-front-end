@@ -200,7 +200,7 @@ const ViewStudent = () => {
                         {activeTab === 'attendance' && <ViewStudentAttendance stats={student.attendanceStats} />}
                         {activeTab === 'results' && <ViewStudentResults results={student.results} />}
                         {activeTab === 'fees' && <ViewStudentFees studentId={student.id} admissionDate={student.admissionDate} monthlyFee={student.monthlyFee} />}
-                        {activeTab === 'timeline' && <ViewStudentTimeline />}
+                        {activeTab === 'timeline' && <ViewStudentTimeline studentId={student.id} />}
                     </div>
                 </main>
             </div>

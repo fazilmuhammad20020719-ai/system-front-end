@@ -52,21 +52,17 @@ const AddStudent = () => {
 
         if (type === 'file' && files[0]) {
             const file = files[0];
-            const allowedTypes = [
-                'image/jpeg', 'image/png', 'image/jpg',
-                'application/pdf',
-                'application/msword',
-                'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-            ];
-            const maxSizeBytes = 10 * 1024 * 1024; // 10 MB
 
-            if (!allowedTypes.includes(file.type)) {
-                notify('error', 'Only Images (PNG/JPG) or Documents (PDF/Doc) are allowed.', 'Invalid File Type');
-                e.target.value = ''; // reset the input
-                return;
-            }
+            // Log to console for debugging
+            console.log("File picked:", { name: file.name, type: file.type, size: file.size });
+
+            // Fail-safe: Only validate the size (50MB limit). 
+            // We trust the HTML <input accept="..."> to restrict the file types.
+            const maxSizeBytes = 50 * 1024 * 1024; // 50 MB
+
             if (file.size > maxSizeBytes) {
-                notify('error', 'File size must be under 10MB.', 'File Too Large');
+                const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                notify('error', `File is ${sizeMB}MB. Must be under 50MB.`, 'File Too Large');
                 e.target.value = ''; // reset the input
                 return;
             }

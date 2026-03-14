@@ -52,16 +52,21 @@ const AddStudent = () => {
 
         if (type === 'file' && files[0]) {
             const file = files[0];
-            const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-            const maxSizeBytes = 2 * 1024 * 1024; // 2 MB
+            const allowedTypes = [
+                'image/jpeg', 'image/png', 'image/jpg',
+                'application/pdf',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            ];
+            const maxSizeBytes = 10 * 1024 * 1024; // 10 MB
 
             if (!allowedTypes.includes(file.type)) {
-                notify('error', 'Only PNG or JPEG image files are allowed.', 'Invalid File Type');
+                notify('error', 'Only Images (PNG/JPG) or Documents (PDF/Doc) are allowed.', 'Invalid File Type');
                 e.target.value = ''; // reset the input
                 return;
             }
             if (file.size > maxSizeBytes) {
-                notify('error', 'File size must be under 2MB.', 'File Too Large');
+                notify('error', 'File size must be under 10MB.', 'File Too Large');
                 e.target.value = ''; // reset the input
                 return;
             }

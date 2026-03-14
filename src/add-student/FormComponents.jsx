@@ -1,4 +1,4 @@
-import { UploadCloud, Image as ImageIcon } from 'lucide-react';
+import { UploadCloud, Image as ImageIcon, FileText } from 'lucide-react';
 
 export const InputField = ({ label, name, placeholder, value, onChange, icon: Icon, type = "text", required = false, pattern, minLength, maxLength, title, max }) => (
     <div className="space-y-1 w-full">
@@ -50,26 +50,39 @@ export const SelectField = ({ label, name, value, onChange, options, placeholder
     </div>
 );
 
-export const FileUploadField = ({ label, name, file, onChange, height = "h-32", preview, accept = "image/*" }) => (
-    <div className="p-3 border border-gray-200 rounded-lg hover:border-green-500 transition-colors bg-white shadow-sm">
-        <p className="font-bold text-gray-700 mb-2 text-xs uppercase">{label}</p>
-        <div className={`${height} bg-gray-50 rounded-md border-2 border-dashed border-gray-300 flex flex-col items-center justify-center relative overflow-hidden group hover:bg-green-50/30 transition-colors`}>
-            {preview || file ? (
-                <img
-                    src={preview || URL.createObjectURL(file)}
-                    className="w-full h-full object-contain"
-                    alt="preview"
-                />
-            ) : (
-                <>
-                    <ImageIcon className="text-gray-300 mb-1 group-hover:text-green-600 transition-colors" size={24} />
-                    <span className="text-[10px] text-gray-400 font-medium group-hover:text-green-600">Click to upload</span>
-                </>
-            )}
-            <input type="file" name={name} onChange={onChange} className="absolute inset-0 opacity-0 cursor-pointer" accept={accept} />
+export const FileUploadField = ({ label, name, file, onChange, height = "h-32", preview, accept = "image/*,.pdf,.doc,.docx" }) => {
+    const isFileDoc = file && (file.type === 'application/pdf' || file.name?.endsWith('.pdf') || file.name?.endsWith('.doc') || file.name?.endsWith('.docx'));
+    const isPreviewDoc = preview && (preview.endsWith('.pdf') || preview.endsWith('.doc') || preview.endsWith('.docx'));
+    const showDocPreview = isFileDoc || isPreviewDoc;
+
+    return (
+        <div className="p-3 border border-gray-200 rounded-lg hover:border-green-500 transition-colors bg-white shadow-sm">
+            <p className="font-bold text-gray-700 mb-2 text-xs uppercase">{label}</p>
+            <div className={`${height} bg-gray-50 rounded-md border-2 border-dashed border-gray-300 flex flex-col items-center justify-center relative overflow-hidden group hover:bg-green-50/30 transition-colors`}>
+                {showDocPreview ? (
+                    <div className="flex flex-col items-center justify-center p-2 text-center w-full">
+                        <FileText className="text-green-500 mb-2" size={28} />
+                        <span className="text-[10px] text-gray-600 font-medium truncate w-full px-2" title={file ? file.name : "Document"}>
+                            {file ? file.name : "Document Uploaded"}
+                        </span>
+                    </div>
+                ) : preview || file ? (
+                    <img
+                        src={preview || URL.createObjectURL(file)}
+                        className="w-full h-full object-contain"
+                        alt="preview"
+                    />
+                ) : (
+                    <>
+                        <ImageIcon className="text-gray-300 mb-1 group-hover:text-green-600 transition-colors" size={24} />
+                        <span className="text-[10px] text-gray-400 font-medium group-hover:text-green-600">Click to upload</span>
+                    </>
+                )}
+                <input type="file" name={name} onChange={onChange} className="absolute inset-0 opacity-0 cursor-pointer" accept={accept} />
+            </div>
         </div>
-    </div>
-);
+    );
+};
 
 export const TextAreaField = ({ label, name, value, onChange, placeholder, rows = 4, required = false }) => (
     <div className="space-y-1 w-full">

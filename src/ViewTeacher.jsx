@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
     LayoutDashboard, FileText, Calendar, DollarSign, ArrowLeft, CheckCircle
 } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Loader from './components/Loader';
 import { API_URL } from './config';
@@ -20,7 +20,8 @@ const ViewTeacher = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const navigate = useNavigate();
     const { id } = useParams();
-    const [activeTab, setActiveTab] = useState('overview');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const activeTab = searchParams.get('tab') || 'overview';
     const [teacher, setTeacher] = useState(null);
 
     // Fetch Real Data
@@ -128,11 +129,11 @@ const ViewTeacher = () => {
                     {/* 2. Navigation Tabs */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6 sticky top-0 z-10 overflow-x-auto scrollbar-hide">
                         <div className="flex min-w-max">
-                            <TabItem icon={LayoutDashboard} label="Overview" active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} />
-                            <TabItem icon={Calendar} label="Schedule" active={activeTab === 'schedule'} onClick={() => setActiveTab('schedule')} />
-                            <TabItem icon={CheckCircle} label="Attendance" active={activeTab === 'attendance'} onClick={() => setActiveTab('attendance')} />
-                            <TabItem icon={DollarSign} label="Payroll" active={activeTab === 'payroll'} onClick={() => setActiveTab('payroll')} />
-                            <TabItem icon={FileText} label="Documents" active={activeTab === 'documents'} onClick={() => setActiveTab('documents')} />
+                            <TabItem icon={LayoutDashboard} label="Overview" active={activeTab === 'overview'} onClick={() => setSearchParams({ tab: 'overview' }, { replace: true })} />
+                            <TabItem icon={Calendar} label="Schedule" active={activeTab === 'schedule'} onClick={() => setSearchParams({ tab: 'schedule' }, { replace: true })} />
+                            <TabItem icon={CheckCircle} label="Attendance" active={activeTab === 'attendance'} onClick={() => setSearchParams({ tab: 'attendance' }, { replace: true })} />
+                            <TabItem icon={DollarSign} label="Payroll" active={activeTab === 'payroll'} onClick={() => setSearchParams({ tab: 'payroll' }, { replace: true })} />
+                            <TabItem icon={FileText} label="Documents" active={activeTab === 'documents'} onClick={() => setSearchParams({ tab: 'documents' }, { replace: true })} />
                         </div>
                     </div>
 
@@ -141,7 +142,6 @@ const ViewTeacher = () => {
                         {activeTab === 'overview' && <TeacherOverview teacher={teacher} stats={teacher.stats} />}
                         {activeTab === 'schedule' && <TeacherSchedule schedule={teacher.schedule} />}
                         {activeTab === 'attendance' && <TeacherAttendanceView stats={teacher.attendanceStats} teacherId={teacher.id} />}
-                        {activeTab === 'schedule' && <TeacherSchedule schedule={teacher.schedule} />}
                         {activeTab === 'payroll' && <TeacherPayroll teacher={teacher} />}
                         {activeTab === 'documents' && <TeacherDocuments documents={teacher.documents} teacherId={teacher.id} refreshTeacher={() => navigate(0)} />}
                     </div>

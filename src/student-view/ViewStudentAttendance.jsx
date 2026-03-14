@@ -143,10 +143,30 @@ const ViewStudentAttendance = () => {
                     <p className="text-gray-500 text-sm font-medium">
                         {monthNames[month]} Attendance
                     </p>
-                    <h2 className={`text-4xl font-bold mt-2 ${stats.rate >= 75 ? 'text-green-600' : 'text-orange-500'}`}>
-                        {loading ? '...' : `${stats.rate}%`}
-                    </h2>
-                    <p className="text-xs text-gray-400 mt-1">Recorded Days: {stats.total}</p>
+                    {/* Donut Chart */}
+                    <div className="flex items-center justify-center my-3">
+                        <div className="relative w-28 h-28">
+                            <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+                                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#f3f4f6" strokeWidth="3.5" />
+                                <circle
+                                    cx="18" cy="18" r="15.9"
+                                    fill="none"
+                                    stroke={stats.rate >= 75 ? '#16a34a' : '#f97316'}
+                                    strokeWidth="3.5"
+                                    strokeDasharray={`${stats.rate} ${100 - stats.rate}`}
+                                    strokeLinecap="round"
+                                    style={{ transition: 'stroke-dasharray 0.7s ease' }}
+                                />
+                            </svg>
+                            <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                <span className={`text-2xl font-bold ${stats.rate >= 75 ? 'text-green-600' : 'text-orange-500'}`}>
+                                    {loading ? '...' : `${stats.rate}%`}
+                                </span>
+                                <span className="text-[10px] text-gray-400">Rate</span>
+                            </div>
+                        </div>
+                    </div>
+                    <p className="text-xs text-gray-400">Recorded Days: {stats.total}</p>
                 </div>
 
                 <div className="bg-green-50 p-4 rounded-xl border border-green-100 flex justify-between items-center">
@@ -167,6 +187,34 @@ const ViewStudentAttendance = () => {
                         Absent
                     </span>
                     <span className="font-bold text-red-800 text-lg">{stats.absent} Days</span>
+                </div>
+                {/* Daily Bar Chart */}
+                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Daily Breakdown</p>
+                    <div className="flex items-end gap-[2px] h-20">
+                        {Array.from({ length: daysInMonth }, (_, i) => {
+                            const day = i + 1;
+                            const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                            const status = attendanceData[dateString];
+                            let barColor = 'bg-gray-100';
+                            if (status === 'Present') barColor = 'bg-green-500';
+                            else if (status === 'Absent') barColor = 'bg-red-400';
+                            else if (status === 'Holiday') barColor = 'bg-blue-300';
+                            return (
+                                <div key={day} className="flex-1 flex flex-col items-center justify-end group relative" title={`${day}: ${status || 'No data'}`}>
+                                    <div className={`w-full rounded-sm ${barColor} ${status ? 'h-full' : 'h-1'}`} style={{ minHeight: '4px' }} />
+                                    <div className="absolute bottom-full mb-1 hidden group-hover:flex z-10 flex-col items-center pointer-events-none">
+                                        <div className="bg-gray-800 text-white text-[9px] px-1.5 py-0.5 rounded whitespace-nowrap">{day} – {status || 'N/A'}</div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                    <div className="flex gap-3 mt-2.5 text-[10px] text-gray-400">
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 bg-green-500 rounded-sm inline-block"></span> Present</span>
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 bg-red-400 rounded-sm inline-block"></span> Absent</span>
+                        <span className="flex items-center gap-1"><span className="w-2 h-2 bg-blue-300 rounded-sm inline-block"></span> Holiday</span>
+                    </div>
                 </div>
             </div>
 

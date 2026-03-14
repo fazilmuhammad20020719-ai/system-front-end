@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { CreditCard, Download, Eye, Plus, Upload, X, Trash2, Edit2, Lock, Check, Settings } from 'lucide-react';
+import { CreditCard, Download, Eye, Plus, Upload, X, Trash2, Edit2, Lock, Check, Settings, MoreVertical } from 'lucide-react';
 import jsPDF from 'jspdf';
 import { API_URL } from '../config';
 
@@ -27,6 +27,13 @@ const ViewStudentFees = ({ studentId, admissionDate, monthlyFee: initialMonthlyF
     const [passwordError, setPasswordError] = useState('');
     const [passwordAction, setPasswordAction] = useState(null); // 'save_payment', 'delete_payment', 'update_rate'
     const [deleteId, setDeleteId] = useState(null);
+    const [openDropdownId, setOpenDropdownId] = useState(null);
+
+    useEffect(() => {
+        const handleClickOutside = () => setOpenDropdownId(null);
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, []);
 
     // Form Data
     const [formData, setFormData] = useState({
@@ -48,7 +55,8 @@ const ViewStudentFees = ({ studentId, admissionDate, monthlyFee: initialMonthlyF
     // Generate Year List (Admission Year -> Current + 1)
     const yearList = useMemo(() => {
         const current = new Date().getFullYear();
-        const start = admissionDate ? new Date(admissionDate).getFullYear() : current - 2;
+        const isValidDate = admissionDate && admissionDate !== 'N/A' && !isNaN(new Date(admissionDate).getTime());
+        const start = isValidDate ? new Date(admissionDate).getFullYear() : current - 2;
         const years = [];
         for (let y = start; y <= current + 1; y++) {
             years.push(y.toString());
@@ -78,69 +86,110 @@ const ViewStudentFees = ({ studentId, admissionDate, monthlyFee: initialMonthlyF
         setMonthlyFeeRate(initialMonthlyFee);
     }, [studentId, initialMonthlyFee]);
 
-    // --- Generate Automated Rows (Jan-Dec for Selected Year) ---
-    const feeRows = useMemo(() => {
+    // --- Generate Automated Rows (Cumulative from Admission Date) ---
+    const feeData = useMemo(() => {
         const rows = [];
         const now = new Date();
         const currentYear = now.getFullYear();
         const currentMonthIdx = now.getMonth(); // 0-11
 
-        // Iterate Jan (0) to Dec (11)
-        for (let i = 0; i < 12; i++) {
-            const monthName = academicMonths[i];
-            const yearStr = selectedYear;
-            const yearInt = parseInt(yearStr);
+        const isValidDate = admissionDate && admissionDate !== 'N/A' && !isNaN(new Date(admissionDate).getTime());
+        const admDate = isValidDate ? new Date(admissionDate) : null;
+        const admYear = admDate ? admDate.getFullYear() : null;
+        const admMonthIdx = admDate ? admDate.getMonth() : null;
 
-            // Find all payment records for this month/year
-            const monthTxns = fees.filter(f => f.month === monthName && f.year === yearStr);
+        // Determine the range of years to calculate (from admission to current+1)
+        const startYear = admYear || (currentYear - 2);
+        const endYear = currentYear + 1;
 
-            const totalPaidAmount = monthTxns.reduce((sum, txn) => sum + parseFloat(txn.amount), 0);
-            const balance = Math.max(0, monthlyFeeRate - totalPaidAmount);
+        let carryOverCredit = 0;
+        let cumulativeDue = 0;
+        let cumulativePaid = 0;
 
-            // Latest record info (for date/receipt display)
-            const latestTxn = monthTxns.length > 0 ? monthTxns[0] : null;
-            // Note: DB sorts by created_at DESC, so [0] is latest
+        for (let y = startYear; y <= endYear; y++) {
+            const yearStr = y.toString();
 
-            // Determine Status
-            let status = 'Pending';
+            for (let i = 0; i < 12; i++) {
+                const monthName = academicMonths[i];
 
-            if (balance <= 0) {
-                status = 'Paid';
-            } else {
-                // Balance > 0
-                if (yearInt > currentYear) {
-                    status = 'Coming';
-                } else if (yearInt === currentYear) {
-                    if (i > currentMonthIdx) { // Future month in current year
+                // Skip months before admission date
+                if (admDate && (y < admYear || (y === admYear && i < admMonthIdx))) {
+                    continue;
+                }
+
+                // Check if this month is in the future relative to "now"
+                const isFutureMonth = (y > currentYear) || (y === currentYear && i > currentMonthIdx);
+
+                // Find all payment records for this month/year
+                const monthTxns = fees.filter(f => f.month === monthName && f.year === yearStr);
+                const totalPaidAmount = monthTxns.reduce((sum, txn) => sum + parseFloat(txn.amount), 0);
+
+                // Track cumulative totals (only for past/current months to determine global standing)
+                if (!isFutureMonth) {
+                    cumulativeDue += monthlyFeeRate;
+                }
+                cumulativePaid += totalPaidAmount;
+
+                // Add past credit to this month's payments
+                const availableFunds = totalPaidAmount + carryOverCredit;
+
+                let balance = 0;
+                let newCarryOver = 0;
+
+                if (availableFunds >= monthlyFeeRate) {
+                    newCarryOver = availableFunds - monthlyFeeRate;
+                    balance = 0;
+                } else {
+                    balance = monthlyFeeRate - availableFunds;
+                    newCarryOver = 0;
+                }
+
+                carryOverCredit = newCarryOver;
+
+                // Latest record info (for date/receipt display)
+                const latestTxn = monthTxns.length > 0 ? monthTxns[0] : null;
+
+                // Determine Status
+                let status = 'Pending';
+                if (balance <= 0) {
+                    status = 'Paid';
+                } else {
+                    if (isFutureMonth) {
                         status = 'Coming';
                     }
-                    // Else: Current or Past month with balance -> Pending
                 }
+
+                rows.push({
+                    sysId: `${monthName}-${yearStr}`, // Unique Key
+                    month: monthName,
+                    year: yearStr,
+                    paidAmount: totalPaidAmount,
+                    balance: balance,
+                    carryOver: newCarryOver, // Credit moving to next month
+                    status: status,
+
+                    // Display Info
+                    date: latestTxn ? (latestTxn.paid_date ? latestTxn.paid_date.split('T')[0] : '') : '',
+                    receiptUrl: latestTxn ? (latestTxn.receipt_url ? `${API_URL}${latestTxn.receipt_url}` : null) : null,
+
+                    // Data for Actions
+                    txns: monthTxns,
+                    hasTxns: monthTxns.length > 0,
+                    amount: totalPaidAmount
+                });
             }
-
-            rows.push({
-                sysId: `${monthName}-${yearStr}`, // Unique Key
-                month: monthName,
-                year: yearStr,
-                paidAmount: totalPaidAmount,
-                balance: balance,
-                status: status,
-
-                // Display Info (from latest txn or empty)
-                date: latestTxn ? (latestTxn.paid_date ? latestTxn.paid_date.split('T')[0] : '') : '',
-                receiptUrl: latestTxn ? (latestTxn.receipt_url ? `${API_URL}${latestTxn.receipt_url}` : null) : null,
-
-                // Data for Actions
-                txns: monthTxns,
-                hasTxns: monthTxns.length > 0,
-
-                // Original needed for helpers
-                amount: totalPaidAmount // for visual compatibility
-            });
         }
 
-        return rows;
-    }, [fees, selectedYear, monthlyFeeRate]);
+        return {
+            rows,
+            globalStanding: cumulativePaid - cumulativeDue // + means Credit, - means Due
+        };
+    }, [fees, monthlyFeeRate, admissionDate]);
+
+    // Rows for the currently selected year
+    const feeRows = useMemo(() => {
+        return feeData.rows.filter(r => r.year === selectedYear);
+    }, [feeData.rows, selectedYear]);
 
     const filteredRows = feeRows.filter(row => {
         if (filterStatus !== 'All' && row.status !== filterStatus) return false;
@@ -148,13 +197,11 @@ const ViewStudentFees = ({ studentId, admissionDate, monthlyFee: initialMonthlyF
         return true;
     });
 
-    // Stats (Annual)
-    const totalPaid = feeRows
-        .reduce((sum, row) => sum + row.paidAmount, 0);
+    // Stats (Annual & Global)
+    const totalPaidSelectedYear = feeRows.reduce((sum, row) => sum + row.paidAmount, 0);
 
-    const totalPending = feeRows
-        .filter(row => row.status === 'Pending')
-        .reduce((sum, row) => sum + row.balance, 0);
+    const isGlobalCredit = feeData.globalStanding > 0;
+    const globalStandingAmount = Math.abs(feeData.globalStanding);
 
 
 
@@ -354,13 +401,22 @@ const ViewStudentFees = ({ studentId, admissionDate, monthlyFee: initialMonthlyF
             {/* Header Stats */}
             <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full xl:w-auto">
-                    <div className="bg-red-50 px-5 py-3 rounded-xl border border-red-100 min-w-[200px]">
-                        <p className="text-xs text-red-500 font-bold uppercase tracking-wider">Pending ({selectedYear})</p>
-                        <h3 className="text-xl font-bold text-red-700 mt-1">Rs. {totalPending.toLocaleString()}</h3>
-                    </div>
+                    {/* Global Standing Card */}
+                    {isGlobalCredit ? (
+                        <div className="bg-emerald-50 px-5 py-3 rounded-xl border border-emerald-100 min-w-[200px]">
+                            <p className="text-xs text-emerald-600 font-bold uppercase tracking-wider">Advance Credit</p>
+                            <h3 className="text-xl font-bold text-emerald-700 mt-1">Rs. {globalStandingAmount.toLocaleString()}</h3>
+                        </div>
+                    ) : (
+                        <div className="bg-red-50 px-5 py-3 rounded-xl border border-red-100 min-w-[200px]">
+                            <p className="text-xs text-red-500 font-bold uppercase tracking-wider">Total Due</p>
+                            <h3 className="text-xl font-bold text-red-700 mt-1">Rs. {globalStandingAmount.toLocaleString()}</h3>
+                        </div>
+                    )}
+
                     <div className="bg-green-50 px-5 py-3 rounded-xl border border-green-100 min-w-[200px]">
                         <p className="text-xs text-green-500 font-bold uppercase tracking-wider">Paid ({selectedYear})</p>
-                        <h3 className="text-xl font-bold text-green-700 mt-1">Rs. {totalPaid.toLocaleString()}</h3>
+                        <h3 className="text-xl font-bold text-green-700 mt-1">Rs. {totalPaidSelectedYear.toLocaleString()}</h3>
                     </div>
                     <div className="bg-blue-50 px-5 py-3 rounded-xl border border-blue-100 min-w-[200px] flex justify-between items-center group cursor-pointer hover:bg-blue-100 transition-colors" onClick={handleUpdateRateClick}>
                         <div>
@@ -372,7 +428,7 @@ const ViewStudentFees = ({ studentId, admissionDate, monthlyFee: initialMonthlyF
                 </div>
 
                 <div className="flex gap-2">
-                    <button onClick={openAddModal} className="bg-[#EB8A33] hover:bg-[#d97d2a] text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors shadow-sm text-sm">
+                    <button onClick={openAddModal} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors shadow-sm text-sm">
                         <Plus size={18} /> Manual Payment
                     </button>
                 </div>
@@ -423,7 +479,7 @@ const ViewStudentFees = ({ studentId, admissionDate, monthlyFee: initialMonthlyF
                                 <th className="px-6 py-4">Date</th>
                                 <th className="px-6 py-4">Paid Amount</th>
                                 <th className="px-6 py-4">Status</th>
-                                <th className="px-6 py-4 text-center">Actions</th>
+                                <th className="px-6 py-4 text-right pr-12">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 text-sm">
@@ -439,6 +495,7 @@ const ViewStudentFees = ({ studentId, admissionDate, monthlyFee: initialMonthlyF
                                         <td className="px-6 py-4 font-bold text-gray-800">
                                             Rs. {row.paidAmount}
                                             {row.balance > 0 && <span className="text-[10px] text-red-500 block font-normal">Due: Rs. {row.balance}</span>}
+                                            {row.carryOver > 0 && <span className="text-[10px] text-emerald-500 block font-normal">Credit Fwd: Rs. {row.carryOver}</span>}
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${row.status === 'Paid' ? 'bg-green-100 text-green-700' :
@@ -449,43 +506,7 @@ const ViewStudentFees = ({ studentId, admissionDate, monthlyFee: initialMonthlyF
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="flex items-center justify-center gap-2">
-                                                {/* Edit/Delete/View controls if Txns exist */}
-                                                {row.hasTxns && (
-                                                    <>
-                                                        {row.receiptUrl && (
-                                                            <button
-                                                                onClick={() => window.open(row.receiptUrl, '_blank')}
-                                                                title="View Receipt"
-                                                                className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
-                                                            >
-                                                                <Eye size={18} />
-                                                            </button>
-                                                        )}
-                                                        <button
-                                                            onClick={() => handleDownloadReceipt(row)}
-                                                            title="Download Receipt"
-                                                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                                        >
-                                                            <Download size={18} />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleEditClick(row)}
-                                                            title="Edit Payment"
-                                                            className="p-2 text-orange-500 hover:bg-orange-50 rounded-lg transition-colors"
-                                                        >
-                                                            <Edit2 size={18} />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDeleteClick(row.txns[0].id)}
-                                                            title="Cancel Payment"
-                                                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                                        >
-                                                            <X size={18} />
-                                                        </button>
-                                                    </>
-                                                )}
-
+                                            <div className="flex items-center justify-end gap-3 pr-4">
                                                 {/* Pay Button if Balance > 0 */}
                                                 {/* If Status is Pending, we allow payment */}
                                                 {/* Even if partial records exist, we can Add Payment (Pay Balance) */}
@@ -494,6 +515,52 @@ const ViewStudentFees = ({ studentId, admissionDate, monthlyFee: initialMonthlyF
                                                         {row.hasTxns ? 'Pay Balance' : 'Pay Now'}
                                                     </button>
                                                 )}
+
+                                                {/* Action Dropdown if Txns exist (3-dots at the end) */}
+                                                {row.hasTxns && (
+                                                    <div className="relative" onClick={(e) => e.stopPropagation()}>
+                                                        <button
+                                                            onClick={() => setOpenDropdownId(openDropdownId === row.sysId ? null : row.sysId)}
+                                                            className={`p-2 rounded-lg transition-colors ${openDropdownId === row.sysId ? 'bg-gray-100 text-gray-800' : 'text-gray-400 hover:text-gray-700 hover:bg-gray-50'}`}
+                                                        >
+                                                            <MoreVertical size={18} />
+                                                        </button>
+
+                                                        {openDropdownId === row.sysId && (
+                                                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 z-50 py-2 animate-in fade-in zoom-in-95 duration-150">
+                                                                {row.receiptUrl && (
+                                                                    <button
+                                                                        onClick={() => { window.open(row.receiptUrl, '_blank'); setOpenDropdownId(null); }}
+                                                                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                                                                    >
+                                                                        <Eye size={16} className="text-blue-500" /> View Receipt
+                                                                    </button>
+                                                                )}
+                                                                <button
+                                                                    onClick={() => { handleDownloadReceipt(row); setOpenDropdownId(null); }}
+                                                                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                                                                >
+                                                                    <Download size={16} className="text-green-600" /> Download Receipt
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => { handleEditClick(row); setOpenDropdownId(null); }}
+                                                                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                                                                >
+                                                                    <Edit2 size={16} className="text-orange-500" /> Edit Payment
+                                                                </button>
+                                                                <div className="h-px bg-gray-100 my-1 mx-2"></div>
+                                                                <button
+                                                                    onClick={() => { handleDeleteClick(row.txns[0].id); setOpenDropdownId(null); }}
+                                                                    className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors font-medium"
+                                                                >
+                                                                    <X size={16} className="text-red-500 shrink-0" strokeWidth={3} /> Cancel Payment
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+
+
                                             </div>
                                         </td>
                                     </tr>

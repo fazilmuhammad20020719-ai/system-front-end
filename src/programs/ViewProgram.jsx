@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { jsPDF } from 'jspdf'; // Import jsPDF
 import {
     ArrowLeft, BookOpen, Users, User, Clock,
@@ -14,7 +14,8 @@ const ViewProgram = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
-    const [activeTab, setActiveTab] = useState('overview');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const activeTab = searchParams.get('tab') || 'overview';
     const [selectedYear, setSelectedYear] = useState('Grade 1');
 
     // DATA STATES
@@ -284,7 +285,7 @@ const ViewProgram = () => {
                         {['overview', 'curriculum', 'teachers'].map((tab) => (
                             <button
                                 key={tab}
-                                onClick={() => setActiveTab(tab)}
+                                onClick={() => setSearchParams({ tab }, { replace: true })}
                                 className={`px-6 py-3 text-sm font-bold capitalize relative transition-colors whitespace-nowrap ${activeTab === tab
                                     ? 'text-green-600'
                                     : 'text-gray-500 hover:text-gray-700'

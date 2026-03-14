@@ -1,5 +1,6 @@
 import { User, Calendar, Mail, Phone, Hash, CreditCard, MessageCircle } from 'lucide-react';
 import { InputField, SelectField, FileUploadField } from './FormComponents';
+import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 import { API_URL } from '../config';
 
 // Today's date in YYYY-MM-DD for DOB max= attribute
@@ -31,11 +32,10 @@ const StudentPersonalInfo = ({ formData, handleChange, handleStatusChange }) => 
                 <User className="text-[#EB8A33]" size={18} /> Personal Information
             </h3>
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div className="flex flex-col lg:flex-row gap-6">
                 {/* Photo Upload */}
-                <div className="lg:col-span-1">
-                    <FileUploadField
-                        label="Student Photo"
+                <div className="flex-shrink-0 flex flex-col items-center gap-3">
+                    <ProfilePhotoUpload
                         name="studentPhoto"
                         onChange={handleChange}
                         preview={getPreviewImage()}
@@ -43,7 +43,7 @@ const StudentPersonalInfo = ({ formData, handleChange, handleStatusChange }) => 
                 </div>
 
                 {/* Form Fields */}
-                <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <InputField label="Index Number" name="indexNumber" value={formData.indexNumber} onChange={handleChange} placeholder="ST-2024-001" icon={Hash} required />
 
                     <SelectField label="Student Status" name="status" value={formData.status} onChange={handleStatusChange} options={['Active', 'Graduated', 'Suspended', 'Inactive']} required />

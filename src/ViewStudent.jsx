@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
     User, FileText, Clock, Award, CreditCard, Activity, ArrowLeft
 } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { API_URL } from './config';
 
@@ -20,7 +20,8 @@ const ViewStudent = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const navigate = useNavigate();
     const { id } = useParams();
-    const [activeTab, setActiveTab] = useState('personal');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const activeTab = searchParams.get('tab') || 'personal';
     const [student, setStudent] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -129,8 +130,8 @@ const ViewStudent = () => {
                     program: (sData.enrollments && sData.enrollments.length > 0) ? sData.enrollments[0].program : (sData.program_name || sData.program),
                     year: (sData.enrollments && sData.enrollments.length > 0) ? sData.enrollments[0].year : sData.current_year,
                     session: (sData.enrollments && sData.enrollments.length > 0) ? sData.enrollments[0].session : sData.session_year,
-                    admissionDate: (sData.enrollments && sData.enrollments.length > 0 && sData.enrollments[0].admissionDate)
-                        ? sData.enrollments[0].admissionDate.split('T')[0]
+                    admissionDate: (sData.enrollments && sData.enrollments.length > 0 && sData.enrollments[0].admission_date)
+                        ? sData.enrollments[0].admission_date.split('T')[0]
                         : (sData.admission_date ? sData.admission_date.split('T')[0] : 'N/A'),
                     status: (sData.enrollments && sData.enrollments.length > 0) ? sData.enrollments[0].status : (sData.status || 'Active'),
 
@@ -184,12 +185,12 @@ const ViewStudent = () => {
                     {/* 2. Navigation Tabs */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6 sticky top-0 z-10 overflow-x-auto scrollbar-hide">
                         <div className="flex min-w-max">
-                            <TabItem icon={User} label="Personal Info" active={activeTab === 'personal'} onClick={() => setActiveTab('personal')} />
-                            <TabItem icon={FileText} label="Documents" active={activeTab === 'documents'} onClick={() => setActiveTab('documents')} />
-                            <TabItem icon={Clock} label="Attendance" active={activeTab === 'attendance'} onClick={() => setActiveTab('attendance')} />
-                            <TabItem icon={Award} label="Results" active={activeTab === 'results'} onClick={() => setActiveTab('results')} />
-                            <TabItem icon={CreditCard} label="Fees" active={activeTab === 'fees'} onClick={() => setActiveTab('fees')} />
-                            <TabItem icon={Activity} label="Timeline" active={activeTab === 'timeline'} onClick={() => setActiveTab('timeline')} />
+                            <TabItem icon={User} label="Personal Info" active={activeTab === 'personal'} onClick={() => setSearchParams({ tab: 'personal' }, { replace: true })} />
+                            <TabItem icon={FileText} label="Documents" active={activeTab === 'documents'} onClick={() => setSearchParams({ tab: 'documents' }, { replace: true })} />
+                            <TabItem icon={Clock} label="Attendance" active={activeTab === 'attendance'} onClick={() => setSearchParams({ tab: 'attendance' }, { replace: true })} />
+                            <TabItem icon={Award} label="Results" active={activeTab === 'results'} onClick={() => setSearchParams({ tab: 'results' }, { replace: true })} />
+                            <TabItem icon={CreditCard} label="Fees" active={activeTab === 'fees'} onClick={() => setSearchParams({ tab: 'fees' }, { replace: true })} />
+                            <TabItem icon={Activity} label="Timeline" active={activeTab === 'timeline'} onClick={() => setSearchParams({ tab: 'timeline' }, { replace: true })} />
                         </div>
                     </div>
 

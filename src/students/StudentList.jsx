@@ -60,19 +60,11 @@ const StudentList = ({ students }) => {
                         {student.enrollments_summary.map((e, idx) => (
                             <div key={idx} className="flex items-center gap-2">
                                 <span className="font-semibold text-xs">{e.program}</span>
-                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${e.status === 'Active' ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                                    {e.status}
-                                </span>
                             </div>
                         ))}
                     </div>
                 ) : (
-                    <>
-                        <p>{student.program}</p>
-                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${student.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                            {student.status}
-                        </span>
-                    </>
+                    <p>{student.program}</p>
                 )}
             </td>
             <td className="py-3 px-4 text-sm text-gray-600">
@@ -82,9 +74,18 @@ const StudentList = ({ students }) => {
                     : student.currentYear || 'N/A'}
             </td>
             <td className="py-3 px-4">
-                {/* Status Column removed/merged into program column for cleaner lookup, or keep general? */}
-                {/* Keeping empty or generalized status if needed, but better to show per program above */}
-                <span className="text-xs text-gray-400">See Program</span>
+                {(() => {
+                    const statusVal = student.enrollments_summary?.length > 0
+                        ? student.enrollments_summary[0].status
+                        : student.status;
+                    if (!statusVal) return <span className="text-xs text-gray-400">—</span>;
+                    const isActive = statusVal === 'Active';
+                    return (
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                            {statusVal}
+                        </span>
+                    );
+                })()}
             </td>
             <td className="py-3 px-4 text-sm text-gray-600">{student.contact}</td>
             <td className="py-3 px-4">

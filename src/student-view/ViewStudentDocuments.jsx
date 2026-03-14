@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
-import { FileText, Download, Eye, Trash2, Plus, FilePenLine } from 'lucide-react';
+import { FileText, Download, Eye, Trash2, Plus, FilePenLine, MoreVertical } from 'lucide-react';
 import { API_URL } from '../config';
 import RenameModal from '../documents/RenameModal';
 
 const ViewStudentDocuments = ({ documents: staticDocs = [], studentId }) => {
     const [dynamicDocs, setDynamicDocs] = useState([]);
     const [isUploading, setIsUploading] = useState(false);
+    const [openMenuIndex, setOpenMenuIndex] = useState(null);
     const fileInputRef = useRef(null);
 
     // Combine static and dynamic
@@ -144,7 +145,7 @@ const ViewStudentDocuments = ({ documents: staticDocs = [], studentId }) => {
                 <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploading || !studentId}
-                    className="flex items-center gap-2 px-4 py-2 bg-[#EB8A33] hover:bg-[#d67b28] text-white text-sm font-medium rounded-lg transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {isUploading ? (
                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -169,7 +170,7 @@ const ViewStudentDocuments = ({ documents: staticDocs = [], studentId }) => {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {allDocs.map((doc, i) => (
-                        <div key={i} className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg hover:border-orange-200 transition-colors group">
+                        <div key={i} className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg hover:border-green-200 transition-colors group">
                             <div className="flex items-center gap-4 overflow-hidden">
                                 <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm text-green-600 shrink-0">
                                     <FileText size={20} />
@@ -179,40 +180,58 @@ const ViewStudentDocuments = ({ documents: staticDocs = [], studentId }) => {
                                     <p className="text-xs text-gray-500">{doc.size} • {doc.date}</p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-1.5 shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+
+                            {/* 3-dot menu */}
+                            <div className="relative shrink-0">
                                 <button
-                                    onClick={() => window.open(doc.url || doc.path, '_blank')}
-                                    className="text-gray-400 hover:text-green-600 transition-colors"
-                                    title="View"
+                                    onClick={() => setOpenMenuIndex(openMenuIndex === i ? null : i)}
+                                    className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-200 rounded-full transition-colors"
+                                    title="More options"
                                 >
-                                    <Eye size={16} />
+                                    <MoreVertical size={16} />
                                 </button>
-                                <a
-                                    href={doc.url || doc.path}
-                                    download
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="text-gray-400 hover:text-blue-600 transition-colors"
-                                    title="Download"
-                                >
-                                    <Download size={16} />
-                                </a>
-                                {!doc.isStatic && (
+
+                                {openMenuIndex === i && (
                                     <>
-                                        <button
-                                            onClick={() => openRenameModal(doc)}
-                                            className="text-gray-400 hover:text-orange-600 transition-colors"
-                                            title="Rename"
-                                        >
-                                            <FilePenLine size={16} />
-                                        </button>
-                                        <button
-                                            onClick={() => handleDelete(doc.id)}
-                                            className="text-gray-400 hover:text-red-600 transition-colors"
-                                            title="Delete"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
+                                        {/* Backdrop to close menu */}
+                                        <div
+                                            className="fixed inset-0 z-10"
+                                            onClick={() => setOpenMenuIndex(null)}
+                                        />
+                                        <div className="absolute right-0 top-8 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[140px]">
+                                            <button
+                                                onClick={() => { window.open(doc.url || doc.path, '_blank'); setOpenMenuIndex(null); }}
+                                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                            >
+                                                <Eye size={14} className="text-green-600" /> View
+                                            </button>
+                                            <a
+                                                href={doc.url || doc.path}
+                                                download
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                onClick={() => setOpenMenuIndex(null)}
+                                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                            >
+                                                <Download size={14} className="text-blue-600" /> Download
+                                            </a>
+                                            {!doc.isStatic && (
+                                                <>
+                                                    <button
+                                                        onClick={() => { openRenameModal(doc); setOpenMenuIndex(null); }}
+                                                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                                                    >
+                                                        <FilePenLine size={14} className="text-orange-500" /> Rename
+                                                    </button>
+                                                    <button
+                                                        onClick={() => { handleDelete(doc.id); setOpenMenuIndex(null); }}
+                                                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                                    >
+                                                        <Trash2 size={14} /> Delete
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
                                     </>
                                 )}
                             </div>

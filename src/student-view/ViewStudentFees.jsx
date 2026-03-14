@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { CreditCard, Download, Eye, Plus, Upload, X, Trash2, Edit2, Lock, Check, Settings, MoreVertical } from 'lucide-react';
-import jsPDF from 'jspdf';
+import { generateFeeBill } from '../utils/generateFeeBill';
 import { API_URL } from '../config';
 
-const ViewStudentFees = ({ studentId, admissionDate, monthlyFee: initialMonthlyFee }) => {
+const ViewStudentFees = ({ studentId, admissionDate, monthlyFee: initialMonthlyFee, studentInfo = {} }) => {
     // --- State Management ---
     const [fees, setFees] = useState([]); // Real DB records
     const [monthlyFeeRate, setMonthlyFeeRate] = useState(initialMonthlyFee || 0);
@@ -120,13 +120,16 @@ const ViewStudentFees = ({ studentId, admissionDate, monthlyFee: initialMonthlyF
                 // Check if this month is in the future relative to "now"
                 const isFutureMonth = (y > currentYear) || (y === currentYear && i > currentMonthIdx);
 
+                // Ensure monthly rate is a number
+                const currentRate = Number(monthlyFeeRate) || 0;
+
                 // Find all payment records for this month/year
                 const monthTxns = fees.filter(f => f.month === monthName && f.year === yearStr);
-                const totalPaidAmount = monthTxns.reduce((sum, txn) => sum + parseFloat(txn.amount), 0);
+                const totalPaidAmount = monthTxns.reduce((sum, txn) => sum + (Number(txn.amount) || 0), 0);
 
                 // Track cumulative totals (only for past/current months to determine global standing)
                 if (!isFutureMonth) {
-                    cumulativeDue += monthlyFeeRate;
+                    cumulativeDue += currentRate;
                 }
                 cumulativePaid += totalPaidAmount;
 
@@ -136,11 +139,11 @@ const ViewStudentFees = ({ studentId, admissionDate, monthlyFee: initialMonthlyF
                 let balance = 0;
                 let newCarryOver = 0;
 
-                if (availableFunds >= monthlyFeeRate) {
-                    newCarryOver = availableFunds - monthlyFeeRate;
+                if (availableFunds >= currentRate) {
+                    newCarryOver = availableFunds - currentRate;
                     balance = 0;
                 } else {
-                    balance = monthlyFeeRate - availableFunds;
+                    balance = currentRate - availableFunds;
                     newCarryOver = 0;
                 }
 
@@ -369,32 +372,6 @@ const ViewStudentFees = ({ studentId, admissionDate, monthlyFee: initialMonthlyF
         }
     };
 
-    // Receipt PDF
-    const handleDownloadReceipt = (record) => {
-        const doc = new jsPDF();
-        doc.setFillColor(235, 138, 51);
-        doc.rect(0, 0, 210, 40, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(22);
-        doc.text("PAYMENT RECEIPT", 105, 25, null, null, "center");
-        doc.setTextColor(0, 0, 0);
-        doc.setFontSize(12);
-
-        let y = 60;
-        const line = (l, v) => { doc.setFont("helvetica", "bold"); doc.text(`${l}:`, 20, y); doc.setFont("helvetica", "normal"); doc.text(`${v}`, 80, y); y += 15; };
-
-        // For aggregated, show summary
-        const txnId = record.txns && record.txns.length > 0 ? record.txns[0].id : "N/A";
-
-        line("Invoice ID", `INV-${txnId}`);
-        line("Student ID", studentId);
-        line("Month", `${record.month} ${record.year}`);
-        line("Date", record.date);
-        line("Total Paid", `Rs. ${record.paidAmount}`);
-        line("Status", record.status.toUpperCase());
-
-        doc.save(`Receipt_${record.month}_${record.year}.pdf`);
-    };
 
     return (
         <div className="space-y-6">
@@ -428,7 +405,7 @@ const ViewStudentFees = ({ studentId, admissionDate, monthlyFee: initialMonthlyF
                 </div>
 
                 <div className="flex gap-2">
-                    <button onClick={openAddModal} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors shadow-sm text-sm">
+                    <button onClick={openAddModal} className="bg-[#EB8A33] hover:bg-[#d97d2a] text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors shadow-sm text-sm">
                         <Plus size={18} /> Manual Payment
                     </button>
                 </div>
@@ -479,7 +456,7 @@ const ViewStudentFees = ({ studentId, admissionDate, monthlyFee: initialMonthlyF
                                 <th className="px-6 py-4">Date</th>
                                 <th className="px-6 py-4">Paid Amount</th>
                                 <th className="px-6 py-4">Status</th>
-                                <th className="px-6 py-4 text-right pr-12">Actions</th>
+                                <th className="px-6 py-4 text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 text-sm">
@@ -506,61 +483,65 @@ const ViewStudentFees = ({ studentId, admissionDate, monthlyFee: initialMonthlyF
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="flex items-center justify-end gap-3 pr-4">
-                                                {/* Pay Button if Balance > 0 */}
-                                                {/* If Status is Pending, we allow payment */}
-                                                {/* Even if partial records exist, we can Add Payment (Pay Balance) */}
-                                                {row.balance > 0 && row.status !== 'Coming' && (
-                                                    <button onClick={() => handlePayClick(row)} className="flex items-center gap-1 bg-green-600/10 hover:bg-green-600 text-green-700 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all ml-2">
-                                                        {row.hasTxns ? 'Pay Balance' : 'Pay Now'}
-                                                    </button>
-                                                )}
-
-                                                {/* Action Dropdown if Txns exist (3-dots at the end) */}
-                                                {row.hasTxns && (
-                                                    <div className="relative" onClick={(e) => e.stopPropagation()}>
-                                                        <button
-                                                            onClick={() => setOpenDropdownId(openDropdownId === row.sysId ? null : row.sysId)}
-                                                            className={`p-2 rounded-lg transition-colors ${openDropdownId === row.sysId ? 'bg-gray-100 text-gray-800' : 'text-gray-400 hover:text-gray-700 hover:bg-gray-50'}`}
-                                                        >
-                                                            <MoreVertical size={18} />
+                                            <div className="flex items-center justify-between gap-2" style={{ minWidth: '140px' }}>
+                                                {/* Pay Button — always on the left */}
+                                                <div className="flex-1 flex justify-center">
+                                                    {row.balance > 0 && row.status !== 'Coming' ? (
+                                                        <button onClick={() => handlePayClick(row)} className="flex items-center gap-1 bg-green-600/10 hover:bg-green-600 text-green-700 hover:text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all">
+                                                            {row.hasTxns ? 'Pay Balance' : 'Pay Now'}
                                                         </button>
+                                                    ) : (
+                                                        <span />
+                                                    )}
+                                                </div>
 
-                                                        {openDropdownId === row.sysId && (
-                                                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 z-50 py-2 animate-in fade-in zoom-in-95 duration-150">
-                                                                {row.receiptUrl && (
+                                                {/* 3-dot menu — always on the right */}
+                                                <div className="w-8 flex items-center justify-center">
+                                                    {row.hasTxns ? (
+                                                        <div className="relative" onClick={(e) => e.stopPropagation()}>
+                                                            <button
+                                                                onClick={() => setOpenDropdownId(openDropdownId === row.sysId ? null : row.sysId)}
+                                                                className={`p-1.5 rounded-lg transition-colors ${openDropdownId === row.sysId ? 'bg-gray-100 text-gray-800' : 'text-gray-400 hover:text-gray-700 hover:bg-gray-50'}`}
+                                                            >
+                                                                <MoreVertical size={18} />
+                                                            </button>
+
+                                                            {openDropdownId === row.sysId && (
+                                                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 z-50 py-2 animate-in fade-in zoom-in-95 duration-150">
+                                                                    {row.receiptUrl && (
+                                                                        <button
+                                                                            onClick={() => { window.open(row.receiptUrl, '_blank'); setOpenDropdownId(null); }}
+                                                                            className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                                                                        >
+                                                                            <Eye size={16} className="text-blue-500" /> View Receipt
+                                                                        </button>
+                                                                    )}
                                                                     <button
-                                                                        onClick={() => { window.open(row.receiptUrl, '_blank'); setOpenDropdownId(null); }}
+                                                                        onClick={() => { generateFeeBill(row, monthlyFeeRate, studentInfo); setOpenDropdownId(null); }}
                                                                         className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
                                                                     >
-                                                                        <Eye size={16} className="text-blue-500" /> View Receipt
+                                                                        <Download size={16} className="text-green-600" /> Download Fee Bill
                                                                     </button>
-                                                                )}
-                                                                <button
-                                                                    onClick={() => { handleDownloadReceipt(row); setOpenDropdownId(null); }}
-                                                                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
-                                                                >
-                                                                    <Download size={16} className="text-green-600" /> Download Receipt
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => { handleEditClick(row); setOpenDropdownId(null); }}
-                                                                    className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
-                                                                >
-                                                                    <Edit2 size={16} className="text-orange-500" /> Edit Payment
-                                                                </button>
-                                                                <div className="h-px bg-gray-100 my-1 mx-2"></div>
-                                                                <button
-                                                                    onClick={() => { handleDeleteClick(row.txns[0].id); setOpenDropdownId(null); }}
-                                                                    className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors font-medium"
-                                                                >
-                                                                    <X size={16} className="text-red-500 shrink-0" strokeWidth={3} /> Cancel Payment
-                                                                </button>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
-
-
+                                                                    <button
+                                                                        onClick={() => { handleEditClick(row); setOpenDropdownId(null); }}
+                                                                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+                                                                    >
+                                                                        <Edit2 size={16} className="text-orange-500" /> Edit Payment
+                                                                    </button>
+                                                                    <div className="h-px bg-gray-100 my-1 mx-2"></div>
+                                                                    <button
+                                                                        onClick={() => { handleDeleteClick(row.txns[0].id); setOpenDropdownId(null); }}
+                                                                        className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors font-medium"
+                                                                    >
+                                                                        <X size={16} className="text-red-500 shrink-0" strokeWidth={3} /> Cancel Payment
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="w-8" />
+                                                    )}
+                                                </div>
                                             </div>
                                         </td>
                                     </tr>

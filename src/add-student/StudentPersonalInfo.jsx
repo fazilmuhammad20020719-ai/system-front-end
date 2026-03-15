@@ -50,6 +50,7 @@ const StudentPersonalInfo = ({ formData, handleChange, handleStatusChange }) => 
 
                     <InputField label="First Name" name="firstName" value={formData.firstName} onChange={handleChange} placeholder="Mohamed" required />
                     <InputField label="Last Name" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Rifkan" />
+                    <InputField label="Father Name" name="fatherName" value={formData.fatherName} onChange={handleChange} placeholder="Abdul Rahman" icon={User} />
 
                     {/* DOB: max=today prevents future dates */}
                     <InputField

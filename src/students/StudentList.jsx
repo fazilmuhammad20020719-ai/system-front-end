@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, Edit, Trash2, CheckCircle, X, AlertTriangle } from 'lucide-react';
-import { API_URL } from '../config'; // API_URL முக்கியம்
+import { API_URL } from '../config';
+import DefaultAvatar from '../components/DefaultAvatar';
 
 const StudentList = ({ students }) => {
     const navigate = useNavigate();
@@ -43,8 +44,8 @@ const StudentList = ({ students }) => {
                                 onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
                             />
                         ) : null}
-                        <div className={`absolute inset-0 flex items-center justify-center font-bold text-xs text-blue-600 ${student.photo_url ? 'hidden' : 'flex'}`}>
-                            {student.name.charAt(0)}
+                        <div className={`absolute inset-0 ${student.photo_url ? 'hidden' : 'flex'}`}>
+                            <DefaultAvatar gender={student.gender} size="sm" />
                         </div>
                     </div>
 

@@ -1,9 +1,9 @@
 import { Eye, Edit, Trash2, GraduationCap, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { API_URL } from '../config';
-import Pagination from './Pagination';
+import DefaultAvatar from '../components/DefaultAvatar';
 
-const StudentGrid = ({ students, cardSize, currentPage, totalPages, onPageChange, onDelete }) => {
+const StudentGrid = ({ students, cardSize, onDelete }) => {
     const navigate = useNavigate();
 
     const getStatusColor = (status) => {
@@ -35,8 +35,8 @@ const StudentGrid = ({ students, cardSize, currentPage, totalPages, onPageChange
                                             onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
                                         />
                                     ) : null}
-                                    <div className={`absolute inset-0 flex items-center justify-center font-bold uppercase text-[#EB8A33] ${student.photo_url ? 'hidden' : 'flex'} ${cardSize === 'large' ? 'text-lg' : 'text-sm'}`}>
-                                        {student.name.charAt(0)}
+                                    <div className={`absolute inset-0 ${student.photo_url ? 'hidden' : 'flex'}`}>
+                                        <DefaultAvatar gender={student.gender} size={cardSize === 'large' ? 'md' : 'sm'} />
                                     </div>
                                 </div>
                                 <div>
@@ -138,9 +138,6 @@ const StudentGrid = ({ students, cardSize, currentPage, totalPages, onPageChange
                         </div>
                     </div>
                 ))}
-            </div>
-            <div className="mt-6 bg-white rounded-xl shadow-sm border border-gray-100">
-                <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} />
             </div>
         </div>
     );

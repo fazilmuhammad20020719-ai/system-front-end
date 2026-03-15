@@ -20,7 +20,7 @@ const AddStudent = () => {
     const [programOptions, setProgramOptions] = useState([]);
 
     const [formData, setFormData] = useState({
-        studentPhoto: null, indexNumber: '', firstName: '', lastName: '', dob: '', gender: 'Male', nic: '', email: '', phone: '', whatsapp: '',
+        studentPhoto: null, indexNumber: '', firstName: '', lastName: '', fatherName: '', dob: '', gender: 'Male', nic: '', email: '', phone: '', whatsapp: '',
         province: '', district: '', dsDivision: '', gnDivision: '', address: '', googleMapLink: '', latitude: '', longitude: '',
         guardianName: '', guardianRelation: 'Father', guardianOccupation: '', guardianPhone: '', guardianEmail: '',
         // Legacy fields (kept for safety during transition, but UI will use enrollments)

@@ -92,9 +92,8 @@ const Students = () => {
         fetchData();
     }, []);
 
-    // PAGINATION STATE
-    const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10;
+    // LOAD MORE STATE
+    const [visibleCount, setVisibleCount] = useState(12);
 
     // Filter Logic
     const filteredStudents = students.filter(student => {
@@ -112,17 +111,15 @@ const Students = () => {
         return matchesSearch && matchesYear && matchesBatch && matchesProgram && matchesStatus;
     });
 
-    // Reset page on filter change
+    // Reset visible count on filter change
     useEffect(() => {
-        setCurrentPage(1);
+        setVisibleCount(12);
     }, [searchTerm, selectedYear, selectedBatch, selectedProgram, selectedStatus]);
 
-    // PAGINATION CALCULATION
-    const totalPages = Math.max(1, Math.ceil(filteredStudents.length / itemsPerPage));
-    const paginatedStudents = filteredStudents.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    );
+    // LOAD MORE CALCULATION
+    const visibleStudents = filteredStudents.slice(0, visibleCount);
+    const hasMore = visibleCount < filteredStudents.length;
+    const loadMore = () => setVisibleCount(prev => prev + 12);
 
     const clearFilters = () => {
         setSearchTerm('');
@@ -209,21 +206,34 @@ const Students = () => {
                         <>
                             {viewMode === 'list' ? (
                                 <StudentList
-                                    students={paginatedStudents}
-                                    currentPage={currentPage}
-                                    totalPages={totalPages}
-                                    onPageChange={setCurrentPage}
-                                    onDelete={confirmDelete} // Pass Handler
+                                    students={visibleStudents}
+                                    onDelete={confirmDelete}
                                 />
                             ) : (
                                 <StudentGrid
-                                    students={paginatedStudents}
+                                    students={visibleStudents}
                                     cardSize={cardSize}
-                                    currentPage={currentPage}
-                                    totalPages={totalPages}
-                                    onPageChange={setCurrentPage}
-                                    onDelete={confirmDelete} // Pass Handler
+                                    onDelete={confirmDelete}
                                 />
+                            )}
+
+                            {/* LOAD MORE BUTTON */}
+                            {hasMore && (
+                                <div className="flex flex-col items-center gap-2 mt-6">
+                                    <button
+                                        onClick={loadMore}
+                                        className="px-8 py-3 bg-white border-2 border-green-500 text-green-600 font-bold rounded-xl hover:bg-green-50 transition-all flex items-center gap-2 shadow-sm"
+                                    >
+                                        <span>Load More Students</span>
+                                        <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">
+                                            {filteredStudents.length - visibleCount} more
+                                        </span>
+                                    </button>
+                                    <p className="text-xs text-gray-400">Showing {visibleCount} of {filteredStudents.length} students</p>
+                                </div>
+                            )}
+                            {!hasMore && filteredStudents.length > 12 && (
+                                <p className="text-center text-xs text-gray-400 mt-4">All {filteredStudents.length} students shown</p>
                             )}
                         </>
                     ) : (

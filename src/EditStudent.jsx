@@ -22,14 +22,15 @@ const EditStudent = () => {
     const { notify } = useNotification();
 
     const [formData, setFormData] = useState({
-        studentPhoto: null, indexNumber: '', firstName: '', lastName: '', dob: '', gender: 'Male', nic: '', email: '', phone: '', whatsapp: '',
+        studentPhoto: null, indexNumber: '', firstName: '', lastName: '', fatherName: '', dob: '', gender: 'Male', nic: '', email: '', phone: '', whatsapp: '',
         status: 'Active',
         province: '', district: '', dsDivision: '', gnDivision: '', address: '', googleMapLink: '', latitude: '', longitude: '',
         guardianName: '', guardianRelation: 'Father', guardianOccupation: '', guardianPhone: '', guardianEmail: '',
         // Legacy fields + Enrollments
         programId: '', session: '', currentYear: '', admissionDate: '', status: 'Active',
         enrollments: [], // Multi-Program Support
-        lastStudiedGrade: '', previousSchoolName: '', previousCollegeName: '', mediumOfStudy: 'Tamil',
+        lastStudiedGrade: '', previousSchoolName: '', previousSchoolLocation: '', reasonForLeaving: '',
+        previousCollegeName: '', previousCollegeLocation: '', reasonForLeavingMadrasa: '', mediumOfStudy: 'Tamil',
         nicFront: null, nicBack: null, studentSignature: null, birthCertificate: null,
         medicalReport: null, guardianNic: null, guardianPhoto: null, leavingCertificate: null
     });
@@ -74,6 +75,7 @@ const EditStudent = () => {
                         indexNumber: data.id,
                         firstName: fName,
                         lastName: lName,
+                        fatherName: data.father_name || '',
                         dob: data.dob ? data.dob.split('T')[0] : '',
                         gender: data.gender || 'Male',
                         nic: data.nic || '',
@@ -99,10 +101,14 @@ const EditStudent = () => {
                         session: data.session_year || '',
                         currentYear: data.current_year || '',
                         admissionDate: data.admission_date ? data.admission_date.split('T')[0] : '',
-                        enrollments: loadedEnrollments, // Use the prepared variable
+                        enrollments: loadedEnrollments,
                         previousSchoolName: data.previous_school || '',
+                        previousSchoolLocation: data.previous_school_location || '',
                         lastStudiedGrade: data.last_studied_grade || '',
+                        reasonForLeaving: data.reason_for_leaving || '',
                         previousCollegeName: data.previous_college || '',
+                        previousCollegeLocation: data.previous_college_location || '',
+                        reasonForLeavingMadrasa: data.reason_for_leaving_madrasa || '',
                         mediumOfStudy: data.medium_of_study || 'Tamil',
                         studentPhoto: null,
                         photoUrl: data.photo_url ? `${API_URL}${data.photo_url}` : null,
@@ -180,7 +186,7 @@ const EditStudent = () => {
             if (response.ok) {
                 notify('success', "Student Updated Successfully", 'Success');
                 setTimeout(() => {
-                    navigate(-1);
+                    navigate(`/students/${formData.indexNumber}`);
                 }, 1500);
             } else {
                 const errData = await response.json();

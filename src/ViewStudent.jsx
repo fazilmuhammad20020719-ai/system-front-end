@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
     User, FileText, Clock, Award, CreditCard, Activity, ArrowLeft
 } from 'lucide-react';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { API_URL } from './config';
 
@@ -16,21 +16,11 @@ import ViewStudentFees from './student-view/ViewStudentFees';
 import ViewStudentTimeline from './student-view/ViewStudentTimeline';
 import Loader from './components/Loader';
 
-const VALID_TABS = ['personal', 'documents', 'attendance', 'results', 'fees', 'timeline'];
-
 const ViewStudent = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const navigate = useNavigate();
     const { id } = useParams();
-    const location = useLocation();
-
-    // Read tab from URL hash (e.g. #documents), fallback to 'personal'
-    const getTabFromHash = () => {
-        const hash = location.hash.replace('#', '');
-        return VALID_TABS.includes(hash) ? hash : 'personal';
-    };
-
-    const [activeTab, setActiveTab] = useState(getTabFromHash);
+    const [activeTab, setActiveTab] = useState('personal');
     const [student, setStudent] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -61,25 +51,28 @@ const ViewStudent = () => {
 
                 // Helper to check and add document
                 const docs = [];
-                const addDoc = (path, title) => {
-                    if (path) {
+                const uploadedDate = sData.created_at
+                    ? new Date(sData.created_at).toLocaleDateString()
+                    : 'N/A';
+                const addDoc = (filePath, title, sizeKey) => {
+                    if (filePath) {
                         docs.push({
                             name: title,
-                            path: `${API_URL}${path}`, // Ensure full URL if needed, or relative
-                            date: 'N/A', // We don't track upload date per file in this schema
-                            size: 'N/A'
+                            path: `${API_URL}${filePath}`,
+                            date: uploadedDate,
+                            size: sData[sizeKey] || 'N/A'
                         });
                     }
                 };
 
-                addDoc(sData.nic_front, 'NIC Front');
-                addDoc(sData.nic_back, 'NIC Back');
-                addDoc(sData.student_signature, 'Student Signature');
-                addDoc(sData.birth_certificate, 'Birth Certificate');
-                addDoc(sData.medical_report, 'Medical Report');
-                addDoc(sData.guardian_nic, 'Guardian NIC');
-                addDoc(sData.guardian_photo, 'Guardian Photo');
-                addDoc(sData.leaving_certificate, 'Leaving Certificate');
+                addDoc(sData.nic_front, 'NIC Front', 'nic_front_size');
+                addDoc(sData.nic_back, 'NIC Back', 'nic_back_size');
+                addDoc(sData.student_signature, 'Student Signature', 'student_signature_size');
+                addDoc(sData.birth_certificate, 'Birth Certificate', 'birth_certificate_size');
+                addDoc(sData.medical_report, 'Medical Report', 'medical_report_size');
+                addDoc(sData.guardian_nic, 'Guardian NIC', 'guardian_nic_size');
+                addDoc(sData.guardian_photo, 'Guardian Photo', 'guardian_photo_size');
+                addDoc(sData.leaving_certificate, 'Leaving Certificate', 'leaving_certificate_size');
 
                 // Merging Data
                 const fullProfile = {
@@ -88,6 +81,7 @@ const ViewStudent = () => {
                     firstName: sData.name ? sData.name.split(' ')[0] : '',
                     lastName: sData.name ? sData.name.split(' ').slice(1).join(' ') : '',
                     name: sData.name || '', // Add name explicitly
+                    fatherName: sData.father_name || '',
                     image: sData.photo_url
                         ? `${API_URL}${sData.photo_url}`
                         : null,
@@ -146,8 +140,12 @@ const ViewStudent = () => {
 
                     // Extra Data
                     previousSchool: sData.previous_school || 'N/A',
-                    lastStudiedGrade: sData.last_studied_grade || 'N/A',
-                    previousCollegeName: sData.previous_college || 'N/A',
+                    previousSchoolLocation: sData.previous_school_location || '',
+                    lastStudiedGrade: sData.last_studied_grade || '',
+                    reasonForLeaving: sData.reason_for_leaving || '',
+                    previousCollegeName: sData.previous_college || '',
+                    previousCollegeLocation: sData.previous_college_location || '',
+                    reasonForLeavingMadrasa: sData.reason_for_leaving_madrasa || '',
                     mediumOfStudy: sData.medium_of_study || 'N/A',
                     monthlyFee: sData.monthly_fee || '0',
 
@@ -194,12 +192,12 @@ const ViewStudent = () => {
                     {/* 2. Navigation Tabs */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6 sticky top-0 z-10 overflow-x-auto scrollbar-hide">
                         <div className="flex min-w-max">
-                            <TabItem icon={User} label="Personal Info" active={activeTab === 'personal'} onClick={() => { setActiveTab('personal'); navigate('#personal', { replace: true }); }} />
-                            <TabItem icon={FileText} label="Documents" active={activeTab === 'documents'} onClick={() => { setActiveTab('documents'); navigate('#documents', { replace: true }); }} />
-                            <TabItem icon={Clock} label="Attendance" active={activeTab === 'attendance'} onClick={() => { setActiveTab('attendance'); navigate('#attendance', { replace: true }); }} />
-                            <TabItem icon={Award} label="Results" active={activeTab === 'results'} onClick={() => { setActiveTab('results'); navigate('#results', { replace: true }); }} />
-                            <TabItem icon={CreditCard} label="Fees" active={activeTab === 'fees'} onClick={() => { setActiveTab('fees'); navigate('#fees', { replace: true }); }} />
-                            <TabItem icon={Activity} label="Timeline" active={activeTab === 'timeline'} onClick={() => { setActiveTab('timeline'); navigate('#timeline', { replace: true }); }} />
+                            <TabItem icon={User} label="Personal Info" active={activeTab === 'personal'} onClick={() => setActiveTab('personal')} />
+                            <TabItem icon={FileText} label="Documents" active={activeTab === 'documents'} onClick={() => setActiveTab('documents')} />
+                            <TabItem icon={Clock} label="Attendance" active={activeTab === 'attendance'} onClick={() => setActiveTab('attendance')} />
+                            <TabItem icon={Award} label="Results" active={activeTab === 'results'} onClick={() => setActiveTab('results')} />
+                            <TabItem icon={CreditCard} label="Fees" active={activeTab === 'fees'} onClick={() => setActiveTab('fees')} />
+                            <TabItem icon={Activity} label="Timeline" active={activeTab === 'timeline'} onClick={() => setActiveTab('timeline')} />
                         </div>
                     </div>
 
@@ -209,7 +207,7 @@ const ViewStudent = () => {
                         {activeTab === 'documents' && <ViewStudentDocuments documents={student.documents} studentId={student.id} />}
                         {activeTab === 'attendance' && <ViewStudentAttendance stats={student.attendanceStats} />}
                         {activeTab === 'results' && <ViewStudentResults results={student.results} />}
-                        {activeTab === 'fees' && <ViewStudentFees studentId={student.id} admissionDate={student.admissionDate} monthlyFee={student.monthlyFee} />}
+                        {activeTab === 'fees' && <ViewStudentFees studentId={student.id} admissionDate={student.admissionDate} monthlyFee={student.monthlyFee} studentInfo={{ name: student.name, id: student.id, program: student.program, year: student.year, phone: student.phone, email: student.email }} />}
                         {activeTab === 'timeline' && <ViewStudentTimeline studentId={student.id} />}
                     </div>
                 </main>

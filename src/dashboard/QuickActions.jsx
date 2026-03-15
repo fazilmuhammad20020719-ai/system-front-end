@@ -12,7 +12,7 @@ const QuickActions = () => {
             </div>
             <button
                 onClick={() => navigate('/add-student')}
-                className="bg-[#E88931] hover:bg-[#d67b28] text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2"
+                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2"
             >
                 <UserPlus size={18} />
                 Add Student

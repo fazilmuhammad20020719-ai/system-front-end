@@ -65,6 +65,7 @@ const ViewStudentInfo = ({ student }) => {
                     <SectionCard title="Personal Details" icon={User} color="text-blue-600" bg="bg-blue-50">
                         <div className="space-y-0.5">
                             <DetailRow label="Full Name" value={student.name} highlight />
+                            <DetailRow label="Father Name" value={student.fatherName || student.father_name} />
                             <DetailRow label="Date of Birth" value={formatDate(student.dob)} />
                             <DetailRow label="Gender" value={student.gender} />
                             <DetailRow label="NIC Number" value={student.nic} />
@@ -147,7 +148,11 @@ const ViewStudentInfo = ({ student }) => {
 
                             <div className="pt-2 border-t border-gray-100">
                                 <DetailRow label="Previous School" value={student.previousSchool || student.previous_school} />
-                                <DetailRow label="Previous Madrasa" value={student.previousCollegeName} />
+                                <DetailRow label="School Location" value={student.previousSchoolLocation || student.previous_school_location} />
+                                <DetailRow label="Last Grade" value={student.lastStudiedGrade || student.last_studied_grade} />
+                                <DetailRow label="Reason for Leaving" value={student.reasonForLeaving || student.reason_for_leaving} />
+                                <DetailRow label="Previous Madrasa" value={student.previousCollegeName || student.previous_college} />
+                                <DetailRow label="Madrasa Location" value={student.previousCollegeLocation || student.previous_college_location} />
                                 <DetailRow label="Medium" value={student.mediumOfStudy || student.medium_of_study} />
                             </div>
                         </div>

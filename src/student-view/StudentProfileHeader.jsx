@@ -1,6 +1,7 @@
 import React from 'react';
 import { BookOpen, Edit, Calendar, GraduationCap, Clock, CheckCircle, Download, Layers } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import DefaultAvatar from '../components/DefaultAvatar';
 
 const StudentProfileHeader = ({ student }) => {
     const navigate = useNavigate();
@@ -50,11 +51,11 @@ const StudentProfileHeader = ({ student }) => {
 
                 {/* Profile Picture */}
                 <div className="relative shrink-0">
-                    <div className="w-24 h-24 rounded-2xl bg-gray-100 border-4 border-orange-50 overflow-hidden flex items-center justify-center text-3xl font-bold text-gray-400">
+                    <div className="w-24 h-24 rounded-2xl bg-gray-100 border-4 border-orange-50 overflow-hidden flex items-center justify-center">
                         {photoUrl ? (
                             <img src={photoUrl} alt="Profile" className="w-full h-full object-cover" />
                         ) : (
-                            <span>{fullName.charAt(0)}</span>
+                            <DefaultAvatar gender={student.gender} size="lg" />
                         )}
                     </div>
                     {/* Overall Status Indicator */}

@@ -261,12 +261,12 @@ const AttendancePopup = ({ isOpen, onClose, slot, subjects, onSave, onCancel }) 
                         filteredStudents.map(student => (
                             <div key={student.id} className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between group hover:border-gray-300 transition-all">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold text-sm">
-                                        {student.name.charAt(0)}
+                                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold text-sm uppercase">
+                                        {student.name.charAt(0).toUpperCase()}
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-gray-800 text-sm">{student.name}</h4>
-                                        <p className="text-xs text-gray-400 font-mono">ID: {student.id}</p>
+                                        <h4 className="font-bold text-gray-800 text-sm uppercase">{student.name}</h4>
+                                        <p className="text-xs text-gray-400 font-mono uppercase">ID: {student.id}</p>
                                     </div>
                                 </div>
 

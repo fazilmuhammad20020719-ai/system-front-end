@@ -2,7 +2,7 @@ import { Umbrella } from 'lucide-react';
 
 const AttendanceTable = ({ students, onStatusChange, isEditing }) => {
 
-    const getInitials = (name) => name ? name.charAt(0).toLowerCase() : "-";
+    const getInitials = (name) => name ? name.charAt(0).toUpperCase() : "-";
 
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200/60 overflow-hidden">
@@ -35,12 +35,12 @@ const AttendanceTable = ({ students, onStatusChange, isEditing }) => {
                         return (
                             <div key={student.id} className="grid grid-cols-12 p-3 items-center hover:bg-gray-50 transition-colors group">
                                 <div className="col-span-5 flex items-center gap-3 pl-2">
-                                    <div className="w-9 h-9 bg-gray-200 rounded flex items-center justify-center text-gray-500 font-bold text-sm lowercase pb-0.5 shrink-0">
+                                    <div className="w-9 h-9 bg-gray-200 rounded flex items-center justify-center text-gray-500 font-bold text-sm uppercase pb-0.5 shrink-0">
                                         {getInitials(student.name)}
                                     </div>
                                     <div className="min-w-0">
-                                        <p className="text-sm font-bold text-slate-700 leading-tight truncate">{student.name}</p>
-                                        <p className="text-[11px] text-gray-400 font-medium mt-0.5 truncate">{student.adminId || student.id}</p>
+                                        <p className="text-sm font-bold text-slate-700 leading-tight uppercase truncate">{student.name}</p>
+                                        <p className="text-[11px] text-gray-400 font-medium mt-0.5 uppercase truncate">{student.adminId || student.id}</p>
                                     </div>
                                 </div>
 

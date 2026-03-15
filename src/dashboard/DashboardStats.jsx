@@ -39,7 +39,7 @@ const DashboardStats = ({ stats }) => {
             />
 
             <StatCard
-                title="Today Student Attendance"
+                title="Daily Student Attendance"
                 value={stats.studentAttendance}
                 subText={`${stats.activeStudents || 0} / ${stats.students || 0} Present`}
                 icon={CalendarCheck}
@@ -48,7 +48,7 @@ const DashboardStats = ({ stats }) => {
                 onClick={() => navigate('/attendance', { state: { tab: 'students' } })}
             />
             <StatCard
-                title="Today Teacher Attendance"
+                title="Daily Teacher Attendance"
                 value={stats.teacherAttendance}
                 subText={`${stats.activeTeachers || 0} / ${stats.teachers || 0} Present`}
                 icon={Users}

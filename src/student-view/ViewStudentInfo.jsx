@@ -177,7 +177,7 @@ const SectionCard = ({ title, icon: Icon, color, bg, children }) => (
 const DetailRow = ({ label, value, highlight = false }) => (
     <div className="flex justify-between items-center py-2.5 border-b border-gray-50 last:border-0">
         <span className="text-sm text-gray-500 font-medium">{label}</span>
-        <div className={`text-sm text-right max-w-[60%] truncate ${highlight ? 'font-bold text-gray-900' : 'font-semibold text-gray-700'}`}>
+        <div className={`text-sm text-right max-w-[60%] truncate uppercase ${highlight ? 'font-bold text-gray-900' : 'font-semibold text-gray-700'}`}>
             {value || "—"}
         </div>
     </div>

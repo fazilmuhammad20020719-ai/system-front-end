@@ -49,7 +49,7 @@ const StudentList = ({ students }) => {
                     </div>
 
                     <div>
-                        <p className="font-medium text-gray-800 text-sm">{student.name}</p>
+                        <p className="font-medium text-gray-800 text-sm uppercase">{student.name}</p>
                         <p className="text-xs text-gray-500 font-mono">{student.id}</p>
                     </div>
                 </div>

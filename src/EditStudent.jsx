@@ -180,7 +180,7 @@ const EditStudent = () => {
             if (response.ok) {
                 notify('success', "Student Updated Successfully", 'Success');
                 setTimeout(() => {
-                    navigate(`/students/${formData.indexNumber}`);
+                    navigate(-1);
                 }, 1500);
             } else {
                 const errData = await response.json();

@@ -40,7 +40,7 @@ const StudentGrid = ({ students, cardSize, currentPage, totalPages, onPageChange
                                     </div>
                                 </div>
                                 <div>
-                                    <h3 className={`font-bold text-gray-800 line-clamp-1 group-hover:text-[#EB8A33] transition-colors ${cardSize === 'large' ? 'text-base' : 'text-sm'}`}>{student.name}</h3>
+                                    <h3 className={`font-bold text-gray-800 line-clamp-1 group-hover:text-[#EB8A33] transition-colors uppercase ${cardSize === 'large' ? 'text-base' : 'text-sm'}`}>{student.name}</h3>
                                     <p className="text-[10px] text-gray-400 font-mono bg-gray-50 px-1.5 py-0.5 rounded w-fit mt-0.5">#{student.id}</p>
                                 </div>
                             </div>
@@ -109,7 +109,7 @@ const StudentGrid = ({ students, cardSize, currentPage, totalPages, onPageChange
                                 <div className="px-1 space-y-1.5">
                                     <div className="flex justify-between items-center text-xs">
                                         <span className="text-gray-500">Guardian:</span>
-                                        <span className="font-medium text-gray-800 truncate max-w-[120px]">{student.guardian}</span>
+                                        <span className="font-medium text-gray-800 truncate max-w-[120px] uppercase">{student.guardian}</span>
                                     </div>
                                     <div className="flex justify-between items-center text-xs">
                                         <span className="text-gray-500">Contact:</span>

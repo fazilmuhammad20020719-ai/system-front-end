@@ -47,10 +47,25 @@ const ViewStudentDocuments = ({ documents: staticDocs = [], studentId }) => {
         }
     }, [studentId]);
 
+    // Deduplicate allDocs by name for display
+    const displayDocs = allDocs.filter(
+        (doc, idx, self) => idx === self.findIndex(d => d.name === doc.name)
+    );
+
     // File Upload Handler
     const handleFileChange = async (event) => {
         const file = event.target.files[0];
         if (!file) return;
+
+        // --- Duplicate check ---
+        const isDuplicate = allDocs.some(
+            doc => doc.name.trim().toLowerCase() === file.name.trim().toLowerCase()
+        );
+        if (isDuplicate) {
+            alert(`A document named "${file.name}" already exists. Please rename the file or delete the existing one first.`);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+            return;
+        }
 
         console.log('[Upload] File selected:', { name: file.name, type: file.type, size: file.size, sizeMB: (file.size / 1024 / 1024).toFixed(2) + ' MB' });
 
@@ -163,13 +178,13 @@ const ViewStudentDocuments = ({ documents: staticDocs = [], studentId }) => {
                 />
             </div>
 
-            {allDocs.length === 0 ? (
+            {displayDocs.length === 0 ? (
                 <div className="text-center py-8 text-gray-500 text-sm">
                     No documents uploaded yet.
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {allDocs.map((doc, i) => (
+                    {displayDocs.map((doc, i) => (
                         <div key={i} className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg hover:border-green-200 transition-colors group">
                             <div className="flex items-center gap-4 overflow-hidden">
                                 <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm text-green-600 shrink-0">

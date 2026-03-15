@@ -64,7 +64,7 @@ const StudentProfileHeader = ({ student }) => {
                 {/* Student Details */}
                 <div className="flex-1 min-w-0 w-full">
                     <div className="flex flex-wrap items-center gap-3 mb-2">
-                        <h1 className="text-2xl font-bold text-gray-800 truncate">{fullName}</h1>
+                        <h1 className="text-2xl font-bold text-gray-800 truncate uppercase">{fullName}</h1>
                         <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-mono rounded border border-gray-200">
                             {student.reg_no || student.id}
                         </span>

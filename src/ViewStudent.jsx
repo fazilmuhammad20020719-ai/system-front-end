@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
     User, FileText, Clock, Award, CreditCard, Activity, ArrowLeft
 } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { API_URL } from './config';
 
@@ -16,11 +16,21 @@ import ViewStudentFees from './student-view/ViewStudentFees';
 import ViewStudentTimeline from './student-view/ViewStudentTimeline';
 import Loader from './components/Loader';
 
+const VALID_TABS = ['personal', 'documents', 'attendance', 'results', 'fees', 'timeline'];
+
 const ViewStudent = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const navigate = useNavigate();
     const { id } = useParams();
-    const [activeTab, setActiveTab] = useState('personal');
+    const location = useLocation();
+
+    // Read tab from URL hash (e.g. #documents), fallback to 'personal'
+    const getTabFromHash = () => {
+        const hash = location.hash.replace('#', '');
+        return VALID_TABS.includes(hash) ? hash : 'personal';
+    };
+
+    const [activeTab, setActiveTab] = useState(getTabFromHash);
     const [student, setStudent] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -184,12 +194,12 @@ const ViewStudent = () => {
                     {/* 2. Navigation Tabs */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6 sticky top-0 z-10 overflow-x-auto scrollbar-hide">
                         <div className="flex min-w-max">
-                            <TabItem icon={User} label="Personal Info" active={activeTab === 'personal'} onClick={() => setActiveTab('personal')} />
-                            <TabItem icon={FileText} label="Documents" active={activeTab === 'documents'} onClick={() => setActiveTab('documents')} />
-                            <TabItem icon={Clock} label="Attendance" active={activeTab === 'attendance'} onClick={() => setActiveTab('attendance')} />
-                            <TabItem icon={Award} label="Results" active={activeTab === 'results'} onClick={() => setActiveTab('results')} />
-                            <TabItem icon={CreditCard} label="Fees" active={activeTab === 'fees'} onClick={() => setActiveTab('fees')} />
-                            <TabItem icon={Activity} label="Timeline" active={activeTab === 'timeline'} onClick={() => setActiveTab('timeline')} />
+                            <TabItem icon={User} label="Personal Info" active={activeTab === 'personal'} onClick={() => { setActiveTab('personal'); navigate('#personal', { replace: true }); }} />
+                            <TabItem icon={FileText} label="Documents" active={activeTab === 'documents'} onClick={() => { setActiveTab('documents'); navigate('#documents', { replace: true }); }} />
+                            <TabItem icon={Clock} label="Attendance" active={activeTab === 'attendance'} onClick={() => { setActiveTab('attendance'); navigate('#attendance', { replace: true }); }} />
+                            <TabItem icon={Award} label="Results" active={activeTab === 'results'} onClick={() => { setActiveTab('results'); navigate('#results', { replace: true }); }} />
+                            <TabItem icon={CreditCard} label="Fees" active={activeTab === 'fees'} onClick={() => { setActiveTab('fees'); navigate('#fees', { replace: true }); }} />
+                            <TabItem icon={Activity} label="Timeline" active={activeTab === 'timeline'} onClick={() => { setActiveTab('timeline'); navigate('#timeline', { replace: true }); }} />
                         </div>
                     </div>
 

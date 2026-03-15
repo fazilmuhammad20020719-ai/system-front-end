@@ -6,6 +6,7 @@ import { NotificationProvider } from './context/NotificationContext';
 import SystemPausedOverlay from './components/SystemPausedOverlay';
 
 // Lazy Load Components
+const Home = lazy(() => import('./website/Home'));
 const Login = lazy(() => import('./login'));
 const ForgotPassword = lazy(() => import('./ForgotPassword'));
 const Dashboard = lazy(() => import('./Dashboard'));
@@ -56,7 +57,8 @@ function App() {
         <NotificationProvider>
           <Suspense fallback={<Loader />}>
             <Routes>
-              <Route path="/" element={<Login />} />
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<Login />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/calendar" element={<Calendar />} />

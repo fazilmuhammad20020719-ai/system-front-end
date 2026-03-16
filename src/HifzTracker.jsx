@@ -3,7 +3,7 @@ import { useNotification } from './context/NotificationContext';
 import { useLoader } from './context/LoaderContext';
 import {
     Search, Plus, Edit2, X, Save, BookOpen,
-    Users, TrendingUp, Award, ChevronRight
+    Users, TrendingUp, Award, Filter, ChevronDown
 } from 'lucide-react';
 import { API_URL } from './config';
 import Sidebar from './Sidebar';
@@ -63,12 +63,17 @@ const HifzTracker = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
     const [allStudents, setAllStudents] = useState([]);
+    const [allPrograms, setAllPrograms] = useState([]);
     const [assignedStudents, setAssignedStudents] = useState([]);
 
     /* assign area */
     const [selectedStudentId, setSelectedStudentId] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
-    const [dropdownOpen, setDropdownOpen] = useState(false);
+
+    /* assign panel filters */
+    const [filterProgram, setFilterProgram] = useState('');
+    const [filterBatch, setFilterBatch] = useState('');
+    const [filterGrade, setFilterGrade] = useState('');
 
     /* table search */
     const [tableSearch, setTableSearch] = useState('');
@@ -82,23 +87,36 @@ const HifzTracker = () => {
     useEffect(() => {
         fetchAllStudents();
         fetchAssignedStudents();
+        fetchPrograms();
     }, []);
 
     /* ── API helpers ── */
     const fetchAllStudents = async () => {
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch(`${API_URL}/students`, {
+            const res = await fetch(`${API_URL}/api/students`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            if (!res.ok) throw new Error();
+            if (!res.ok) throw new Error('Failed to fetch students from API');
             const data = await res.json();
-            // Backend returns a plain array; accept all students regardless of status
             const list = Array.isArray(data) ? data : (data.students || []);
             setAllStudents(list);
-        } catch {
+        } catch (error) {
+            console.error('Students fetch error:', error);
             showNotification('Failed to load students list', 'error');
         }
+    };
+
+    const fetchPrograms = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${API_URL}/api/programs`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            setAllPrograms(Array.isArray(data) ? data : []);
+        } catch { /* silent */ }
     };
 
     const fetchAssignedStudents = async () => {
@@ -190,11 +208,39 @@ const HifzTracker = () => {
     };
 
     /* ── derived data ── */
-    const filteredDropdown = allStudents.filter(s =>
-        (s?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (s?.id || '').toString().includes(searchTerm)
-    );
-    const selectedName = allStudents.find(s => s.id === selectedStudentId)?.name || '';
+    // Unique filter options derived from student list
+    const programOptions = [...new Set(allStudents.map(s => s.program).filter(Boolean))].sort();
+    const batchOptions = [...new Set(allStudents.map(s => s.session).filter(Boolean))].sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
+
+    // Grade options: if a program is selected and we have programs list, generate from duration
+    let gradeOptions = [];
+    if (filterProgram) {
+        const prog = allPrograms.find(p => p.name === filterProgram);
+        if (prog) {
+            const dur = parseInt(prog.duration) || 5;
+            gradeOptions = Array.from({ length: dur }, (_, i) => `Grade ${i + 1}`);
+        }
+    }
+    if (gradeOptions.length === 0) {
+        gradeOptions = [...new Set(allStudents.map(s => s.currentYear).filter(Boolean))]
+            .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+    }
+
+    // Filtered students for assign panel
+    const assignedIds = new Set(assignedStudents.map(s => String(s.student_id)));
+    const filteredDropdown = allStudents.filter(s => {
+        const matchSearch = (s?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            String(s?.id || '').includes(searchTerm);
+        const matchProgram = !filterProgram || s.program === filterProgram;
+        const matchBatch = !filterBatch || s.session === filterBatch;
+        const matchGrade = !filterGrade || s.currentYear === filterGrade;
+        return matchSearch && matchProgram && matchBatch && matchGrade;
+    });
+
+    const selectedStudent = allStudents.find(s => String(s.id) === String(selectedStudentId));
+    const selectedName = selectedStudent?.name || '';
+
+    const hasAssignFilters = searchTerm || filterProgram || filterBatch || filterGrade;
 
     const filteredTable = assignedStudents.filter(s =>
         (s?.student_name || '').toLowerCase().includes(tableSearch.toLowerCase()) ||
@@ -242,7 +288,7 @@ const HifzTracker = () => {
                 <div className="flex gap-6 px-6 pt-5 pb-24">
 
                     {/* ════ LEFT SIDEBAR PANEL ════ */}
-                    <aside className="w-72 flex-shrink-0">
+                    <aside className="w-80 flex-shrink-0">
                         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden sticky top-24">
 
                             {/* sidebar header */}
@@ -251,89 +297,149 @@ const HifzTracker = () => {
                                     <Plus size={20} className="text-white" />
                                 </div>
                                 <h2 className="text-white font-bold text-lg leading-tight">Assign Student</h2>
-                                <p className="text-green-100 text-xs mt-1">Add a student to the Hifz programme</p>
+                                <p className="text-green-100 text-xs mt-1">Filter &amp; select a student for the Hifz programme</p>
                             </div>
 
-                            {/* form body */}
-                            <div className="p-5 space-y-4">
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-2">
-                                        Select Student
-                                    </label>
+                            {/* ── FILTER ROW ── */}
+                            <div className="px-4 pt-4 space-y-2">
+                                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1">
+                                    <Filter size={11} /> Filters
+                                </p>
 
-                                    {/* custom searchable dropdown */}
+                                {/* Program filter */}
+                                <div className="relative">
+                                    <select
+                                        value={filterProgram}
+                                        onChange={e => { setFilterProgram(e.target.value); setFilterGrade(''); setSelectedStudentId(''); }}
+                                        className="w-full pl-3 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs appearance-none focus:outline-none focus:border-green-400 focus:ring-1 focus:ring-green-200 text-gray-700"
+                                    >
+                                        <option value="">All Programs</option>
+                                        {programOptions.map(p => <option key={p} value={p}>{p}</option>)}
+                                    </select>
+                                    <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                </div>
+
+                                {/* Batch + Grade row */}
+                                <div className="grid grid-cols-2 gap-2">
                                     <div className="relative">
-                                        <div
-                                            className={`w-full border rounded-xl p-3 bg-white flex justify-between items-center cursor-pointer transition-all ${dropdownOpen ? 'border-green-400 ring-2 ring-green-100' : 'border-gray-200 hover:border-green-300'}`}
-                                            onClick={() => setDropdownOpen(!dropdownOpen)}
+                                        <select
+                                            value={filterBatch}
+                                            onChange={e => { setFilterBatch(e.target.value); setSelectedStudentId(''); }}
+                                            className="w-full pl-3 pr-7 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs appearance-none focus:outline-none focus:border-green-400 focus:ring-1 focus:ring-green-200 text-gray-700"
                                         >
-                                            <span className={`text-sm line-clamp-1 ${selectedName ? 'text-gray-800 font-medium' : 'text-gray-400'}`}>
-                                                {selectedName ? `${selectedName}` : 'Search & select…'}
-                                            </span>
-                                            <ChevronRight
-                                                size={15}
-                                                className={`text-gray-400 transition-transform flex-shrink-0 ml-2 ${dropdownOpen ? 'rotate-90' : ''}`}
-                                            />
-                                        </div>
-
-                                        {dropdownOpen && (
-                                            <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-56 overflow-y-auto">
-                                                <div className="sticky top-0 bg-white p-2 border-b border-gray-100">
-                                                    <div className="relative">
-                                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Name or ID…"
-                                                            className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-300 focus:border-green-400 outline-none"
-                                                            value={searchTerm}
-                                                            onChange={e => setSearchTerm(e.target.value)}
-                                                            onClick={e => e.stopPropagation()}
-                                                            autoFocus
-                                                        />
-                                                    </div>
-                                                </div>
-                                                {filteredDropdown.length > 0 ? filteredDropdown.map(s => (
-                                                    <div
-                                                        key={s.id}
-                                                        className="px-4 py-2.5 hover:bg-green-50 cursor-pointer flex items-center gap-3"
-                                                        onClick={() => {
-                                                            setSelectedStudentId(s.id);
-                                                            setDropdownOpen(false);
-                                                            setSearchTerm('');
-                                                        }}
-                                                    >
-                                                        <div className="w-7 h-7 rounded-full bg-green-100 text-green-700 font-bold text-xs flex items-center justify-center flex-shrink-0">
-                                                            {(s.name || '?').charAt(0).toUpperCase()}
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-sm font-medium text-gray-800">{s.name}</p>
-                                                            <p className="text-xs text-gray-400">ID: {s.id}</p>
-                                                        </div>
-                                                    </div>
-                                                )) : (
-                                                    <div className="p-4 text-center text-sm text-gray-400">No students found</div>
-                                                )}
-                                            </div>
-                                        )}
+                                            <option value="">All Batches</option>
+                                            {batchOptions.map(b => <option key={b} value={b}>{b}</option>)}
+                                        </select>
+                                        <ChevronDown size={13} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                                     </div>
+                                    <div className="relative">
+                                        <select
+                                            value={filterGrade}
+                                            onChange={e => { setFilterGrade(e.target.value); setSelectedStudentId(''); }}
+                                            className="w-full pl-3 pr-7 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs appearance-none focus:outline-none focus:border-green-400 focus:ring-1 focus:ring-green-200 text-gray-700"
+                                        >
+                                            <option value="">All Grades</option>
+                                            {gradeOptions.map(g => <option key={g} value={g}>{g}</option>)}
+                                        </select>
+                                        <ChevronDown size={13} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                                    </div>
+                                </div>
 
-                                    {selectedName && (
-                                        <div className="mt-2 flex items-center gap-2 bg-green-50 border border-green-100 rounded-lg px-3 py-2">
-                                            <div className="w-6 h-6 rounded-full bg-green-600 text-white text-xs font-bold flex items-center justify-center">
-                                                {selectedName.charAt(0).toUpperCase()}
-                                            </div>
-                                            <span className="text-sm font-medium text-green-800 flex-1 truncate">{selectedName}</span>
-                                            <button onClick={() => setSelectedStudentId('')} className="text-green-400 hover:text-green-600">
-                                                <X size={14} />
-                                            </button>
-                                        </div>
+                                {/* Search */}
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={13} />
+                                    <input
+                                        type="text"
+                                        placeholder="Search name or ID…"
+                                        className="w-full pl-8 pr-8 py-2 text-xs border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-200 focus:border-green-400 outline-none bg-gray-50"
+                                        value={searchTerm}
+                                        onChange={e => { setSearchTerm(e.target.value); setSelectedStudentId(''); }}
+                                    />
+                                    {searchTerm && (
+                                        <button onClick={() => setSearchTerm('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                            <X size={12} />
+                                        </button>
                                     )}
                                 </div>
+
+                                {/* clear filters pill */}
+                                {hasAssignFilters && (
+                                    <button
+                                        onClick={() => { setFilterProgram(''); setFilterBatch(''); setFilterGrade(''); setSearchTerm(''); setSelectedStudentId(''); }}
+                                        className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 font-medium"
+                                    >
+                                        <X size={11} /> Clear filters
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* ── STUDENT LIST ── */}
+                            <div className="px-4 pt-3 pb-2">
+                                <p className="text-xs text-gray-400 mb-2">
+                                    {filteredDropdown.length} student{filteredDropdown.length !== 1 ? 's' : ''} found
+                                    {selectedStudentId && <span className="ml-2 text-green-600 font-semibold">· 1 selected</span>}
+                                </p>
+                                <div className="max-h-56 overflow-y-auto rounded-xl border border-gray-100 divide-y divide-gray-50">
+                                    {filteredDropdown.length > 0 ? filteredDropdown.map(s => {
+                                        const isSelected = String(s.id) === String(selectedStudentId);
+                                        const isAssigned = assignedIds.has(String(s.id));
+                                        return (
+                                            <div
+                                                key={s.id}
+                                                onClick={() => !isAssigned && setSelectedStudentId(isSelected ? '' : s.id)}
+                                                className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors
+                                                    ${isAssigned ? 'opacity-40 cursor-not-allowed bg-gray-50'
+                                                        : isSelected ? 'bg-green-50 border-l-2 border-green-500'
+                                                            : 'hover:bg-gray-50'}`}
+                                            >
+                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0
+                                                    ${isSelected ? 'bg-green-600 text-white' : 'bg-green-100 text-green-700'}`}>
+                                                    {(s.name || '?').charAt(0).toUpperCase()}
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="text-sm font-medium text-gray-800 truncate">{s.name}</p>
+                                                    <p className="text-xs text-gray-400 truncate">
+                                                        ID: {s.id}
+                                                        {s.currentYear && <span className="ml-1">· {s.currentYear}</span>}
+                                                        {s.session && <span className="ml-1">· {s.session}</span>}
+                                                    </p>
+                                                </div>
+                                                {isAssigned && (
+                                                    <span className="text-xs bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded-full flex-shrink-0">In Tracker</span>
+                                                )}
+                                                {isSelected && !isAssigned && (
+                                                    <span className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                                                        <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
+                                                            <path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                                        </svg>
+                                                    </span>
+                                                )}
+                                            </div>
+                                        );
+                                    }) : (
+                                        <div className="py-8 text-center text-sm text-gray-400">No students found</div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* ── SELECTED BADGE + ADD BUTTON ── */}
+                            <div className="px-4 pb-4 space-y-3">
+                                {selectedName && (
+                                    <div className="flex items-center gap-2 bg-green-50 border border-green-100 rounded-lg px-3 py-2">
+                                        <div className="w-6 h-6 rounded-full bg-green-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+                                            {selectedName.charAt(0).toUpperCase()}
+                                        </div>
+                                        <span className="text-sm font-medium text-green-800 flex-1 truncate">{selectedName}</span>
+                                        <button onClick={() => setSelectedStudentId('')} className="text-green-400 hover:text-green-600">
+                                            <X size={13} />
+                                        </button>
+                                    </div>
+                                )}
 
                                 <button
                                     onClick={handleAssignStudent}
                                     disabled={!selectedStudentId}
-                                    className={`w-full py-3 rounded-xl font-semibold flex justify-center items-center gap-2 text-sm transition-all ${selectedStudentId
+                                    className={`w-full py-2.5 rounded-xl font-semibold flex justify-center items-center gap-2 text-sm transition-all ${selectedStudentId
                                         ? 'bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg'
                                         : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                         }`}
@@ -344,8 +450,8 @@ const HifzTracker = () => {
                             </div>
 
                             {/* sidebar mini-legend */}
-                            <div className="px-5 pb-5">
-                                <div className="rounded-xl bg-gray-50 border border-gray-100 p-3 space-y-2">
+                            <div className="px-4 pb-4">
+                                <div className="rounded-xl bg-gray-50 border border-gray-100 p-3 space-y-1.5">
                                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Juz Progress Legend</p>
                                     {[
                                         { label: 'Starting (1–12)', color: 'bg-amber-400' },

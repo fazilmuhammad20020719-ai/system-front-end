@@ -29,8 +29,11 @@ export const LoaderProvider = ({ children }) => {
         }, duration);
     };
 
+    const showLoader = () => setIsLoading(true);
+    const hideLoader = () => setIsLoading(false);
+
     return (
-        <LoaderContext.Provider value={{ isLoading, triggerLoading }}>
+        <LoaderContext.Provider value={{ isLoading, triggerLoading, showLoader, hideLoader }}>
             {children}
             {isLoading && <Loader />}
         </LoaderContext.Provider>

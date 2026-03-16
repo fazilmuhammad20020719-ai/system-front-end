@@ -6,7 +6,6 @@ import { NotificationProvider } from './context/NotificationContext';
 import SystemPausedOverlay from './components/SystemPausedOverlay';
 
 // Lazy Load Components
-const Home = lazy(() => import('./website/Home'));
 const Login = lazy(() => import('./login'));
 const ForgotPassword = lazy(() => import('./ForgotPassword'));
 const Dashboard = lazy(() => import('./Dashboard'));
@@ -43,6 +42,7 @@ const Documents = lazy(() => import('./Documents'));
 const Subscription = lazy(() => import('./Subscription'));
 const Activity = lazy(() => import('./Activity'));
 const AdminProfile = lazy(() => import('./AdminProfile'));
+const HifzTracker = lazy(() => import('./HifzTracker'));
 
 // Developer Controller
 const ControllerLogin = lazy(() => import('./controller/ControllerLogin'));
@@ -57,8 +57,7 @@ function App() {
         <NotificationProvider>
           <Suspense fallback={<Loader />}>
             <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/login" element={<Login />} />
+              <Route path="/" element={<Login />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/calendar" element={<Calendar />} />
@@ -85,6 +84,7 @@ function App() {
               <Route path="/programs" element={<Programs />} />
               <Route path="/programs/:id" element={<ProgramDetails />} />
               <Route path="/view-program/:id" element={<ViewProgram />} />
+              <Route path="/hifz-tracker" element={<HifzTracker />} />
 
               {/* Exams Routes */}
               <Route path="/exams" element={<ExamsLayout />} />

@@ -16,7 +16,8 @@ import {
     Crown,
     Activity,
     UserCog,
-    Wifi
+    Wifi,
+    BookOpen
 } from 'lucide-react';
 
 // ── Network speed hook ──────────────────────────────────────────
@@ -31,12 +32,13 @@ const useNetworkSpeed = () => {
         if (conn?.downlink !== undefined && conn.downlink > 0) {
             const speed = conn.downlink; // Mbps
             setMbps(speed);
-            setStatus(speed >= 20 ? 'good' : speed >= 5 ? 'medium' : 'low');
+            setStatus(speed >= 2 ? 'good' : speed >= 0.5 ? 'medium' : 'low');
         }
 
         // Also do a real timing test for accuracy
         try {
-            const FILE_SIZE_KB = 8; // tiny payload ~8KB = 8192 bytes
+            // Ping the backend health endpoint to measure real app connectivity
+            const FILE_SIZE_KB = 8;
             const url = `https://httpbin.org/bytes/${FILE_SIZE_KB * 1024}?t=${Date.now()}`;
             const start = performance.now();
             const res = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(8000) });
@@ -45,7 +47,8 @@ const useNetworkSpeed = () => {
             const bits = FILE_SIZE_KB * 1024 * 8;
             const speed = parseFloat(((bits / duration) / 1_000_000).toFixed(1)); // Mbps
             setMbps(speed);
-            setStatus(speed >= 20 ? 'good' : speed >= 5 ? 'medium' : 'low');
+            // Realistic thresholds: good ≥2 Mbps, medium ≥0.5 Mbps
+            setStatus(speed >= 2 ? 'good' : speed >= 0.5 ? 'medium' : 'low');
         } catch {
             // If fetch fails entirely, mark offline
             if (!navigator.onLine) {
@@ -213,6 +216,14 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                             />
 
                             <SidebarItem
+                                icon={BookOpen}
+                                text="Hifz Tracker"
+                                to="/hifz-tracker"
+                                active={isActive('/hifz-tracker')}
+                                isOpen={isOpen}
+                            />
+
+                            <SidebarItem
                                 icon={ClipboardList}
                                 text="Exams & Results"
                                 to="/exams"
@@ -233,7 +244,13 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                                 active={isActive('/documents')}
                                 isOpen={isOpen}
                             />
-
+                            <SidebarItem
+                                icon={Crown}
+                                text="Subscription"
+                                to="/subscription"
+                                active={isActive('/subscription')}
+                                isOpen={isOpen}
+                            />
                             <SidebarItem
                                 icon={Activity}
                                 text="Activity Log"
@@ -241,7 +258,13 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                                 active={isActive('/activity')}
                                 isOpen={isOpen}
                             />
-
+                            <SidebarItem
+                                icon={UserCog}
+                                text="Admin Profile"
+                                to="/admin-profile"
+                                active={isActive('/admin-profile')}
+                                isOpen={isOpen}
+                            />
                         </div>
                     </div>
                 </nav>

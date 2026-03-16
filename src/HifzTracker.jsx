@@ -55,9 +55,43 @@ const StatCard = ({ icon: Icon, label, value, color }) => (
     </div>
 );
 
+/* ─── Surat Data by Juz ─────────────────────────────────────── */
+const juzSurahMapping = {
+    1: ["Surah Al-Fatihah (1:1-7)", "Surah Al-Baqarah (2:1-141)"],
+    2: ["Surah Al-Baqarah (2:142-252)"],
+    3: ["Surah Al-Baqarah (2:253-286)", "Surah Al Imran (3:1-92)"],
+    4: ["Surah Al Imran (3:93-200)", "Surah An-Nisa (4:1-23)"],
+    5: ["Surah An-Nisa (4:24-147)"],
+    6: ["Surah An-Nisa (4:148-176)", "Surah Al-Ma'idah (5:1-81)"],
+    7: ["Surah Al-Ma'idah (5:82-120)", "Surah Al-An'am (6:1-110)"],
+    8: ["Surah Al-An'am (6:111-165)", "Surah Al-A'raf (7:1-87)"],
+    9: ["Surah Al-A'raf (7:88-206)", "Surah Al-Anfal (8:1-40)"],
+    10: ["Surah Al-Anfal (8:41-75)", "Surah At-Tawbah (9:1-92)"],
+    11: ["Surah At-Tawbah (9:93-129)", "Surah Yunus (10:1-109)", "Surah Hud (11:1-5)"],
+    12: ["Surah Hud (11:6-123)", "Surah Yusuf (12:1-52)"],
+    13: ["Surah Yusuf (12:53-111)", "Surah Ar-Ra'd (13:1-43)", "Surah Ibrahim (14:1-52)"],
+    14: ["Surah Al-Hijr (15:1-99)", "Surah An-Nahl (16:1-128)"],
+    15: ["Surah Al-Isra (17:1-111)", "Surah Al-Kahf (18:1-74)"],
+    16: ["Surah Al-Kahf (18:75-110)", "Surah Maryam (19:1-98)", "Surah Ta-Ha (20:1-135)"],
+    17: ["Surah Al-Anbiya (21:1-112)", "Surah Al-Hajj (22:1-78)"],
+    18: ["Surah Al-Mu'minun (23:1-118)", "Surah An-Nur (24:1-64)", "Surah Al-Furqan (25:1-20)"],
+    19: ["Surah Al-Furqan (25:21-77)", "Surah Ash-Shu'ara (26:1-227)", "Surah An-Naml (27:1-55)"],
+    20: ["Surah An-Naml (27:56-93)", "Surah Al-Qasas (28:1-88)", "Surah Al-'Ankabut (29:1-45)"],
+    21: ["Surah Al-'Ankabut (29:46-69)", "Surah Ar-Rum (30:1-60)", "Surah Luqman (31:1-34)", "Surah As-Sajdah (32:1-30)", "Surah Al-Ahzab (33:1-30)"],
+    22: ["Surah Al-Ahzab (33:31-73)", "Surah Saba (34:1-54)", "Surah Fatir (35:1-45)", "Surah Ya-Sin (36:1-27)"],
+    23: ["Surah Ya-Sin (36:28-83)", "Surah As-Saffat (37:1-182)", "Surah Sad (38:1-88)", "Surah Az-Zumar (39:1-31)"],
+    24: ["Surah Az-Zumar (39:32-75)", "Surah Ghafir (40:1-85)", "Surah Fussilat (41:1-46)"],
+    25: ["Surah Fussilat (41:47-54)", "Surah Ash-Shura (42:1-53)", "Surah Az-Zukhruf (43:1-89)", "Surah Ad-Dukhan (44:1-59)", "Surah Al-Jathiyah (45:1-37)"],
+    26: ["Surah Al-Ahqaf (46:1-35)", "Surah Muhammad (47:1-38)", "Surah Al-Fath (48:1-29)", "Surah Al-Hujurat (49:1-18)", "Surah Qaf (50:1-45)", "Surah Ad-Dhariyat (51:1-30)"],
+    27: ["Surah Ad-Dhariyat (51:31-60)", "Surah At-Tur (52:1-49)", "Surah An-Najm (53:1-62)", "Surah Al-Qamar (54:1-55)", "Surah Ar-Rahman (55:1-78)", "Surah Al-Waqi'ah (56:1-96)", "Surah Al-Hadid (57:1-29)"],
+    28: ["Surah Al-Mujadila (58)", "Al-Hashr (59)", "Al-Mumtahanah (60)", "As-Saff (61)", "Al-Jumu'ah (62)", "Al-Munafiqun (63)", "At-Taghabun (64)", "At-Talaq (65)", "At-Tahrim (66)"],
+    29: ["Surah Al-Mulk (67)", "Al-Qalam (68)", "Al-Haqqah (69)", "Al-Ma'arij (70)", "Nuh (71)", "Al-Jinn (72)", "Al-Muzzammil (73)", "Al-Muddaththir (74)", "Al-Qiyamah (75)", "Al-Insan (76)", "Al-Mursalat (77)"],
+    30: ["Surah An-Naba (78)", "An-Nazi'at (79)", "'Abasa (80)", "At-Takwir (81)", "Al-Infitar (82)", "Al-Mutaffifin (83)", "Al-Inshiqaq (84)", "Al-Buruj (85)", "At-Tariq (86)", "Al-A'la (87)", "Al-Ghashiyah (88)", "Al-Fajr (89)", "Al-Balad (90)", "Ash-Shams (91)", "Al-Layl (92)", "Ad-Duha (93)", "Ash-Sharh (94)", "At-Tin (95)", "Al-'Alaq (96)", "Al-Qadr (97)", "Al-Bayyinah (98)", "Az-Zalzalah (99)", "Al-'Adiyat (100)", "Al-Qari'ah (101)", "At-Takathur (102)", "Al-'Asr (103)", "Al-Humazah (104)", "Al-Fil (105)", "Quraysh (106)", "Al-Ma'un (107)", "Al-Kawthar (108)", "Al-Kafirun (109)", "An-Nasr (110)", "Al-Masad (111)", "Al-Ikhlas (112)", "Al-Falaq (113)", "An-Nas (114)"]
+};
+
 /* ═══════════════════════════════════════════════════════════════ */
 const HifzTracker = () => {
-    const { showNotification } = useNotification();
+    const { notify } = useNotification();
     const { showLoader, hideLoader } = useLoader();
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -83,6 +117,8 @@ const HifzTracker = () => {
     const [editingStudent, setEditingStudent] = useState(null);
     const [updateJuz, setUpdateJuz] = useState('');
     const [updateSurah, setUpdateSurah] = useState('');
+    const [customJuz, setCustomJuz] = useState('');
+    const [customSurah, setCustomSurah] = useState('');
 
     useEffect(() => {
         fetchAllStudents();
@@ -103,7 +139,7 @@ const HifzTracker = () => {
             setAllStudents(list);
         } catch (error) {
             console.error('Students fetch error:', error);
-            showNotification('Failed to load students list', 'error');
+            notify('error', 'Failed to load students list');
         }
     };
 
@@ -123,14 +159,14 @@ const HifzTracker = () => {
         try {
             showLoader();
             const token = localStorage.getItem('token');
-            const res = await fetch(`${API_URL}/hifz/students`, {
+            const res = await fetch(`${API_URL}/api/hifz/students`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!res.ok) throw new Error();
             const data = await res.json();
             setAssignedStudents(data);
         } catch {
-            showNotification('Failed to load Hifz tracker list', 'error');
+            notify('error', 'Failed to load Hifz tracker list');
         } finally {
             hideLoader();
         }
@@ -138,25 +174,25 @@ const HifzTracker = () => {
 
     const handleAssignStudent = async () => {
         if (!selectedStudentId) {
-            showNotification('Please select a student', 'warning');
+            notify('warning', 'Please select a student');
             return;
         }
         try {
             showLoader();
             const token = localStorage.getItem('token');
-            const res = await fetch(`${API_URL}/hifz/assign`, {
+            const res = await fetch(`${API_URL}/api/hifz/assign`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ studentId: selectedStudentId })
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || 'Failed');
-            showNotification('Student added to Hifz Tracker!', 'success');
+            notify('success', 'Student added to Hifz Tracker!');
             setSelectedStudentId('');
             setSearchTerm('');
             fetchAssignedStudents();
         } catch (err) {
-            showNotification(err.message || 'Failed to assign student', 'error');
+            notify('error', err.message || 'Failed to assign student');
         } finally {
             hideLoader();
         }
@@ -174,34 +210,57 @@ const HifzTracker = () => {
         setEditingStudent(null);
         setUpdateJuz('');
         setUpdateSurah('');
+        setCustomJuz('');
+        setCustomSurah('');
+    };
+
+    const handleJuzChange = (e) => {
+        const selectedJuz = e.target.value;
+        setUpdateJuz(selectedJuz);
+
+        if (selectedJuz === 'Other') {
+            setUpdateSurah('Other');
+            return;
+        }
+
+        // Reset or set default surah when juz changes
+        if (selectedJuz && juzSurahMapping[selectedJuz] && juzSurahMapping[selectedJuz].length > 0) {
+            setUpdateSurah(juzSurahMapping[selectedJuz][0]);
+        } else {
+            setUpdateSurah('');
+        }
     };
 
     const handleUpdateProgress = async (e) => {
         e.preventDefault();
         if (!editingStudent) return;
-        if (updateJuz === '' || isNaN(updateJuz) || updateJuz < 1 || updateJuz > 30) {
-            showNotification('Please enter a valid Juz number (1–30)', 'warning');
+
+        let finalJuz = updateJuz === 'Other' ? customJuz : updateJuz;
+        let finalSurah = updateSurah === 'Other' ? customSurah : updateSurah;
+
+        if (finalJuz === '' || isNaN(finalJuz) || finalJuz < 1 || finalJuz > 30) {
+            notify('warning', 'Please enter a valid Juz number (1–30)');
             return;
         }
-        if (!updateSurah.trim()) {
-            showNotification('Please enter the current Surah', 'warning');
+        if (!finalSurah.trim()) {
+            notify('warning', 'Please enter the current Surah');
             return;
         }
         try {
             showLoader();
             const token = localStorage.getItem('token');
-            const res = await fetch(`${API_URL}/hifz/update/${editingStudent.student_id}`, {
+            const res = await fetch(`${API_URL}/api/hifz/update/${editingStudent.student_id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                body: JSON.stringify({ current_juz: parseInt(updateJuz), current_surah: updateSurah })
+                body: JSON.stringify({ current_juz: parseInt(finalJuz), current_surah: finalSurah })
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || 'Failed');
-            showNotification('Progress updated successfully!', 'success');
+            notify('success', 'Progress updated successfully!');
             closeUpdateModal();
             fetchAssignedStudents();
         } catch (err) {
-            showNotification(err.message || 'Failed to update progress', 'error');
+            notify('error', err.message || 'Failed to update progress');
         } finally {
             hideLoader();
         }
@@ -616,29 +675,63 @@ const HifzTracker = () => {
                                         <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                                             Current Juz <span className="text-red-500">*</span>
                                         </label>
-                                        <input
-                                            type="number" min="1" max="30"
-                                            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-400 outline-none"
-                                            placeholder="e.g. 15"
-                                            value={updateJuz}
-                                            onChange={e => setUpdateJuz(e.target.value)}
-                                            required
-                                        />
-                                        <p className="text-xs text-gray-400 mt-1">Enter a number between 1 and 30</p>
+                                        <div className="relative">
+                                            <select
+                                                className="w-full border border-gray-200 rounded-xl pl-4 pr-10 py-3 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-400 outline-none appearance-none bg-white"
+                                                value={updateJuz}
+                                                onChange={handleJuzChange}
+                                                required
+                                            >
+                                                <option value="" disabled>Select Juz</option>
+                                                {Array.from({ length: 30 }, (_, i) => i + 1).map(num => (
+                                                    <option key={num} value={num}>Juz {num}</option>
+                                                ))}
+                                                <option value="Other">Other (Type manually)</option>
+                                            </select>
+                                            <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+                                        </div>
+                                        {updateJuz === 'Other' && (
+                                            <input
+                                                type="number" min="1" max="30"
+                                                className="w-full mt-3 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-400 outline-none"
+                                                placeholder="Enter Juz (1-30)"
+                                                value={customJuz}
+                                                onChange={e => setCustomJuz(e.target.value)}
+                                                required
+                                            />
+                                        )}
                                     </div>
 
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                                             Current Surah <span className="text-red-500">*</span>
                                         </label>
-                                        <input
-                                            type="text"
-                                            className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-400 outline-none"
-                                            placeholder='e.g. "Al-Kahf"'
-                                            value={updateSurah}
-                                            onChange={e => setUpdateSurah(e.target.value)}
-                                            required
-                                        />
+                                        <div className="relative">
+                                            <select
+                                                className={`w-full border border-gray-200 rounded-xl pl-4 pr-10 py-3 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-400 outline-none appearance-none ${!updateJuz ? 'bg-gray-50 text-gray-400 cursor-not-allowed' : 'bg-white'}`}
+                                                value={updateSurah}
+                                                onChange={e => setUpdateSurah(e.target.value)}
+                                                required
+                                                disabled={!updateJuz}
+                                            >
+                                                <option value="" disabled>{updateJuz ? 'Select Surah' : 'Select a Juz first'}</option>
+                                                {updateJuz && juzSurahMapping[updateJuz] && juzSurahMapping[updateJuz].map(surah => (
+                                                    <option key={surah} value={surah}>{surah}</option>
+                                                ))}
+                                                <option value="Other">Other / Not Listed</option>
+                                            </select>
+                                            <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+                                        </div>
+                                        {updateSurah === 'Other' && (
+                                            <input
+                                                type="text"
+                                                className="w-full mt-3 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-400 outline-none"
+                                                placeholder="e.g. Surah Al-Kahf"
+                                                value={customSurah}
+                                                onChange={e => setCustomSurah(e.target.value)}
+                                                required
+                                            />
+                                        )}
                                     </div>
                                 </div>
 

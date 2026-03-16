@@ -117,8 +117,6 @@ const HifzTracker = () => {
     const [editingStudent, setEditingStudent] = useState(null);
     const [updateJuz, setUpdateJuz] = useState('');
     const [updateSurah, setUpdateSurah] = useState('');
-    const [customJuz, setCustomJuz] = useState('');
-    const [customSurah, setCustomSurah] = useState('');
 
     useEffect(() => {
         fetchAllStudents();
@@ -210,19 +208,11 @@ const HifzTracker = () => {
         setEditingStudent(null);
         setUpdateJuz('');
         setUpdateSurah('');
-        setCustomJuz('');
-        setCustomSurah('');
     };
 
     const handleJuzChange = (e) => {
         const selectedJuz = e.target.value;
         setUpdateJuz(selectedJuz);
-
-        if (selectedJuz === 'Other') {
-            setUpdateSurah('Other');
-            return;
-        }
-
         // Reset or set default surah when juz changes
         if (selectedJuz && juzSurahMapping[selectedJuz] && juzSurahMapping[selectedJuz].length > 0) {
             setUpdateSurah(juzSurahMapping[selectedJuz][0]);
@@ -234,15 +224,11 @@ const HifzTracker = () => {
     const handleUpdateProgress = async (e) => {
         e.preventDefault();
         if (!editingStudent) return;
-
-        let finalJuz = updateJuz === 'Other' ? customJuz : updateJuz;
-        let finalSurah = updateSurah === 'Other' ? customSurah : updateSurah;
-
-        if (finalJuz === '' || isNaN(finalJuz) || finalJuz < 1 || finalJuz > 30) {
+        if (updateJuz === '' || isNaN(updateJuz) || updateJuz < 1 || updateJuz > 30) {
             notify('warning', 'Please enter a valid Juz number (1–30)');
             return;
         }
-        if (!finalSurah.trim()) {
+        if (!updateSurah.trim()) {
             notify('warning', 'Please enter the current Surah');
             return;
         }
@@ -252,7 +238,7 @@ const HifzTracker = () => {
             const res = await fetch(`${API_URL}/api/hifz/update/${editingStudent.student_id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                body: JSON.stringify({ current_juz: parseInt(finalJuz), current_surah: finalSurah })
+                body: JSON.stringify({ current_juz: parseInt(updateJuz), current_surah: updateSurah })
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || 'Failed');
@@ -686,20 +672,9 @@ const HifzTracker = () => {
                                                 {Array.from({ length: 30 }, (_, i) => i + 1).map(num => (
                                                     <option key={num} value={num}>Juz {num}</option>
                                                 ))}
-                                                <option value="Other">Other (Type manually)</option>
                                             </select>
                                             <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
                                         </div>
-                                        {updateJuz === 'Other' && (
-                                            <input
-                                                type="number" min="1" max="30"
-                                                className="w-full mt-3 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-400 outline-none"
-                                                placeholder="Enter Juz (1-30)"
-                                                value={customJuz}
-                                                onChange={e => setCustomJuz(e.target.value)}
-                                                required
-                                            />
-                                        )}
                                     </div>
 
                                     <div>
@@ -718,20 +693,9 @@ const HifzTracker = () => {
                                                 {updateJuz && juzSurahMapping[updateJuz] && juzSurahMapping[updateJuz].map(surah => (
                                                     <option key={surah} value={surah}>{surah}</option>
                                                 ))}
-                                                <option value="Other">Other / Not Listed</option>
                                             </select>
                                             <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
                                         </div>
-                                        {updateSurah === 'Other' && (
-                                            <input
-                                                type="text"
-                                                className="w-full mt-3 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-400 outline-none"
-                                                placeholder="e.g. Surah Al-Kahf"
-                                                value={customSurah}
-                                                onChange={e => setCustomSurah(e.target.value)}
-                                                required
-                                            />
-                                        )}
                                     </div>
                                 </div>
 

@@ -32,7 +32,7 @@ export const SelectField = ({ label, name, value, onChange, options, placeholder
         </label>
         <select
             name={name}
-            value={value}
+            value={value !== null && value !== undefined ? String(value) : ''}
             onChange={onChange}
             disabled={disabled}
             className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-all disabled:opacity-50 disabled:bg-gray-100 shadow-sm hover:border-gray-400 cursor-pointer"
@@ -43,7 +43,7 @@ export const SelectField = ({ label, name, value, onChange, options, placeholder
                 const optionValue = isObject ? opt.value : opt;
                 const optionLabel = isObject ? opt.label : opt;
                 return (
-                    <option key={isObject ? opt.value : opt} value={optionValue}>{optionLabel}</option>
+                    <option key={isObject ? opt.value : opt} value={String(optionValue)}>{optionLabel}</option>
                 );
             })}
         </select>

@@ -3,7 +3,7 @@ import { useNotification } from './context/NotificationContext';
 import { useLoader } from './context/LoaderContext';
 import {
     Search, Plus, Edit2, X, Save, BookOpen,
-    Users, TrendingUp, Award, Filter, ChevronDown
+    Users, TrendingUp, Award, Filter, ChevronDown, ChevronLeft, Check
 } from 'lucide-react';
 import { API_URL } from './config';
 import Sidebar from './Sidebar';
@@ -112,8 +112,9 @@ const HifzTracker = () => {
     /* table search */
     const [tableSearch, setTableSearch] = useState('');
 
-    /* modal */
+    /* modal states */
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalStep, setModalStep] = useState(1); // Step 1: Juz Grid, Step 2: Surah Grid
     const [editingStudent, setEditingStudent] = useState(null);
     const [updateJuz, setUpdateJuz] = useState('');
     const [updateSurah, setUpdateSurah] = useState('');
@@ -200,6 +201,7 @@ const HifzTracker = () => {
         setEditingStudent(student);
         setUpdateJuz(student.current_juz || '');
         setUpdateSurah(student.current_surah || '');
+        setModalStep(1); // Start with grid selection
         setIsModalOpen(true);
     };
 
@@ -208,28 +210,24 @@ const HifzTracker = () => {
         setEditingStudent(null);
         setUpdateJuz('');
         setUpdateSurah('');
+        setModalStep(1);
     };
 
-    const handleJuzChange = (e) => {
-        const selectedJuz = e.target.value;
-        setUpdateJuz(selectedJuz);
-        // Reset or set default surah when juz changes
-        if (selectedJuz && juzSurahMapping[selectedJuz] && juzSurahMapping[selectedJuz].length > 0) {
-            setUpdateSurah(juzSurahMapping[selectedJuz][0]);
-        } else {
-            setUpdateSurah('');
-        }
+    const handleJuzGridSelect = (juzNumber) => {
+        setUpdateJuz(juzNumber);
+        setUpdateSurah('');
+        setModalStep(2); // Move to surah grid
     };
 
     const handleUpdateProgress = async (e) => {
         e.preventDefault();
         if (!editingStudent) return;
         if (updateJuz === '' || isNaN(updateJuz) || updateJuz < 1 || updateJuz > 30) {
-            notify('warning', 'Please enter a valid Juz number (1–30)');
+            notify('warning', 'Please select a valid Juz number (1–30)');
             return;
         }
         if (!updateSurah.trim()) {
-            notify('warning', 'Please enter the current Surah');
+            notify('warning', 'Please select the current Surah');
             return;
         }
         try {
@@ -253,11 +251,9 @@ const HifzTracker = () => {
     };
 
     /* ── derived data ── */
-    // Unique filter options derived from student list
     const programOptions = [...new Set(allStudents.map(s => s.program).filter(Boolean))].sort();
     const batchOptions = [...new Set(allStudents.map(s => s.session).filter(Boolean))].sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
 
-    // Grade options: if a program is selected and we have programs list, generate from duration
     let gradeOptions = [];
     if (filterProgram) {
         const prog = allPrograms.find(p => p.name === filterProgram);
@@ -271,7 +267,6 @@ const HifzTracker = () => {
             .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
     }
 
-    // Filtered students for assign panel
     const assignedIds = new Set(assignedStudents.map(s => String(s.student_id)));
     const filteredDropdown = allStudents.filter(s => {
         const matchSearch = (s?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -621,12 +616,12 @@ const HifzTracker = () => {
                     </main>
                 </div>
 
-                {/* ══════════ UPDATE MODAL ══════════ */}
+                {/* ══════════ UPDATE MODAL WITH GRID OPTIONS ══════════ */}
                 {isModalOpen && editingStudent && (
                     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-                        <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-[fadeInUp_0.2s_ease]">
+                        <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden animate-[fadeInUp_0.2s_ease] flex flex-col max-h-[90vh]">
                             {/* modal header */}
-                            <div className="bg-gradient-to-br from-green-600 to-green-700 p-5 flex justify-between items-center">
+                            <div className="bg-gradient-to-br from-green-600 to-green-700 p-5 flex justify-between items-center shrink-0">
                                 <div className="flex items-center gap-3">
                                     <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
                                         <BookOpen size={18} className="text-white" />
@@ -641,9 +636,9 @@ const HifzTracker = () => {
                                 </button>
                             </div>
 
-                            <form onSubmit={handleUpdateProgress} className="p-6">
+                            <form onSubmit={handleUpdateProgress} className="flex-1 overflow-y-auto p-6 flex flex-col min-h-0">
                                 {/* student info */}
-                                <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100 mb-6">
+                                <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100 mb-6 shrink-0">
                                     <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold text-lg flex-shrink-0">
                                         {editingStudent.student_name.charAt(0).toUpperCase()}
                                     </div>
@@ -656,50 +651,75 @@ const HifzTracker = () => {
                                     </div>
                                 </div>
 
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                                            Current Juz <span className="text-red-500">*</span>
-                                        </label>
-                                        <div className="relative">
-                                            <select
-                                                className="w-full border border-gray-200 rounded-xl pl-4 pr-10 py-3 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-400 outline-none appearance-none bg-white"
-                                                value={updateJuz}
-                                                onChange={handleJuzChange}
-                                                required
-                                            >
-                                                <option value="" disabled>Select Juz</option>
-                                                {Array.from({ length: 30 }, (_, i) => i + 1).map(num => (
-                                                    <option key={num} value={num}>Juz {num}</option>
-                                                ))}
-                                            </select>
-                                            <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+                                <div className="flex-1 flex flex-col min-h-0">
+                                    {modalStep === 1 ? (
+                                        /* ── STEP 1: JUZ GRID ── */
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-3">
+                                                Select Current Juz <span className="text-red-500">*</span>
+                                            </label>
+                                            <div className="grid grid-cols-5 sm:grid-cols-6 gap-2.5">
+                                                {Array.from({ length: 30 }, (_, i) => i + 1).map(num => {
+                                                    const isActive = updateJuz === num;
+                                                    return (
+                                                        <button
+                                                            key={num}
+                                                            type="button"
+                                                            onClick={() => handleJuzGridSelect(num)}
+                                                            className={`relative h-14 rounded-xl border-2 font-bold text-lg transition-all flex items-center justify-center
+                                                                ${isActive
+                                                                    ? 'border-green-500 bg-green-50 text-green-700 shadow-sm'
+                                                                    : 'border-gray-100 bg-white text-gray-600 hover:border-green-300 hover:bg-green-50 hover:text-green-700'
+                                                                }`}
+                                                        >
+                                                            {isActive && <Check size={14} className="absolute top-1 right-1 text-green-500" />}
+                                                            {num}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
-                                    </div>
+                                    ) : (
+                                        /* ── STEP 2: SURAH GRID ── */
+                                        <div className="flex-1 flex flex-col min-h-0">
+                                            <div className="flex items-center justify-between mb-3 shrink-0">
+                                                <label className="block text-sm font-semibold text-gray-700">
+                                                    Select Surah for Juz {updateJuz} <span className="text-red-500">*</span>
+                                                </label>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setModalStep(1)}
+                                                    className="text-xs font-medium text-green-600 hover:text-green-700 flex items-center gap-1 bg-green-50 px-2.5 py-1.5 rounded-lg transition-colors"
+                                                >
+                                                    <ChevronLeft size={14} /> Back to Juz
+                                                </button>
+                                            </div>
 
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                                            Current Surah <span className="text-red-500">*</span>
-                                        </label>
-                                        <div className="relative">
-                                            <select
-                                                className={`w-full border border-gray-200 rounded-xl pl-4 pr-10 py-3 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-400 outline-none appearance-none ${!updateJuz ? 'bg-gray-50 text-gray-400 cursor-not-allowed' : 'bg-white'}`}
-                                                value={updateSurah}
-                                                onChange={e => setUpdateSurah(e.target.value)}
-                                                required
-                                                disabled={!updateJuz}
-                                            >
-                                                <option value="" disabled>{updateJuz ? 'Select Surah' : 'Select a Juz first'}</option>
-                                                {updateJuz && juzSurahMapping[updateJuz] && juzSurahMapping[updateJuz].map(surah => (
-                                                    <option key={surah} value={surah}>{surah}</option>
-                                                ))}
-                                            </select>
-                                            <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 overflow-y-auto pr-2 pb-2">
+                                                {(juzSurahMapping[updateJuz] || []).map(surah => {
+                                                    const isActive = updateSurah === surah;
+                                                    return (
+                                                        <button
+                                                            key={surah}
+                                                            type="button"
+                                                            onClick={() => setUpdateSurah(surah)}
+                                                            className={`p-3.5 rounded-xl border-2 text-left text-sm font-medium transition-all flex justify-between items-center
+                                                                ${isActive
+                                                                    ? 'border-green-500 bg-green-50 text-green-800 shadow-sm'
+                                                                    : 'border-gray-100 bg-white text-gray-600 hover:border-green-300 hover:bg-green-50'
+                                                                }`}
+                                                        >
+                                                            <span className="truncate pr-2">{surah}</span>
+                                                            {isActive && <Check size={16} className="text-green-600 flex-shrink-0" />}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
                                 </div>
 
-                                <div className="mt-6 flex gap-3 justify-end">
+                                <div className="mt-6 flex gap-3 justify-end shrink-0 pt-4 border-t border-gray-100">
                                     <button
                                         type="button"
                                         onClick={closeUpdateModal}
@@ -709,7 +729,8 @@ const HifzTracker = () => {
                                     </button>
                                     <button
                                         type="submit"
-                                        className="px-5 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 font-semibold text-sm flex items-center gap-2 shadow-md transition-all"
+                                        disabled={!updateJuz || !updateSurah}
+                                        className="px-5 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-sm flex items-center gap-2 shadow-md transition-all"
                                     >
                                         <Save size={16} />
                                         Save Progress

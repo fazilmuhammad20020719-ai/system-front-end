@@ -161,6 +161,15 @@ const EditStudent = () => {
         setFormData(prev => ({ ...prev, status: newStatus, currentYear: newGrade }));
     };
 
+    const handleEnrollmentChange = (index, name, value) => {
+        const currentEnrollments = formData.enrollments || [];
+        if (index >= currentEnrollments.length) return;
+
+        const updatedEnrollments = [...currentEnrollments];
+        updatedEnrollments[index] = { ...updatedEnrollments[index], [name]: value };
+        setFormData(prev => ({ ...prev, enrollments: updatedEnrollments }));
+    };
+
     // --- திருத்தப்பட்ட SUBMIT FUNCTION (FormData) ---
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -186,7 +195,7 @@ const EditStudent = () => {
             if (response.ok) {
                 notify('success', "Student Updated Successfully", 'Success');
                 setTimeout(() => {
-                    navigate(`/students/${formData.indexNumber}`);
+                    navigate(`/view-student/${formData.indexNumber}`);
                 }, 1500);
             } else {
                 const errData = await response.json();
@@ -240,7 +249,7 @@ const EditStudent = () => {
                         )}
                         {activeTab === 'guardian' && <StudentGuardianInfo formData={formData} handleChange={handleChange} />}
                         {activeTab === 'academic' && (
-                            <StudentAcademicInfo formData={formData} handleChange={handleChange} programs={programOptions} setFormData={setFormData} />
+                            <StudentAcademicInfo formData={formData} handleChange={handleChange} handleEnrollmentChange={handleEnrollmentChange} programs={programOptions} setFormData={setFormData} />
                         )}
                         {activeTab === 'documents' && <StudentUploads formData={formData} handleChange={handleChange} />}
                     </div>

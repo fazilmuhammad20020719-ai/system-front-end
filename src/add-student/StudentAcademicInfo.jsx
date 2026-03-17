@@ -16,8 +16,7 @@ const StudentAcademicInfo = ({ formData, handleChange, handleEnrollmentChange, p
     // Safety check for enrollments: Default to [] if missing to avoid crash
     const enrollments = formData?.enrollments || [];
 
-    // handleEnrollmentChange is passed down from AddStudent.jsx (parent)
-    // It knows which index in the enrollments array to update
+    // --- Enrollment Handlers ---
 
     const addEnrollment = () => {
         setFormData(prev => ({

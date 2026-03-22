@@ -5,19 +5,23 @@ const UploadModal = ({ isOpen, onClose, onUpload }) => {
     const [fileName, setFileName] = useState("");
     const [fileType, setFileType] = useState("pdf");
     const [category, setCategory] = useState("general");
+    const [selectedFile, setSelectedFile] = useState(null);
 
     const handleUpload = () => {
-        if (!fileName) return; // Simple validation
+        if (!selectedFile) return;
 
-        onUpload({
-            name: fileName,
-            type: fileType,
-            category: category
-        });
+        const formData = new FormData();
+        formData.append("document", selectedFile);
+        formData.append("name", fileName || selectedFile.name);
+        formData.append("type", fileType);
+        formData.append("category", category);
+
+        onUpload(formData);
 
         // Reset
         setFileName("");
         setFileType("pdf");
+        setSelectedFile(null);
         onClose();
     };
 
@@ -31,11 +35,23 @@ const UploadModal = ({ isOpen, onClose, onUpload }) => {
                     <button onClick={onClose}><X size={20} className="text-gray-400 hover:text-gray-600" /></button>
                 </div>
 
-                {/* Simulated File Drop */}
-                <div className="border-2 border-dashed border-gray-300 rounded-xl h-32 flex flex-col items-center justify-center text-gray-400 hover:border-[#ea8933] cursor-pointer bg-gray-50 mb-4 transition-colors">
+                {/* Real File Input */}
+                <label className="border-2 border-dashed border-gray-300 rounded-xl h-32 flex flex-col items-center justify-center text-gray-400 hover:border-[#ea8933] cursor-pointer bg-gray-50 mb-4 transition-colors">
                     <UploadCloud size={32} className="mb-2" />
-                    <p className="font-medium text-sm">Click to Browse (Simulated)</p>
-                </div>
+                    <p className="font-medium text-sm text-center px-4 truncate w-full">
+                        {selectedFile ? selectedFile.name : "Click to Browse"}
+                    </p>
+                    <input
+                        type="file"
+                        className="hidden"
+                        onChange={(e) => {
+                            if (e.target.files && e.target.files.length > 0) {
+                                setSelectedFile(e.target.files[0]);
+                                if (!fileName) setFileName(e.target.files[0].name);
+                            }
+                        }}
+                    />
+                </label>
 
                 <div className="space-y-3">
                     <div>

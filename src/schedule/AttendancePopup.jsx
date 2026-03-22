@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Check, Clock, User, Ban, Save, Search } from 'lucide-react';
 import { API_URL } from '../config'; // Import API URL
 import PinModal from '../attendance/PinModal';
+import SystemAlert from '../hifz/SystemAlert';
 
 const AttendancePopup = ({ isOpen, onClose, slot, subjects, onSave, onCancel }) => {
     // 0. Auth State
@@ -14,6 +15,14 @@ const AttendancePopup = ({ isOpen, onClose, slot, subjects, onSave, onCancel }) 
     const [attendanceList, setAttendanceList] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(false);
+
+    // Alert State
+    const [alertConfig, setAlertConfig] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        type: 'success'
+    });
 
     // Reset Auth on Open
     useEffect(() => {
@@ -140,7 +149,12 @@ const AttendancePopup = ({ isOpen, onClose, slot, subjects, onSave, onCancel }) 
             };
 
             if (payload.attendanceData.length === 0) {
-                alert("Please mark attendance for at least one student.");
+                setAlertConfig({
+                    isOpen: true,
+                    title: 'Requirement',
+                    message: "Please mark attendance for at least one student.",
+                    type: 'warning'
+                });
                 return;
             }
 
@@ -151,16 +165,31 @@ const AttendancePopup = ({ isOpen, onClose, slot, subjects, onSave, onCancel }) 
             });
 
             if (res.ok) {
-                alert("Attendance saved successfully!");
+                setAlertConfig({
+                    isOpen: true,
+                    title: 'SUCCESS!',
+                    message: "Attendance saved successfully!",
+                    type: 'success'
+                });
                 onSave(attendanceList); // Notify parent if needed
-                onClose();
+                // onClose(); // Don't close immediately, let them see the success msg
             } else {
                 const err = await res.json();
-                alert(`Failed to save: ${err.message}`);
+                setAlertConfig({
+                    isOpen: true,
+                    title: 'FAILED!',
+                    message: `Failed to save: ${err.message}`,
+                    type: 'error'
+                });
             }
         } catch (error) {
             console.error("Error saving attendance:", error);
-            alert("An error occurred while saving attendance.");
+            setAlertConfig({
+                isOpen: true,
+                title: 'ERROR!',
+                message: "An error occurred while saving attendance.",
+                type: 'error'
+            });
         }
     };
 
@@ -182,11 +211,21 @@ const AttendancePopup = ({ isOpen, onClose, slot, subjects, onSave, onCancel }) 
                     onCancel(); // Parent handler
                     onClose();
                 } else {
-                    alert("Failed to cancel class.");
+                    setAlertConfig({
+                        isOpen: true,
+                        title: 'FAILED!',
+                        message: "Failed to cancel class.",
+                        type: 'error'
+                    });
                 }
             } catch (err) {
                 console.error("Error cancelling class:", err);
-                alert("Error cancelling class");
+                setAlertConfig({
+                    isOpen: true,
+                    title: 'ERROR!',
+                    message: "Error cancelling class",
+                    type: 'error'
+                });
             }
         }
     };
@@ -336,6 +375,19 @@ const AttendancePopup = ({ isOpen, onClose, slot, subjects, onSave, onCancel }) 
                 </div>
 
             </div>
+
+            <SystemAlert
+                isOpen={alertConfig.isOpen}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                type={alertConfig.type}
+                onConfirm={() => {
+                    setAlertConfig({ ...alertConfig, isOpen: false });
+                    if (alertConfig.type === 'success') {
+                        onClose();
+                    }
+                }}
+            />
         </div>
     );
 };

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-    User, FileText, Clock, Award, CreditCard, Activity, ArrowLeft
+    User, FileText, Clock, Award, CreditCard, Activity, ArrowLeft, BookOpen
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Sidebar from './Sidebar';
@@ -14,6 +14,7 @@ import ViewStudentAttendance from './student-view/ViewStudentAttendance';
 import ViewStudentResults from './student-view/ViewStudentResults';
 import ViewStudentFees from './student-view/ViewStudentFees';
 import ViewStudentTimeline from './student-view/ViewStudentTimeline';
+import ViewStudentHifz from './student-view/ViewStudentHifz';
 import Loader from './components/Loader';
 
 const ViewStudent = () => {
@@ -22,6 +23,7 @@ const ViewStudent = () => {
     const { id } = useParams();
     const [activeTab, setActiveTab] = useState('personal');
     const [student, setStudent] = useState(null);
+    const [hifzData, setHifzData] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -157,6 +159,15 @@ const ViewStudent = () => {
                     }
                 };
 
+                // Fetch Hifz Tracker data for this student
+                const hifzRes = await fetch(`${API_URL}/api/hifz/students`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+                if (hifzRes.ok) {
+                    const data = await hifzRes.json();
+                    const hifzList = Array.isArray(data) ? data : (data.students || []);
+                    const studentHifz = hifzList.find(h => String(h.student_id) === String(id));
+                    setHifzData(studentHifz || null);
+                }
+
                 setStudent(fullProfile);
 
             } catch (err) {
@@ -197,6 +208,7 @@ const ViewStudent = () => {
                             <TabItem icon={Clock} label="Attendance" active={activeTab === 'attendance'} onClick={() => setActiveTab('attendance')} />
                             <TabItem icon={Award} label="Results" active={activeTab === 'results'} onClick={() => setActiveTab('results')} />
                             <TabItem icon={CreditCard} label="Fees" active={activeTab === 'fees'} onClick={() => setActiveTab('fees')} />
+                            {hifzData && <TabItem icon={BookOpen} label="Hifz Progress" active={activeTab === 'hifz'} onClick={() => setActiveTab('hifz')} />}
                             <TabItem icon={Activity} label="Timeline" active={activeTab === 'timeline'} onClick={() => setActiveTab('timeline')} />
                         </div>
                     </div>
@@ -208,6 +220,7 @@ const ViewStudent = () => {
                         {activeTab === 'attendance' && <ViewStudentAttendance stats={student.attendanceStats} />}
                         {activeTab === 'results' && <ViewStudentResults results={student.results} />}
                         {activeTab === 'fees' && <ViewStudentFees studentId={student.id} admissionDate={student.admissionDate} monthlyFee={student.monthlyFee} studentInfo={{ name: student.name, id: student.id, program: student.program, year: student.year, phone: student.phone, email: student.email }} />}
+                        {activeTab === 'hifz' && <ViewStudentHifz hifzData={hifzData} />}
                         {activeTab === 'timeline' && <ViewStudentTimeline studentId={student.id} />}
                     </div>
                 </main>

@@ -11,6 +11,7 @@ import AssignSidebar from './hifz/AssignSidebar';
 import StudentTable from './hifz/StudentTable';
 import UpdateModal from './hifz/UpdateModal';
 import ConfirmPopup from './hifz/ConfirmPopup';
+import SystemConfirm from './hifz/SystemConfirm';
 
 // Helpers
 import { juzNames, getCompletedJuzs, getRunningJuzs } from './hifz/hifzHelpers';
@@ -37,6 +38,7 @@ const HifzTracker = () => {
 
     // Custom Confirmation Popup State
     const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, num: null, name: '' });
+    const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, studentId: null, studentName: '' });
 
     const [isEditingCompleted, setIsEditingCompleted] = useState(false);
     const [updateData, setUpdateData] = useState({
@@ -69,7 +71,8 @@ const HifzTracker = () => {
         try {
             showLoader();
             const res = await fetch(`${API_URL}/api/hifz/students`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
-            setAssignedStudents(await res.json());
+            const data = await res.json();
+            setAssignedStudents(Array.isArray(data) ? data : (data.students || []));
         } catch { notify('error', 'FAILED TO LOAD HIFZ TRACKER LIST'); } finally { hideLoader(); }
     };
 
@@ -85,24 +88,49 @@ const HifzTracker = () => {
         try {
             showLoader();
             const token = localStorage.getItem('token');
-            const promises = selectedStudentIds.map(studentId => 
+            const promises = selectedStudentIds.map(studentId =>
                 fetch(`${API_URL}/api/hifz/assign`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                     body: JSON.stringify({ studentId })
                 })
             );
-            
+
             const responses = await Promise.all(promises);
             const successCount = responses.filter(r => r.ok).length;
-            
+
             if (successCount > 0) {
                 notify('success', `${successCount} STUDENTS ADDED TO HIFZ TRACKER!`);
-                setSelectedStudentIds([]); 
+                setSelectedStudentIds([]);
                 fetchAssignedStudents();
             } else {
                 notify('error', 'FAILED TO ASSIGN STUDENTS');
             }
         } catch { notify('error', 'ERROR IN STUDENT ASSIGNMENT'); } finally { hideLoader(); }
+    };
+
+    const handleDeleteStudent = (studentId, studentName) => {
+        setDeleteConfirm({ isOpen: true, studentId, studentName });
+    };
+
+    const confirmDeleteStudent = async () => {
+        const { studentId } = deleteConfirm;
+        if (!studentId) return;
+
+        try {
+            showLoader();
+            const res = await fetch(`${API_URL}/api/hifz/delete/${studentId}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+            });
+            if (!res.ok) throw new Error('FAILED');
+            notify('success', 'STUDENT REMOVED FROM TRACKER');
+            setDeleteConfirm({ isOpen: false, studentId: null, studentName: '' });
+            fetchAssignedStudents();
+        } catch {
+            notify('error', 'FAILED TO REMOVE STUDENT');
+        } finally {
+            hideLoader();
+        }
     };
 
     const openUpdateModal = (student) => {
@@ -119,20 +147,33 @@ const HifzTracker = () => {
 
     const handleJuzGridSelect = (num) => {
         if (isEditingCompleted) {
-            setUpdateData(prev => ({
-                ...prev,
-                completed_juzs: prev.completed_juzs.includes(num)
-                    ? prev.completed_juzs.filter(j => j !== num)
-                    : [...prev.completed_juzs, num],
-                running_juzs: prev.running_juzs.filter(j => j !== num)
-            }));
+            setUpdateData(prev => {
+                const isFinished = prev.completed_juzs.some(j => j.num === num);
+                if (isFinished) {
+                    return {
+                        ...prev,
+                        completed_juzs: prev.completed_juzs.filter(j => j.num !== num)
+                    };
+                } else {
+                    const runningMatch = prev.running_juzs.find(j => j.num === num);
+                    return {
+                        ...prev,
+                        completed_juzs: [...prev.completed_juzs, {
+                            num,
+                            start: runningMatch?.start || null,
+                            finish: new Date().toISOString()
+                        }],
+                        running_juzs: prev.running_juzs.filter(j => j.num !== num)
+                    };
+                }
+            });
         } else {
-            if (updateData.completed_juzs.includes(num)) return;
+            if (updateData.completed_juzs.some(j => j.num === num)) return;
 
-            if (updateData.running_juzs.includes(num)) {
+            if (updateData.running_juzs.some(j => j.num === num)) {
                 setUpdateData(prev => ({
                     ...prev,
-                    running_juzs: prev.running_juzs.filter(j => j !== num)
+                    running_juzs: prev.running_juzs.filter(j => j.num !== num)
                 }));
             } else {
                 const juzName = juzNames[num - 1];
@@ -144,7 +185,10 @@ const HifzTracker = () => {
     const confirmStartJuz = () => {
         setUpdateData(prev => ({
             ...prev,
-            running_juzs: [...prev.running_juzs, confirmDialog.num]
+            running_juzs: [...prev.running_juzs, {
+                num: confirmDialog.num,
+                start: new Date().toISOString()
+            }]
         }));
         setConfirmDialog({ isOpen: false, num: null, name: '' });
     };
@@ -209,7 +253,7 @@ const HifzTracker = () => {
                 </div>
 
                 <div className="flex gap-6 px-6 pt-5 pb-24">
-                    <AssignSidebar 
+                    <AssignSidebar
                         filterProgram={filterProgram}
                         setFilterProgram={setFilterProgram}
                         programOptions={programOptions}
@@ -222,15 +266,18 @@ const HifzTracker = () => {
                         handleAssignStudent={handleAssignStudent}
                     />
 
-                    <StudentTable 
+                    <StudentTable
                         filteredTable={filteredTable}
+                        tableSearch={tableSearch}
+                        setTableSearch={setTableSearch}
                         openUpdateModal={openUpdateModal}
+                        handleDeleteStudent={handleDeleteStudent}
                         getCompletedJuzs={getCompletedJuzs}
                         getRunningJuzs={getRunningJuzs}
                     />
                 </div>
 
-                <UpdateModal 
+                <UpdateModal
                     isOpen={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
                     editingStudent={editingStudent}
@@ -245,12 +292,20 @@ const HifzTracker = () => {
                     getRunningJuzs={getRunningJuzs}
                 />
 
-                <ConfirmPopup 
+                <ConfirmPopup
                     isOpen={confirmDialog.isOpen}
                     num={confirmDialog.num}
                     name={confirmDialog.name}
                     onConfirm={confirmStartJuz}
                     onCancel={cancelStartJuz}
+                />
+
+                <SystemConfirm
+                    isOpen={deleteConfirm.isOpen}
+                    title="DELETE STUDENT?"
+                    message={`ARE YOU SURE YOU WANT TO DELETE "${deleteConfirm.studentName}"? THIS CANNOT BE UNDONE.`}
+                    onConfirm={confirmDeleteStudent}
+                    onCancel={() => setDeleteConfirm({ isOpen: false, studentId: null, studentName: '' })}
                 />
 
             </div>

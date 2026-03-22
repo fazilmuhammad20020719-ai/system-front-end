@@ -116,8 +116,8 @@ const Documents = () => {
         try {
             const res = await fetch(`${API_URL}/api/documents`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(fileData)
+                // Removing Content-Type header so the browser sets multipart boundary automatically
+                body: fileData
             });
             if (res.ok) {
                 fetchDocuments(); // Refresh list

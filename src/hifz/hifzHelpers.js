@@ -8,16 +8,29 @@ export const juzNames = [
 ];
 
 export const getCompletedJuzs = (str) => {
-    try { return typeof str === 'string' ? JSON.parse(str) : (str || []); }
+    try {
+        const parsed = typeof str === 'string' ? JSON.parse(str) : (str || []);
+        return parsed.map(item => typeof item === 'object' ? item : { num: item, start: null, finish: null });
+    }
     catch { return []; }
 };
 
 export const getRunningJuzs = (val) => {
     try {
-        if (Array.isArray(val)) return val;
-        const parsed = JSON.parse(val);
-        return Array.isArray(parsed) ? parsed : (val ? [parseInt(val)] : []);
+        let list = [];
+        if (Array.isArray(val)) list = val;
+        else {
+            const parsed = JSON.parse(val);
+            list = Array.isArray(parsed) ? parsed : (val ? [parseInt(val)] : []);
+        }
+        return list.map(item => typeof item === 'object' ? item : { num: item, start: null });
     } catch {
-        return val ? [parseInt(val)] : [];
+        return val ? [{ num: parseInt(val), start: null }] : [];
     }
+};
+
+export const formatJuzDate = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' });
 };

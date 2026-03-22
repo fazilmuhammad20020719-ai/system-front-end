@@ -1,5 +1,7 @@
 import React from 'react';
 import { X, Edit2, History, BookOpen, Check, Save, Calendar } from 'lucide-react';
+// Helpers
+import { formatJuzDate } from './hifzHelpers';
 
 const UpdateModal = ({
     isOpen,
@@ -54,32 +56,44 @@ const UpdateModal = ({
                                 <div className="mb-5 bg-gray-50 p-3 rounded-lg border border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-semibold text-gray-600 uppercase">
                                     <div className="flex flex-wrap gap-4">
                                         <span className="flex items-center gap-1.5"><div className="w-3.5 h-3.5 rounded bg-green-500"></div> COMPLETED</span>
-                                        <span className="flex items-center gap-1.5"><div className="w-3.5 h-3.5 rounded bg-yellow-400"></div> RUNNING</span>
+                                        <span className="flex items-center gap-1.5"><div className="w-3.5 h-3.5 rounded border border-yellow-400 bg-white"></div> RUNNING</span>
                                         <span className="flex items-center gap-1.5"><div className="w-3.5 h-3.5 rounded border border-gray-300 bg-white"></div> NOT STARTED</span>
                                     </div>
                                     {isEditingCompleted && <span className="text-green-600 animate-pulse bg-green-50 px-2 py-1 rounded">SELECT COMPLETED BOXES</span>}
                                 </div>
 
-                                <div className="grid grid-cols-5 sm:grid-cols-6 lg:grid-cols-10 gap-3">
+                                <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-10 gap-2">
                                     {Array.from({ length: 30 }, (_, i) => i + 1).map(num => {
-                                        const isFinished = updateData.completed_juzs.includes(num);
-                                        const isRunning = updateData.running_juzs.includes(num);
+                                        const finishObj = updateData.completed_juzs.find(j => j.num === num);
+                                        const runningObj = updateData.running_juzs.find(j => j.num === num);
+
+                                        const isFinished = !!finishObj;
+                                        const isRunning = !!runningObj;
 
                                         let boxColorClass = "border-gray-200 bg-white text-gray-600 hover:border-blue-300 hover:bg-blue-50";
                                         if (isFinished) boxColorClass = "border-green-600 bg-green-500 text-white shadow-sm";
-                                        else if (isRunning) boxColorClass = "border-yellow-500 bg-yellow-400 text-yellow-900 shadow-sm transform scale-105 ring-2 ring-yellow-200";
+                                        else if (isRunning) boxColorClass = "border-yellow-500 bg-white text-yellow-700 shadow-sm transform scale-105 ring-2 ring-yellow-200";
 
                                         if (isEditingCompleted) boxColorClass += " hover:scale-105 cursor-pointer border-dashed";
+
+                                        const startDate = isFinished ? finishObj.start : (isRunning ? runningObj.start : null);
+                                        const finishDate = isFinished ? finishObj.finish : null;
 
                                         return (
                                             <button
                                                 key={num}
                                                 type="button"
                                                 onClick={() => handleJuzGridSelect(num)}
-                                                className={`relative h-12 rounded-xl border-2 font-bold text-sm transition-all flex items-center justify-center ${boxColorClass}`}
+                                                className={`relative min-h-[4rem] px-1 rounded-xl border-2 font-bold transition-all flex flex-col items-center justify-center gap-0.5 ${boxColorClass}`}
                                             >
-                                                {isFinished && <Check size={14} className="absolute top-1 right-1 text-white opacity-60" />}
-                                                {num}
+                                                {isFinished && <Check size={12} className="absolute top-0.5 right-0.5 text-white opacity-60" />}
+                                                <span className="text-sm">{num}</span>
+                                                {(startDate || finishDate) && (
+                                                    <div className="flex flex-col text-[8px] leading-[1] opacity-90 font-medium">
+                                                        {startDate && <span className="text-blue-100">S: {formatJuzDate(startDate)}</span>}
+                                                        {finishDate && <span className="text-yellow-100">F: {formatJuzDate(finishDate)}</span>}
+                                                    </div>
+                                                )}
                                             </button>
                                         );
                                     })}
@@ -98,7 +112,7 @@ const UpdateModal = ({
                                 studentLogs.map((log, idx) => {
                                     const logDate = new Date(log.log_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
                                     const logRunningJuzs = getRunningJuzs(log.sabaq_juz);
-                                    const displayRunning = logRunningJuzs.length > 0 ? logRunningJuzs.join(', ') : 'None';
+                                    const displayRunning = logRunningJuzs.length > 0 ? logRunningJuzs.map(j => j.num).join(', ') : 'None';
 
                                     return (
                                         <div key={idx} className="bg-white border-l-4 border-green-500 rounded-lg p-4 shadow-sm flex justify-between items-center uppercase">

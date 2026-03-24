@@ -45,17 +45,39 @@ const Documents = () => {
         {
             id: 'root',
             name: 'All Documents',
-            subfolders: [
-                {
-                    id: 'students',
-                    name: 'Student Documents',
-                    subfolders: []
-                },
-                { id: 'teachers', name: 'Teacher Records', subfolders: [] },
-                { id: 'finance', name: 'Finance & Accounts', subfolders: [] }
-            ]
+            subfolders: [] // Will be populated dynamically
         }
     ]);
+
+    // -- FETCH FOLDERS (Dynamic) --
+    const fetchFolders = async () => {
+        try {
+            const res = await fetch(`${API_URL}/api/documents/folders/all`);
+            if (res.ok) {
+                const data = await res.json();
+
+                let baseTree = {
+                    id: 'root',
+                    name: 'All Documents',
+                    subfolders: []
+                };
+
+                data.forEach(folder => {
+                    if (folder.parent_id === 'root') {
+                        baseTree.subfolders.push({
+                            id: folder.id,
+                            name: folder.name,
+                            subfolders: []
+                        });
+                    }
+                });
+
+                setFolderTree([baseTree]);
+            }
+        } catch (err) {
+            console.error("Error fetching folders:", err);
+        }
+    };
 
     // -- FETCH DATA (Now fully dynamic) --
     const fetchDocuments = async () => {
@@ -88,6 +110,7 @@ const Documents = () => {
     };
 
     useEffect(() => {
+        fetchFolders();
         fetchDocuments();
     }, []);
 
@@ -151,30 +174,50 @@ const Documents = () => {
     };
 
     // -- FOLDER CREATION --
-    const handleCreateFolder = () => {
+    const handleCreateFolder = async () => {
         if (!newFolderName.trim()) return;
 
-        const newFolderId = newFolderName.trim().toLowerCase().replace(/\s+/g, '-');
+        const tempId = `folder_${Date.now()}`;
+        const newFolder = { id: tempId, name: newFolderName.trim(), subfolders: [] };
 
-        setFolderTree(prevTree => {
-            // Deep copy tree so React triggers full re-render on nested arrays
-            const newTree = JSON.parse(JSON.stringify(prevTree));
-
-            // Add to root's subfolders
-            if (newTree[0] && newTree[0].id === 'root') {
-                if (!newTree[0].subfolders.find(f => f.id === newFolderId)) {
-                    newTree[0].subfolders.push({
-                        id: newFolderId,
-                        name: newFolderName.trim(),
-                        subfolders: []
-                    });
-                }
-            }
-            return newTree;
-        });
-
+        // Optimistic update — show folder immediately in sidebar
+        setFolderTree(prev => prev.map(node =>
+            node.id === 'root'
+                ? { ...node, subfolders: [...node.subfolders, newFolder] }
+                : node
+        ));
         setNewFolderName("");
         setShowCreateFolderModal(false);
+
+        try {
+            const res = await fetch(`${API_URL}/api/documents/folders`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: newFolderName.trim(), parent_id: 'root' })
+            });
+
+            if (res.ok) {
+                fetchFolders(); // Sync real ID from DB
+            } else {
+                // Revert optimistic update on failure
+                setFolderTree(prev => prev.map(node =>
+                    node.id === 'root'
+                        ? { ...node, subfolders: node.subfolders.filter(f => f.id !== tempId) }
+                        : node
+                ));
+                const errData = await res.json().catch(() => ({}));
+                alert(errData.message || 'Error creating folder');
+            }
+        } catch (err) {
+            console.error("Create folder error", err);
+            // Revert optimistic update on network error
+            setFolderTree(prev => prev.map(node =>
+                node.id === 'root'
+                    ? { ...node, subfolders: node.subfolders.filter(f => f.id !== tempId) }
+                    : node
+            ));
+            alert('Failed to connect to server');
+        }
     };
 
     // -- VIEW & DOWNLOAD HANDLERS --

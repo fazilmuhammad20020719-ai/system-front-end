@@ -40,7 +40,7 @@ const MoveCopyModal = ({ isOpen, onClose, file, action, folderTree, onSubmit }) 
                     </h3>
                     <button onClick={onClose}><X size={20} className="text-gray-400 hover:text-gray-600" /></button>
                 </div>
-                
+
                 <p className="text-sm text-gray-500 mb-4">
                     Select a destination folder to {isMove ? 'move' : 'copy'} <strong>"{file.name}"</strong> to.
                 </p>

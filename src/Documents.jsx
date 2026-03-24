@@ -38,6 +38,11 @@ const Documents = () => {
     const [fileToMoveCopy, setFileToMoveCopy] = useState(null);
     const [moveCopyAction, setMoveCopyAction] = useState('move');
 
+    // -- FOLDER EDIT STATE --
+    const [showRenameFolderModal, setShowRenameFolderModal] = useState(false);
+    const [folderToEdit, setFolderToEdit] = useState(null);
+    const [editFolderValue, setEditFolderValue] = useState('');
+
     const [loading, setLoading] = useState(true);
     const [allFiles, setAllFiles] = useState([]);
 
@@ -62,15 +67,17 @@ const Documents = () => {
                     subfolders: []
                 };
 
-                data.forEach(folder => {
-                    if (folder.parent_id === 'root') {
-                        baseTree.subfolders.push({
-                            id: folder.id,
-                            name: folder.name,
-                            subfolders: []
-                        });
-                    }
-                });
+                const buildTree = (parentId) => {
+                    return data
+                        .filter(f => f.parent_id === parentId)
+                        .map(f => ({
+                            id: f.id,
+                            name: f.name,
+                            subfolders: buildTree(f.id)
+                        }));
+                };
+
+                baseTree.subfolders = buildTree('root');
 
                 setFolderTree([baseTree]);
             }
@@ -177,15 +184,41 @@ const Documents = () => {
     const handleCreateFolder = async () => {
         if (!newFolderName.trim()) return;
 
+        const isSystemFolder = ['recent', 'starred', 'pinned', 'trash'].includes(selectedFolderId);
+        const actualParentId = (selectedFolderId && !isSystemFolder) ? selectedFolderId : 'root';
+
         const tempId = `folder_${Date.now()}`;
         const newFolder = { id: tempId, name: newFolderName.trim(), subfolders: [] };
 
+        const addNode = (nodes, parentId, newNode) => {
+            return nodes.map(node => {
+                if (node.id === parentId) {
+                    return { ...node, subfolders: [...(node.subfolders || []), newNode] };
+                }
+                if (node.subfolders && node.subfolders.length > 0) {
+                    return { ...node, subfolders: addNode(node.subfolders, parentId, newNode) };
+                }
+                return node;
+            });
+        };
+
+        const removeNode = (nodes, nodeId) => {
+            return nodes.map(node => {
+                if (node.subfolders) {
+                    return { ...node, subfolders: removeNode(node.subfolders.filter(f => f.id !== nodeId), nodeId) };
+                }
+                return node;
+            });
+        };
+
         // Optimistic update — show folder immediately in sidebar
-        setFolderTree(prev => prev.map(node =>
-            node.id === 'root'
-                ? { ...node, subfolders: [...node.subfolders, newFolder] }
-                : node
-        ));
+        setFolderTree(prev => addNode(prev, actualParentId, newFolder));
+
+        // Expand the parent so the new folder is visible
+        if (actualParentId !== 'root' && !expandedFolders.includes(actualParentId)) {
+            setExpandedFolders(prev => [...prev, actualParentId]);
+        }
+
         setNewFolderName("");
         setShowCreateFolderModal(false);
 
@@ -193,29 +226,21 @@ const Documents = () => {
             const res = await fetch(`${API_URL}/api/documents/folders`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: newFolderName.trim(), parent_id: 'root' })
+                body: JSON.stringify({ name: newFolderName.trim(), parent_id: actualParentId })
             });
 
             if (res.ok) {
                 fetchFolders(); // Sync real ID from DB
             } else {
                 // Revert optimistic update on failure
-                setFolderTree(prev => prev.map(node =>
-                    node.id === 'root'
-                        ? { ...node, subfolders: node.subfolders.filter(f => f.id !== tempId) }
-                        : node
-                ));
+                setFolderTree(prev => removeNode(prev, tempId));
                 const errData = await res.json().catch(() => ({}));
                 alert(errData.message || 'Error creating folder');
             }
         } catch (err) {
             console.error("Create folder error", err);
             // Revert optimistic update on network error
-            setFolderTree(prev => prev.map(node =>
-                node.id === 'root'
-                    ? { ...node, subfolders: node.subfolders.filter(f => f.id !== tempId) }
-                    : node
-            ));
+            setFolderTree(prev => removeNode(prev, tempId));
             alert('Failed to connect to server');
         }
     };
@@ -267,6 +292,77 @@ const Documents = () => {
             setFileToMoveCopy(null);
         } catch (err) {
             console.error("Move/Copy error", err);
+        }
+    };
+
+    // -- FOLDER DELETE & EDIT HANDLERS --
+    const handleDeleteFolder = async (folder) => {
+        if (!window.confirm(`Delete folder "${folder.name}"? Files and subfolders inside will be moved to All Documents.`)) return;
+
+        const removeNode = (nodes, nodeId) => {
+            return nodes.map(node => {
+                if (node.subfolders) {
+                    return { ...node, subfolders: removeNode(node.subfolders.filter(f => f.id !== nodeId), nodeId) };
+                }
+                return node;
+            });
+        };
+
+        // Optimistic UI update
+        setFolderTree(prev => removeNode(prev, folder.id));
+        if (selectedFolderId === folder.id) setSelectedFolderId('root');
+
+        try {
+            const res = await fetch(`${API_URL}/api/documents/folders/${folder.id}`, { method: 'DELETE' });
+            if (res.ok) {
+                fetchFolders();
+                fetchDocuments(); // Refresh files — deleted folder's files move to root
+            } else {
+                fetchFolders(); // Revert
+            }
+        } catch (err) {
+            console.error('Delete folder error', err);
+            fetchFolders(); // Revert
+        }
+    };
+
+    const handleEditFolder = (folder) => {
+        setFolderToEdit(folder);
+        setEditFolderValue(folder.name);
+        setShowRenameFolderModal(true);
+    };
+
+    const handleSaveFolderRename = async () => {
+        if (!folderToEdit || !editFolderValue.trim()) return;
+
+        const updateNodeName = (nodes, nodeId, newName) => {
+            return nodes.map(node => {
+                if (node.id === nodeId) {
+                    return { ...node, name: newName };
+                }
+                if (node.subfolders) {
+                    return { ...node, subfolders: updateNodeName(node.subfolders, nodeId, newName) };
+                }
+                return node;
+            });
+        };
+
+        // Optimistic update
+        setFolderTree(prev => updateNodeName(prev, folderToEdit.id, editFolderValue.trim()));
+        setShowRenameFolderModal(false);
+
+        try {
+            const res = await fetch(`${API_URL}/api/documents/folders/${folderToEdit.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: editFolderValue.trim() })
+            });
+            if (!res.ok) fetchFolders(); // Revert on failure
+        } catch (err) {
+            console.error('Rename folder error', err);
+            fetchFolders(); // Revert
+        } finally {
+            setFolderToEdit(null);
         }
     };
 
@@ -351,7 +447,7 @@ const Documents = () => {
     if (loading) return <Loader />;
 
     return (
-        <div className="flex min-h-screen bg-[#f3f4f6] font-sans text-slate-800">
+        <div className="flex min-h-screen bg-[#f3f4f6] font-sans text-slate-900 selection:bg-orange-100 selection:text-[#ea8933]">
             <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
 
             <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "md:ml-64" : "md:ml-20"} ml-0`}>
@@ -379,6 +475,8 @@ const Documents = () => {
                         expandedFolders={expandedFolders}
                         setExpandedFolders={setExpandedFolders}
                         folderTree={folderTree}
+                        onDeleteFolder={handleDeleteFolder}
+                        onEditFolder={handleEditFolder}
                     />
 
                     {/* FILE CONTENT */}
@@ -429,6 +527,15 @@ const Documents = () => {
                 action={moveCopyAction}
                 folderTree={folderTree}
                 onSubmit={handleMoveCopySubmit}
+            />
+
+            {/* Folder Rename Modal — reuses RenameModal */}
+            <RenameModal
+                isOpen={showRenameFolderModal}
+                onClose={() => setShowRenameFolderModal(false)}
+                renameValue={editFolderValue}
+                setRenameValue={setEditFolderValue}
+                onSave={handleSaveFolderRename}
             />
         </div>
     );

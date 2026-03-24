@@ -9,6 +9,7 @@ import DocumentsFileList from './documents/DocumentsFileList';
 import CreateFolderModal from './documents/CreateFolderModal';
 import UploadModal from './documents/UploadModal';
 import RenameModal from './documents/RenameModal';
+import MoveCopyModal from './documents/MoveCopyModal';
 import Loader from './components/Loader';
 
 const Documents = () => {
@@ -32,10 +33,15 @@ const Documents = () => {
     const [fileToRename, setFileToRename] = useState(null);
     const [renameValue, setRenameValue] = useState("");
 
+    // -- MOVE & COPY STATE --
+    const [showMoveCopyModal, setShowMoveCopyModal] = useState(false);
+    const [fileToMoveCopy, setFileToMoveCopy] = useState(null);
+    const [moveCopyAction, setMoveCopyAction] = useState('move');
+
     const [loading, setLoading] = useState(true);
     const [allFiles, setAllFiles] = useState([]);
 
-    const [folderTree] = useState([
+    const [folderTree, setFolderTree] = useState([
         {
             id: 'root',
             name: 'All Documents',
@@ -51,26 +57,26 @@ const Documents = () => {
         }
     ]);
 
-    // -- FETCH DATA --
+    // -- FETCH DATA (Now fully dynamic) --
     const fetchDocuments = async () => {
         setLoading(true);
         try {
             const res = await fetch(`${API_URL}/api/documents`);
             if (res.ok) {
                 const data = await res.json();
-                // Map API data to UI structure
-                // API: id, name, type, category, upload_date
-                // UI expects: id, folderId, name, type, size, date, starred, pinned, trashed
+
+                // Map the exact columns from your database to the UI
                 const mapped = data.map(d => ({
                     id: d.id,
-                    folderId: d.category || 'root', // root if no category
+                    folderId: d.category || 'root',
                     name: d.name,
+                    file_url: d.file_url,
                     type: d.type || 'unknown',
-                    size: '2 MB', // Mock size as DB doesn't store size yet
+                    size: d.size || 'Unknown', // Pulled from your new DB column
                     date: d.upload_date ? new Date(d.upload_date).toISOString().split('T')[0] : '2024-01-01',
-                    starred: false,
-                    pinned: false,
-                    trashed: false
+                    starred: d.starred || false,
+                    pinned: d.pinned || false,
+                    trashed: d.trashed || false
                 }));
                 setAllFiles(mapped);
             }
@@ -85,7 +91,7 @@ const Documents = () => {
         fetchDocuments();
     }, []);
 
-    // -- ACTIONS --
+    // -- ACTIONS (Now syncs with DB) --
     const handleFileAction = async (id, action) => {
         if (action === 'delete') {
             if (window.confirm("Permanently delete this file?")) {
@@ -99,15 +105,31 @@ const Documents = () => {
                 }
             }
         } else {
-            // Local Actions (Star, Pin, Trash-simulated)
-            setAllFiles(prev => prev.map(file => {
-                if (file.id !== id) return file;
-                if (action === 'star') return { ...file, starred: !file.starred };
-                if (action === 'pin') return { ...file, pinned: !file.pinned };
-                if (action === 'trash') return { ...file, trashed: true, starred: false, pinned: false };
-                if (action === 'restore') return { ...file, trashed: false };
-                return file;
-            }));
+            // Find current file to figure out what we are toggling
+            const file = allFiles.find(f => f.id === id);
+            if (!file) return;
+
+            // Prepare the dynamic update payload
+            let updates = {};
+            if (action === 'star') updates = { starred: !file.starred };
+            if (action === 'pin') updates = { pinned: !file.pinned };
+            if (action === 'trash') updates = { trashed: true, starred: false, pinned: false };
+            if (action === 'restore') updates = { trashed: false };
+
+            // Optimistic UI Update (feels faster for the user)
+            setAllFiles(prev => prev.map(f => f.id === id ? { ...f, ...updates } : f));
+
+            try {
+                // Send actual update to Database
+                await fetch(`${API_URL}/api/documents/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updates)
+                });
+            } catch (err) {
+                console.error("Update error", err);
+                fetchDocuments(); // Revert UI if DB fails
+            }
         }
     };
 
@@ -128,21 +150,112 @@ const Documents = () => {
         }
     };
 
-    // -- RENAME HANDLERS --
+    // -- FOLDER CREATION --
+    const handleCreateFolder = () => {
+        if (!newFolderName.trim()) return;
+
+        const newFolderId = newFolderName.trim().toLowerCase().replace(/\s+/g, '-');
+
+        setFolderTree(prevTree => {
+            // Deep copy tree so React triggers full re-render on nested arrays
+            const newTree = JSON.parse(JSON.stringify(prevTree));
+
+            // Add to root's subfolders
+            if (newTree[0] && newTree[0].id === 'root') {
+                if (!newTree[0].subfolders.find(f => f.id === newFolderId)) {
+                    newTree[0].subfolders.push({
+                        id: newFolderId,
+                        name: newFolderName.trim(),
+                        subfolders: []
+                    });
+                }
+            }
+            return newTree;
+        });
+
+        setNewFolderName("");
+        setShowCreateFolderModal(false);
+    };
+
+    // -- VIEW & DOWNLOAD HANDLERS --
+    const handleDownloadClick = (file) => {
+        if (!file.file_url) return;
+        const url = `${API_URL}${file.file_url}`;
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = file.name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    };
+
+    const handleViewClick = (file) => {
+        if (!file.file_url) return;
+        window.open(`${API_URL}${file.file_url}`, '_blank');
+    };
+
+    // -- MOVE & COPY HANDLERS --
+    const handleMoveCopyOpen = (file, action) => {
+        setFileToMoveCopy(file);
+        setMoveCopyAction(action);
+        setShowMoveCopyModal(true);
+    };
+
+    const handleMoveCopySubmit = async (targetFolderId) => {
+        if (!fileToMoveCopy || !targetFolderId) return;
+
+        try {
+            if (moveCopyAction === 'move') {
+                const res = await fetch(`${API_URL}/api/documents/${fileToMoveCopy.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ category: targetFolderId })
+                });
+                if (res.ok) fetchDocuments();
+            } else if (moveCopyAction === 'copy') {
+                const res = await fetch(`${API_URL}/api/documents/${fileToMoveCopy.id}/copy`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ category: targetFolderId })
+                });
+                if (res.ok) fetchDocuments();
+            }
+            setShowMoveCopyModal(false);
+            setFileToMoveCopy(null);
+        } catch (err) {
+            console.error("Move/Copy error", err);
+        }
+    };
+
+    // -- RENAME HANDLERS (Now saves to DB) --
     const openRenameModal = (file) => {
         setFileToRename(file);
         setRenameValue(file.name);
         setShowRenameModal(true);
     };
 
-    const handleSaveRename = () => {
-        // Mock rename local for now as API doesn't support PUT rename yet
+    const handleSaveRename = async () => {
         if (!fileToRename) return;
-        setAllFiles(prev => prev.map(f =>
-            f.id === fileToRename.id ? { ...f, name: renameValue } : f
-        ));
-        setShowRenameModal(false);
-        setFileToRename(null);
+
+        try {
+            // Send dynamic rename to Backend Database
+            const res = await fetch(`${API_URL}/api/documents/${fileToRename.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: renameValue })
+            });
+
+            if (res.ok) {
+                // Update UI on success
+                setAllFiles(prev => prev.map(f =>
+                    f.id === fileToRename.id ? { ...f, name: renameValue } : f
+                ));
+                setShowRenameModal(false);
+                setFileToRename(null);
+            }
+        } catch (err) {
+            console.error("Rename error", err);
+        }
     };
 
     // -- HELPER FUNCTIONS --
@@ -236,6 +349,9 @@ const Documents = () => {
                         openRenameModal={openRenameModal}
                         onUploadClick={() => setShowUploadModal(true)}
                         pageTitle={getPageTitle()}
+                        onViewClick={handleViewClick}
+                        onDownloadClick={handleDownloadClick}
+                        onMoveCopyOpen={handleMoveCopyOpen}
                     />
                 </main>
             </div>
@@ -246,6 +362,7 @@ const Documents = () => {
                 onClose={() => setShowCreateFolderModal(false)}
                 newFolderName={newFolderName}
                 setNewFolderName={setNewFolderName}
+                onCreate={handleCreateFolder}
             />
 
             <UploadModal
@@ -260,6 +377,15 @@ const Documents = () => {
                 renameValue={renameValue}
                 setRenameValue={setRenameValue}
                 onSave={handleSaveRename}
+            />
+
+            <MoveCopyModal
+                isOpen={showMoveCopyModal}
+                onClose={() => setShowMoveCopyModal(false)}
+                file={fileToMoveCopy}
+                action={moveCopyAction}
+                folderTree={folderTree}
+                onSubmit={handleMoveCopySubmit}
             />
         </div>
     );

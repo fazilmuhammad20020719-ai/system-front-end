@@ -1,4 +1,4 @@
-import { Grid, List, FileText, File, Image as ImageIcon, Download, Printer, Eye, FilePenLine, Trash2, RotateCcw, X, Pin, UploadCloud, Folder } from 'lucide-react';
+import { Grid, List, FileText, File, Image as ImageIcon, Download, Printer, Eye, FilePenLine, Trash2, RotateCcw, X, Pin, UploadCloud, Folder, FolderInput, Copy } from 'lucide-react';
 
 const DocumentsFileList = ({
     files,
@@ -9,7 +9,10 @@ const DocumentsFileList = ({
     handleFileAction,
     openRenameModal,
     onUploadClick,
-    pageTitle
+    pageTitle,
+    onViewClick,
+    onDownloadClick,
+    onMoveCopyOpen
 }) => {
 
     const getFileIcon = (type, name) => {
@@ -52,9 +55,11 @@ const DocumentsFileList = ({
                                         </>
                                     ) : (
                                         <>
-                                            <button title="Download" className="p-1.5 rounded hover:bg-green-50 text-gray-400 hover:text-green-600"><Download size={14} /></button>
+                                            <button onClick={() => onDownloadClick(file)} title="Download" className="p-1.5 rounded hover:bg-green-50 text-gray-400 hover:text-green-600"><Download size={14} /></button>
                                             <button title="Print" className="p-1.5 rounded hover:bg-blue-50 text-gray-400 hover:text-blue-600"><Printer size={14} /></button>
-                                            <button title="View" className="p-1.5 rounded hover:bg-orange-50 text-gray-400 hover:text-orange-600"><Eye size={14} /></button>
+                                            <button onClick={() => onViewClick(file)} title="View" className="p-1.5 rounded hover:bg-orange-50 text-gray-400 hover:text-orange-600"><Eye size={14} /></button>
+                                            <button onClick={() => onMoveCopyOpen(file, 'move')} title="Move" className="p-1.5 rounded hover:bg-blue-50 text-gray-400 hover:text-blue-600"><FolderInput size={14} /></button>
+                                            <button onClick={() => onMoveCopyOpen(file, 'copy')} title="Copy" className="p-1.5 rounded hover:bg-purple-50 text-gray-400 hover:text-purple-600"><Copy size={14} /></button>
                                             <button onClick={() => openRenameModal(file)} title="Rename" className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700"><FilePenLine size={14} /></button>
                                             <div className="w-px bg-gray-200 h-4 my-auto mx-1"></div>
                                             <button onClick={() => handleFileAction(file.id, 'trash')} title="Delete" className="p-1.5 rounded hover:bg-red-50 text-gray-400 hover:text-red-500"><Trash2 size={14} /></button>
@@ -96,9 +101,11 @@ const DocumentsFileList = ({
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <button title="Download" className="p-1.5 text-gray-400 hover:text-green-600 rounded"><Download size={16} /></button>
+                                                        <button onClick={() => onDownloadClick(file)} title="Download" className="p-1.5 text-gray-400 hover:text-green-600 rounded"><Download size={16} /></button>
                                                         <button title="Print" className="p-1.5 text-gray-400 hover:text-blue-600 rounded"><Printer size={16} /></button>
-                                                        <button title="View" className="p-1.5 text-gray-400 hover:text-orange-600 rounded"><Eye size={16} /></button>
+                                                        <button onClick={() => onViewClick(file)} title="View" className="p-1.5 text-gray-400 hover:text-orange-600 rounded"><Eye size={16} /></button>
+                                                        <button onClick={() => onMoveCopyOpen(file, 'move')} title="Move" className="p-1.5 text-gray-400 hover:text-blue-600 rounded"><FolderInput size={16} /></button>
+                                                        <button onClick={() => onMoveCopyOpen(file, 'copy')} title="Copy" className="p-1.5 text-gray-400 hover:text-purple-600 rounded"><Copy size={16} /></button>
                                                         <button onClick={() => openRenameModal(file)} title="Rename" className="p-1.5 text-gray-400 hover:text-gray-700 rounded"><FilePenLine size={16} /></button>
                                                         <div className="w-px bg-gray-200 h-4 my-auto mx-1"></div>
                                                         <button onClick={() => handleFileAction(file.id, 'trash')} className="p-1.5 text-gray-300 hover:text-red-500 rounded"><Trash2 size={16} /></button>

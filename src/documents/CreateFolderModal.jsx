@@ -1,4 +1,4 @@
-const CreateFolderModal = ({ isOpen, onClose, newFolderName, setNewFolderName }) => {
+const CreateFolderModal = ({ isOpen, onClose, newFolderName, setNewFolderName, onCreate }) => {
     if (!isOpen) return null;
 
     return (
@@ -15,7 +15,7 @@ const CreateFolderModal = ({ isOpen, onClose, newFolderName, setNewFolderName })
                 />
                 <div className="flex gap-3">
                     <button onClick={onClose} className="flex-1 py-2 rounded-lg border border-gray-300 font-bold text-gray-600 hover:bg-gray-50 text-sm">Cancel</button>
-                    <button onClick={onClose} className="flex-1 py-2 rounded-lg bg-[#ea8933] text-white font-bold hover:bg-[#d97c2a] text-sm">Create</button>
+                    <button onClick={onCreate} className="flex-1 py-2 rounded-lg bg-[#ea8933] text-white font-bold hover:bg-[#d97c2a] text-sm">Create</button>
                 </div>
             </div>
         </div>

@@ -15,7 +15,6 @@ import {
     ClipboardList,
     Crown,
     Activity,
-    UserCog,
     Wifi,
     BookOpen
 } from 'lucide-react';
@@ -258,13 +257,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                                 active={isActive('/activity')}
                                 isOpen={isOpen}
                             />
-                            <SidebarItem
-                                icon={UserCog}
-                                text="Admin Profile"
-                                to="/admin-profile"
-                                active={isActive('/admin-profile')}
-                                isOpen={isOpen}
-                            />
+
                         </div>
                     </div>
                 </nav>

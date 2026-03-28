@@ -3,7 +3,7 @@ import { FileText, Download, Eye, Trash2, Plus, FilePenLine, MoreVertical } from
 import { API_URL } from '../config';
 import RenameModal from '../documents/RenameModal';
 
-const ViewStudentDocuments = ({ documents: staticDocs = [], studentId }) => {
+const ViewStudentDocuments = ({ documents: staticDocs = [], studentId, onRefresh }) => {
     const [dynamicDocs, setDynamicDocs] = useState([]);
     const [isUploading, setIsUploading] = useState(false);
     const [openMenuIndex, setOpenMenuIndex] = useState(null);
@@ -133,16 +133,24 @@ const ViewStudentDocuments = ({ documents: staticDocs = [], studentId }) => {
     };
 
     // Delete Handler
-    const handleDelete = async (docId) => {
+    const handleDelete = async (docId, isStatic = false) => {
         if (!window.confirm("Are you sure you want to delete this document?")) return;
 
         try {
-            const response = await fetch(`${API_URL}/api/students/${studentId}/documents/${docId}`, {
+            const endpoint = isStatic
+                ? `${API_URL}/api/students/${studentId}/static-documents/${docId}`
+                : `${API_URL}/api/students/${studentId}/documents/${docId}`;
+
+            const response = await fetch(endpoint, {
                 method: 'DELETE',
             });
 
             if (response.ok) {
-                fetchDocuments();
+                if (isStatic && onRefresh) {
+                    onRefresh();
+                } else {
+                    fetchDocuments();
+                }
             } else {
                 alert('Delete failed');
             }
@@ -230,7 +238,7 @@ const ViewStudentDocuments = ({ documents: staticDocs = [], studentId }) => {
                                             >
                                                 <Download size={14} className="text-blue-600" /> Download
                                             </a>
-                                            {!doc.isStatic && (
+                                            {!doc.isStatic ? (
                                                 <>
                                                     <button
                                                         onClick={() => { openRenameModal(doc); setOpenMenuIndex(null); }}
@@ -239,12 +247,19 @@ const ViewStudentDocuments = ({ documents: staticDocs = [], studentId }) => {
                                                         <FilePenLine size={14} className="text-orange-500" /> Rename
                                                     </button>
                                                     <button
-                                                        onClick={() => { handleDelete(doc.id); setOpenMenuIndex(null); }}
+                                                        onClick={() => { handleDelete(doc.id, false); setOpenMenuIndex(null); }}
                                                         className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                                                     >
                                                         <Trash2 size={14} /> Delete
                                                     </button>
                                                 </>
+                                            ) : (
+                                                <button
+                                                    onClick={() => { handleDelete(doc.id, true); setOpenMenuIndex(null); }}
+                                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                                >
+                                                    <Trash2 size={14} /> Delete
+                                                </button>
                                             )}
                                         </div>
                                     </>

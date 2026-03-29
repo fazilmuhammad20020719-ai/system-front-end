@@ -64,7 +64,9 @@ const ExaminationAttendance = ({ slotId, exams: propExams, initialExamId }) => {
 
                     const attMap = {};
                     data.forEach(r => {
-                        attMap[r.student_id] = r.status; // Real status, can be null
+                        let st = r.status;
+                        if (st === 'Pass' || st === 'Fail') st = 'Present';
+                        attMap[r.student_id] = st;
                     });
                     setAttendance(attMap);
                 }

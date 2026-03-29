@@ -173,6 +173,12 @@ const ViewStudentResults = ({ studentId }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // Filters
+    const [filterSlot, setFilterSlot] = useState('');
+    const [filterSubject, setFilterSubject] = useState('');
+    const [filterGrade, setFilterGrade] = useState('');
+    const [filterStatus, setFilterStatus] = useState('');
+
     useEffect(() => {
         if (!studentId) return;
         const fetchResults = async () => {
@@ -181,7 +187,20 @@ const ViewStudentResults = ({ studentId }) => {
             try {
                 const res = await fetch(`${API_URL}/api/exams/student/${studentId}/results`);
                 if (!res.ok) throw new Error('Failed to fetch results');
-                setResults(await res.json());
+                const data = await res.json();
+                // Patch any bad database data on the frontend: 
+                // if marks exist, status MUST be Pass or Fail, not Present/Late
+                const patchedData = data.map(r => {
+                    let st = r.status;
+                    if (r.marks_obtained !== null && r.marks_obtained !== undefined && r.marks_obtained !== '') {
+                        if (st !== 'Pass' && st !== 'Fail') {
+                            const val = parseInt(r.marks_obtained);
+                            st = (!isNaN(val) && val >= 50) ? 'Pass' : 'Fail';
+                        }
+                    }
+                    return { ...r, status: st };
+                });
+                setResults(patchedData);
             } catch (err) {
                 console.error('Error fetching student results:', err);
                 setError('Could not load results. Please try again.');
@@ -227,11 +246,25 @@ const ViewStudentResults = ({ studentId }) => {
         );
     }
 
+    // ── Filter Data ──
+    const filteredResults = results.filter(r => {
+        const matchSlot = filterSlot ? r.slot_name === filterSlot : true;
+        const matchSubject = filterSubject ? r.subject_name === filterSubject : true;
+        const matchGrade = filterGrade ? r.grade === filterGrade : true;
+        const matchStatus = filterStatus ? r.status === filterStatus : true;
+        return matchSlot && matchSubject && matchGrade && matchStatus;
+    });
+
+    // Extract unique options
+    const uniqueSlots = [...new Set(results.map(r => r.slot_name).filter(Boolean))].sort();
+    const uniqueSubjects = [...new Set(results.map(r => r.subject_name).filter(Boolean))].sort();
+    const uniqueGrades = [...new Set(results.map(r => r.grade).filter(Boolean))].sort();
+    const uniqueStatuses = [...new Set(results.map(r => r.status).filter(Boolean))].sort();
+
     // ── Group by slot ──
-    // Key: slot_id (or 'no-slot' for exams without a slot)
     const slotMap = new Map(); // slotKey → { name, rows[] }
 
-    results.forEach(r => {
+    filteredResults.forEach(r => {
         const key = r.slot_id != null ? String(r.slot_id) : 'no-slot';
         const name = r.slot_name || 'Unassigned Exams';
         if (!slotMap.has(key)) slotMap.set(key, { name, rows: [] });
@@ -241,10 +274,10 @@ const ViewStudentResults = ({ studentId }) => {
     const slots = Array.from(slotMap.values());
 
     // Global summary
-    const total = results.length;
-    const passed = results.filter(r => r.status === 'Pass').length;
-    const failed = results.filter(r => r.status === 'Fail').length;
-    const gradedAll = results.filter(r => r.marks_obtained !== null && r.marks_obtained !== '');
+    const total = filteredResults.length;
+    const passed = filteredResults.filter(r => r.status === 'Pass').length;
+    const failed = filteredResults.filter(r => r.status === 'Fail').length;
+    const gradedAll = filteredResults.filter(r => r.marks_obtained !== null && r.marks_obtained !== '');
     const avgAll = gradedAll.length > 0
         ? gradedAll.reduce((s, r) => s + (parseFloat(r.marks_obtained) || 0), 0) / gradedAll.length
         : null;
@@ -259,7 +292,63 @@ const ViewStudentResults = ({ studentId }) => {
                         <Award className="text-green-600" size={20} />
                         <h3 className="font-bold text-gray-800">Examination Results</h3>
                     </div>
-                    <span className="text-xs text-slate-400 font-medium">{total} exam{total !== 1 ? 's' : ''} · {slots.length} slot{slots.length !== 1 ? 's' : ''}</span>
+                </div>
+
+                {/* ── Filters ── */}
+                <div className="bg-slate-50 px-6 py-4 flex flex-wrap gap-4 border-b border-gray-100">
+                    <div className="flex-1 min-w-[140px]">
+                        <select
+                            value={filterSlot}
+                            onChange={(e) => setFilterSlot(e.target.value)}
+                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                        >
+                            <option value="">All Slots</option>
+                            {uniqueSlots.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                    </div>
+                    <div className="flex-1 min-w-[140px]">
+                        <select
+                            value={filterSubject}
+                            onChange={(e) => setFilterSubject(e.target.value)}
+                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                        >
+                            <option value="">All Subjects</option>
+                            {uniqueSubjects.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                    </div>
+                    <div className="flex-1 min-w-[140px]">
+                        <select
+                            value={filterGrade}
+                            onChange={(e) => setFilterGrade(e.target.value)}
+                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                        >
+                            <option value="">All Grades</option>
+                            {uniqueGrades.map(g => <option key={g} value={g}>{g}</option>)}
+                        </select>
+                    </div>
+                    <div className="flex-1 min-w-[140px]">
+                        <select
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value)}
+                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                        >
+                            <option value="">All Statuses</option>
+                            {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                    </div>
+                    {(filterSlot || filterSubject || filterGrade || filterStatus) && (
+                        <button
+                            onClick={() => {
+                                setFilterSlot('');
+                                setFilterSubject('');
+                                setFilterGrade('');
+                                setFilterStatus('');
+                            }}
+                            className="px-4 py-2 bg-slate-200 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-300 transition-colors"
+                        >
+                            Clear
+                        </button>
+                    )}
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-y md:divide-y-0 border-b border-gray-100">
@@ -285,9 +374,15 @@ const ViewStudentResults = ({ studentId }) => {
             </div>
 
             {/* ── Per-slot sections ── */}
-            {slots.map((slot, idx) => (
-                <SlotSection key={idx} slotName={slot.name} rows={slot.rows} />
-            ))}
+            {filteredResults.length === 0 ? (
+                <div className="text-center py-10 text-slate-400 bg-white rounded-xl border border-dashed border-gray-200">
+                    No results match your selected filters.
+                </div>
+            ) : (
+                slots.map((slot, idx) => (
+                    <SlotSection key={idx} slotName={slot.name} rows={slot.rows} />
+                ))
+            )}
         </div>
     );
 };

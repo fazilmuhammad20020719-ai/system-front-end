@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, MapPin, User, Plus, Edit2, ClipboardCheck, ChevronDown, ChevronLeft, ChevronRight, Calendar, Zap } from 'lucide-react';
+import { Clock, MapPin, User, Plus, Edit2, ClipboardCheck, ChevronDown, ChevronLeft, ChevronRight, Calendar, Zap, Download, X } from 'lucide-react';
 import Sidebar from '../Sidebar';
 import ScheduleModal from './ScheduleModal';
 import FastScheduleModal from './FastScheduleModal';
@@ -32,6 +32,9 @@ const Schedule = () => {
     const [showScheduleModal, setShowScheduleModal] = useState(false);
     const [showFastScheduleModal, setShowFastScheduleModal] = useState(false);
     const [showAttendancePopup, setShowAttendancePopup] = useState(false);
+    const [showExportModal, setShowExportModal] = useState(false);
+    const [selectedProgramForExport, setSelectedProgramForExport] = useState(null);
+    const [exportGradeSelection, setExportGradeSelection] = useState('All');
     const [selectedSlotForAttendance, setSelectedSlotForAttendance] = useState(null);
     const [editingSchedule, setEditingSchedule] = useState(null);
     const [selectedProgramForAdd, setSelectedProgramForAdd] = useState(null);
@@ -205,6 +208,93 @@ const Schedule = () => {
     };
 
     // --- Handlers ---
+    const executeExport = (programName, selectedGrade) => {
+        const programSlots = schedules.filter(s => {
+            const sSubId = parseInt(s.subject_id || s.subjectId);
+            if (!sSubId && s.type === 'Break') {
+                const currentProgramObj = titlePrograms.find(p => p.name === programName);
+                if (selectedGrade !== 'All') return false;
+                return s.program_id === currentProgramObj?.id;
+            }
+            const subject = subjects.find(sub => sub.id === sSubId);
+            if (subject?.program !== programName) return false;
+
+            if (selectedGrade !== 'All') {
+                return (subject?.year === selectedGrade);
+            }
+            return true;
+        });
+
+        if (programSlots.length === 0) {
+            alert(`No schedule slots found for ${programName}${selectedGrade !== 'All' ? ` (${selectedGrade})` : ''}.`);
+            return;
+        }
+
+        const csvRows = [];
+        csvRows.push(['Day', 'Start Time', 'End Time', 'Type', 'Subject', 'Grade', 'Teacher', 'Room', 'Status'].join(','));
+
+        const dayOrder = { 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6, 'Sunday': 7 };
+
+        programSlots.sort((a, b) => {
+            const dayA = a.day_of_week || a.day;
+            const dayB = b.day_of_week || b.day;
+            if (dayOrder[dayA] !== dayOrder[dayB]) {
+                return dayOrder[dayA] - dayOrder[dayB];
+            }
+            const timeA = a.start_time || a.startTime || "";
+            const timeB = b.start_time || b.startTime || "";
+            return timeA.localeCompare(timeB);
+        });
+
+        programSlots.forEach(slot => {
+            const day = slot.day_of_week || slot.day || '';
+            const startTime = (slot.start_time || slot.startTime || "00:00").substring(0, 5);
+            const endTime = (slot.end_time || slot.endTime || "00:00").substring(0, 5);
+            const type = slot.type || (slot.subject_id ? 'Class' : 'Break');
+            const room = slot.room || '';
+            const status = slot.attendanceStatus || 'pending';
+
+            let subjectName = '';
+            let grade = '';
+            let teacherName = '';
+
+            if (type !== 'Break') {
+                const sSubId = parseInt(slot.subject_id || slot.subjectId);
+                const subject = subjects.find(sub => sub.id === sSubId);
+                subjectName = subject?.name || '';
+                grade = subject?.year || 'General';
+
+                const tId = parseInt(slot.teacher_id || slot.teacherId);
+                const teacher = teachers.find(t => t.id === tId);
+                teacherName = teacher?.name || '';
+            }
+
+            const escapeCSV = (str) => `"${String(str).replace(/"/g, '""')}"`;
+
+            csvRows.push([
+                escapeCSV(day),
+                escapeCSV(startTime),
+                escapeCSV(endTime),
+                escapeCSV(type),
+                escapeCSV(subjectName),
+                escapeCSV(grade),
+                escapeCSV(teacherName),
+                escapeCSV(room),
+                escapeCSV(status)
+            ].join(','));
+        });
+
+        const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent(csvRows.join('\n'));
+        const link = document.createElement("a");
+        link.setAttribute("href", csvContent);
+        const fileName = selectedGrade === 'All' ? `${programName}_Timetable.csv` : `${programName}_${selectedGrade.replace(/\s+/g, '_')}_Timetable.csv`;
+        link.setAttribute("download", fileName);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setShowExportModal(false);
+    };
+
     const handleAddClick = (program, day, isBreak = false) => {
         setEditingSchedule(null);
         setSelectedProgramForAdd(program);
@@ -461,12 +551,25 @@ const Schedule = () => {
                                                 </select>
                                             </div>
 
-                                            <button
-                                                onClick={() => handleAddClick(program)}
-                                                className="px-4 py-1.5 bg-[#ea8933] text-white rounded-lg hover:bg-[#d97c2a] text-xs font-bold flex items-center gap-2 shadow-sm transition-all hover:shadow-md ml-auto xl:ml-0"
-                                            >
-                                                <Plus size={14} /> Add Slot
-                                            </button>
+                                            <div className="flex gap-2 ml-auto xl:ml-0">
+                                                <button
+                                                    onClick={() => {
+                                                        setSelectedProgramForExport(program);
+                                                        setExportGradeSelection('All');
+                                                        setShowExportModal(true);
+                                                    }}
+                                                    className="px-4 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 border border-gray-200 text-xs font-bold flex items-center gap-2 shadow-sm transition-all hover:shadow-md"
+                                                    title="Export Timetable as CSV"
+                                                >
+                                                    <Download size={14} /> Export
+                                                </button>
+                                                <button
+                                                    onClick={() => handleAddClick(program)}
+                                                    className="px-4 py-1.5 bg-[#ea8933] text-white rounded-lg hover:bg-[#d97c2a] text-xs font-bold flex items-center gap-2 shadow-sm transition-all hover:shadow-md"
+                                                >
+                                                    <Plus size={14} /> Add Slot
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -548,17 +651,21 @@ const Schedule = () => {
                                                                 }
 
                                                                 const subject = subjects.find(s => s.id === parseInt(slot.subject_id || slot.subjectId));
-                                                                const colorClass = getSubjectColor(subject?.id || 0);
                                                                 const status = slot.attendanceStatus || 'pending';
+
+                                                                let colorClass = "bg-yellow-50 border-yellow-200 text-yellow-800";
                                                                 let statusIconColor = "bg-yellow-100 text-yellow-600 hover:bg-yellow-200";
 
                                                                 if (status === 'completed') {
+                                                                    colorClass = "bg-emerald-50 border-emerald-200 text-emerald-800";
                                                                     statusIconColor = "bg-emerald-100 text-emerald-600 hover:bg-emerald-200 ring-2 ring-emerald-500/20";
                                                                 } else if (status === 'cancelled') {
+                                                                    colorClass = "bg-rose-50 border-rose-200 text-rose-800";
                                                                     statusIconColor = "bg-rose-100 text-rose-600 hover:bg-rose-200 ring-2 ring-rose-500/20";
                                                                 }
 
                                                                 const startTime = (slot.start_time || slot.startTime || "00:00").substring(0, 5);
+                                                                const endTime = (slot.end_time || slot.endTime || "00:00").substring(0, 5);
                                                                 const teacherName = teachers.find(t => t.id === parseInt(slot.teacher_id || slot.teacherId))?.name.split(' ')[0] || 'Teacher';
 
                                                                 return (
@@ -582,7 +689,7 @@ const Schedule = () => {
 
                                                                         <div className="flex justify-between items-start mb-1 mt-1">
                                                                             <span className="text-[10px] font-bold text-gray-500 flex items-center gap-1">
-                                                                                <Clock size={10} /> {startTime}
+                                                                                <Clock size={10} /> {startTime} - {endTime}
                                                                             </span>
                                                                         </div>
 
@@ -660,6 +767,54 @@ const Schedule = () => {
                     onSave={(data) => handleAttendanceUpdate(selectedSlotForAttendance?.id, 'completed', data)}
                     onCancel={() => handleAttendanceUpdate(selectedSlotForAttendance?.id, 'cancelled')}
                 />
+
+                {/* Export Modal */}
+                {showExportModal && selectedProgramForExport && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+                        <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
+                            <div className="p-5 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+                                <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                                    <Download size={18} className="text-[#ea8933]" /> Export Timetable
+                                </h3>
+                                <button onClick={() => setShowExportModal(false)} className="text-gray-400 hover:text-gray-600 rounded-lg p-1 hover:bg-gray-100 transition-colors">
+                                    <X size={20} />
+                                </button>
+                            </div>
+                            <div className="p-5">
+                                <p className="text-sm text-gray-600 mb-4">
+                                    Export schedule for <strong className="text-[#ea8933]">{selectedProgramForExport}</strong>. Select which grade to export, or export all grades.
+                                </p>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-700 block mb-1">Select Grade</label>
+                                    <select
+                                        value={exportGradeSelection}
+                                        onChange={(e) => setExportGradeSelection(e.target.value)}
+                                        className="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#ea8933] focus:border-transparent transition-all shadow-sm"
+                                    >
+                                        <option value="All">All Grades</option>
+                                        {getProgramGrades(selectedProgramForExport).map(grade => (
+                                            <option key={grade} value={grade}>{grade}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="p-5 bg-gray-50 border-t border-gray-100 flex gap-3">
+                                <button
+                                    onClick={() => setShowExportModal(false)}
+                                    className="flex-1 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-bold hover:bg-gray-50 transition-colors shadow-sm"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={() => executeExport(selectedProgramForExport, exportGradeSelection)}
+                                    className="flex-1 px-4 py-2.5 bg-[#ea8933] text-white rounded-xl text-sm font-bold hover:bg-[#d97c2a] transition-all shadow-sm shadow-orange-200 flex items-center justify-center gap-2"
+                                >
+                                    <Download size={16} /> Download CSV
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

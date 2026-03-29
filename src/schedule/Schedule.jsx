@@ -41,14 +41,14 @@ const Schedule = () => {
     const [editingSchedule, setEditingSchedule] = useState(null);
     const [editingSlotDate, setEditingSlotDate] = useState(null); // Calendar date of the slot being edited
     const [selectedProgramForAdd, setSelectedProgramForAdd] = useState(null);
-    const [selectedDayForAdd, setSelectedDayForAdd] = useState('Monday');
+    const [selectedDayForAdd, setSelectedDayForAdd] = useState('Sunday');
     const [isBreakMode, setIsBreakMode] = useState(false);
 
     // Date Navigation State
     const getStartOfWeek = (date) => {
         const d = new Date(date);
         const day = d.getDay();
-        const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+        const diff = d.getDate() - day; // Start week on Sunday
         return new Date(d.setDate(diff));
     };
 
@@ -89,7 +89,7 @@ const Schedule = () => {
             ]);
 
             // 3. Set State & Merge Attendance
-            const daysList = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            const daysList = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
             const mergedSchedules = schData.map(slot => {
                 // Calculate Date for this slot
@@ -185,7 +185,7 @@ const Schedule = () => {
         return a.localeCompare(b);
     });
 
-    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
     const handleAttendanceUpdate = (slotId, status, data = null) => {
         // Optimistic Update
@@ -244,7 +244,7 @@ const Schedule = () => {
         const csvRows = [];
         csvRows.push(['Day', 'Start Time', 'End Time', 'Type', 'Subject', 'Grade', 'Teacher', 'Room', 'Status'].join(','));
 
-        const dayOrder = { 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6, 'Sunday': 7 };
+        const dayOrder = { 'Sunday': 1, 'Monday': 2, 'Tuesday': 3, 'Wednesday': 4, 'Thursday': 5, 'Friday': 6, 'Saturday': 7 };
 
         programSlots.sort((a, b) => {
             const dayA = a.day_of_week || a.day;
@@ -591,7 +591,7 @@ const Schedule = () => {
                                 // Ignore breaks for stats
                                 if (!sSubId && s.type === 'Break') return;
 
-                                const dayList = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                                const dayList = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
                                 const slotDay = s.day_of_week || s.day;
                                 const dIndex = dayList.indexOf(slotDay);
                                 if (dIndex === -1) return;
@@ -632,6 +632,8 @@ const Schedule = () => {
                                 <div key={program} className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                                     {/* Program Header & Filters */}
                                     <div className="p-4 border-b border-gray-100 bg-gray-50/50 flex flex-col gap-4">
+
+                                        {/* Row 1: Program name + filters + action buttons */}
                                         <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
                                             <div className="flex items-center gap-3 min-w-[200px]">
                                                 <div className="w-1.5 h-8 bg-[#ea8933] rounded-full"></div>
@@ -697,6 +699,7 @@ const Schedule = () => {
                                                     </select>
                                                 </div>
 
+                                                {/* Action buttons */}
                                                 <div className="flex gap-2 ml-auto xl:ml-0">
                                                     <button
                                                         onClick={() => handleClearAllSlots(program)}
@@ -728,7 +731,7 @@ const Schedule = () => {
                                             </div>
                                         </div>
 
-                                        {/* Stats Boxes */}
+                                        {/* Row 2: Stats Boxes */}
                                         <div className="grid grid-cols-3 gap-3">
                                             <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 flex items-center justify-between shadow-sm">
                                                 <div className="text-xs font-bold text-yellow-700 uppercase">Pending Classes</div>
@@ -743,6 +746,7 @@ const Schedule = () => {
                                                 <div className="text-lg font-black text-rose-600">{programStats.cancelled}</div>
                                             </div>
                                         </div>
+
                                     </div>
 
                                     {/* Schedule Grid */}
@@ -765,7 +769,7 @@ const Schedule = () => {
                                                     if (slotEffectiveFrom && columnDateStr < slotEffectiveFrom) return false;
 
                                                     // Skip-this-week guard: hide if this occurrence is marked Skipped
-                                                    const sessionForThisSlot = attData.find(a =>
+                                                    const sessionForThisSlot = attendanceData.find(a =>
                                                         parseInt(a.schedule_id) === parseInt(s.id) &&
                                                         a.date.split('T')[0] === columnDateStr
                                                     );

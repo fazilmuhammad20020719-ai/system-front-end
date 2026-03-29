@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Clock, User, BookOpen, MapPin, Calendar, AlertCircle, Layers } from 'lucide-react';
+import { X, Save, Clock, User, BookOpen, MapPin, Calendar, AlertCircle, Layers, CalendarX2, CalendarOff, ChevronDown } from 'lucide-react';
 
 // Added 'defaultDay' to props
-const ScheduleModal = ({ isOpen, onClose, subjects, teachers, initialData, existingSchedules, onSave, onDelete, programGrades = [], defaultGrade = 'All', defaultDay, isBreak = false }) => {
+const ScheduleModal = ({ isOpen, onClose, subjects, teachers, initialData, existingSchedules, onSave, onDelete, onDeleteWeek, slotDate, programGrades = [], defaultGrade = 'All', defaultDay, isBreak = false }) => {
 
     // Initial State
     const [formData, setFormData] = useState({
-        day: defaultDay || 'Monday',
+        day: defaultDay || 'Sunday',
         subjectId: '',
         teacherId: '',
         startTime: '',
@@ -16,6 +16,7 @@ const ScheduleModal = ({ isOpen, onClose, subjects, teachers, initialData, exist
     });
 
     const [error, setError] = useState('');
+    const [showDeleteOptions, setShowDeleteOptions] = useState(false);
 
     // Load Data on Open
     useEffect(() => {
@@ -33,7 +34,7 @@ const ScheduleModal = ({ isOpen, onClose, subjects, teachers, initialData, exist
             } else {
                 // Reset for new entry using passed defaults
                 setFormData({
-                    day: defaultDay || 'Monday',
+                    day: defaultDay || 'Sunday',
                     subjectId: '',
                     teacherId: '',
                     startTime: '',
@@ -45,6 +46,11 @@ const ScheduleModal = ({ isOpen, onClose, subjects, teachers, initialData, exist
             setError('');
         }
     }, [isOpen, initialData, defaultGrade, defaultDay, isBreak]);
+
+    // Reset delete panel when modal opens/closes
+    useEffect(() => {
+        if (!isOpen) setShowDeleteOptions(false);
+    }, [isOpen]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -143,19 +149,7 @@ const ScheduleModal = ({ isOpen, onClose, subjects, teachers, initialData, exist
             return;
         }
 
-        // Past Time Check
-        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-        const todayIndex = new Date().getDay() - 1;
-        const currentDayName = days[todayIndex === -1 ? 6 : todayIndex];
 
-        if (formData.day === currentDayName) {
-            const now = new Date();
-            const currentTime = now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0');
-            if (formData.startTime < currentTime) {
-                setError("Cannot schedule in the past time for today.");
-                return;
-            }
-        }
 
         const conflictMsg = checkConflicts();
         if (conflictMsg) {
@@ -202,7 +196,7 @@ const ScheduleModal = ({ isOpen, onClose, subjects, teachers, initialData, exist
                                 onChange={handleChange}
                                 className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none"
                             >
-                                {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
+                                {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].map(day => (
                                     <option key={day} value={day}>{day}</option>
                                 ))}
                             </select>
@@ -306,24 +300,66 @@ const ScheduleModal = ({ isOpen, onClose, subjects, teachers, initialData, exist
 
                     {/* Action Buttons */}
                     <div className="flex gap-3 pt-4 border-t border-gray-100 mt-2">
-                        {initialData && (
+                        {initialData && !showDeleteOptions && (
                             <button
                                 type="button"
-                                onClick={() => onDelete(initialData.id)}
-                                className="px-4 py-2.5 border border-red-200 text-red-600 rounded-xl hover:bg-red-50 font-bold text-sm transition-colors"
+                                onClick={() => setShowDeleteOptions(true)}
+                                className="px-4 py-2.5 border border-red-200 text-red-500 rounded-xl hover:bg-red-50 font-bold text-sm transition-colors flex items-center gap-2"
                             >
-                                Delete
+                                <CalendarOff size={15} /> Delete
                             </button>
                         )}
 
-                        <div className="flex-1 flex gap-3 justify-end">
-                            <button
-                                type="button"
-                                onClick={onClose}
-                                className="px-5 py-2.5 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 font-bold text-sm transition-colors"
-                            >
-                                Cancel
-                            </button>
+                        {/* Inline Delete Options Panel */}
+                        {initialData && showDeleteOptions && (
+                            <div className="flex-1 flex flex-col gap-2 p-3 bg-red-50 border border-red-200 rounded-xl animate-in fade-in slide-in-from-left-2 duration-200">
+                                <p className="text-xs font-bold text-red-600 mb-1">Choose delete scope:</p>
+                                <div className="flex gap-2">
+                                    {/* This week only — skip this single occurrence */}
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (window.confirm('Skip this slot for this week only?\n\nThe slot will still appear in future weeks.')) {
+                                                onDeleteWeek && onDeleteWeek(initialData.id, slotDate);
+                                            }
+                                        }}
+                                        className="flex-1 px-3 py-2 bg-white border border-red-300 text-red-600 rounded-lg hover:bg-red-100 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
+                                    >
+                                        <CalendarX2 size={14} /> This Week
+                                    </button>
+                                    {/* All future — soft-close the recurring slot */}
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (window.confirm('Remove this slot permanently?\n\nAll future occurrences will be deleted. Past attendance is preserved.')) {
+                                                onDelete && onDelete(initialData.id);
+                                            }
+                                        }}
+                                        className="flex-1 px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
+                                    >
+                                        <CalendarOff size={14} /> All Future
+                                    </button>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowDeleteOptions(false)}
+                                    className="text-xs text-gray-400 hover:text-gray-600 text-center mt-0.5 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        )}
+
+                        <div className={`flex gap-3 justify-end ${!showDeleteOptions ? 'flex-1' : ''}`}>
+                            {!showDeleteOptions && (
+                                <button
+                                    type="button"
+                                    onClick={onClose}
+                                    className="px-5 py-2.5 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 font-bold text-sm transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                            )}
                             <button
                                 type="submit"
                                 className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 font-bold text-sm shadow-lg shadow-blue-500/30 transition-all flex items-center gap-2"

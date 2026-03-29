@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { API_URL } from '../config';
 
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 const addMinutes = (timeStr, mins) => {
     const [h, m] = timeStr.split(':').map(Number);
@@ -28,7 +28,7 @@ const FastScheduleModal = ({
     // Step 1
     const [selectedProgram, setSelectedProgram] = useState('');
     const [selectedGrade, setSelectedGrade] = useState('');
-    const [selectedDays, setSelectedDays] = useState(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']);
+    const [selectedDays, setSelectedDays] = useState(['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday']);
 
     // Step 2
     const [startTime, setStartTime] = useState('08:00');
@@ -51,7 +51,7 @@ const FastScheduleModal = ({
             setStep(1);
             setSelectedProgram('');
             setSelectedGrade('');
-            setSelectedDays(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']);
+            setSelectedDays(['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday']);
             setStartTime('08:00');
             setClassDuration(60);
             setBreakDuration(15);

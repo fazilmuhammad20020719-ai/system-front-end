@@ -218,7 +218,7 @@ const ViewStudent = () => {
                         {activeTab === 'personal' && <ViewStudentInfo student={student} />}
                         {activeTab === 'documents' && <ViewStudentDocuments documents={student.documents} studentId={student.id} onRefresh={fetchStudentData} />}
                         {activeTab === 'attendance' && <ViewStudentAttendance stats={student.attendanceStats} />}
-                        {activeTab === 'results' && <ViewStudentResults results={student.results} />}
+                        {activeTab === 'results' && <ViewStudentResults studentId={student.id} />}
                         {activeTab === 'fees' && <ViewStudentFees studentId={student.id} admissionDate={student.admissionDate} monthlyFee={student.monthlyFee} studentInfo={{ name: student.name, id: student.id, program: student.program, year: student.year, phone: student.phone, email: student.email }} />}
                         {activeTab === 'hifz' && <ViewStudentHifz hifzData={hifzData} />}
                         {activeTab === 'timeline' && <ViewStudentTimeline studentId={student.id} />}

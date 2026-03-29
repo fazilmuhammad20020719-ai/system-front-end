@@ -14,17 +14,22 @@ const ExaminationSlots = () => {
     const [isSlotModalOpen, setIsSlotModalOpen] = useState(false);
     const [editingSlot, setEditingSlot] = useState(null);
 
-    // For Exam Creation inside a slot
     const [isExamModalOpen, setIsExamModalOpen] = useState(false);
     const [editingExam, setEditingExam] = useState(null);
     const [slotExams, setSlotExams] = useState([]);
     const [loadingExams, setLoadingExams] = useState(false);
+    const [jumpToExamId, setJumpToExamId] = useState('');
 
     // Filters & Reference Data
     const [filterSubject, setFilterSubject] = useState('');
     const [filterGrade, setFilterGrade] = useState('');
     const [filterStatus, setFilterStatus] = useState('');
     const [filterSupervisor, setFilterSupervisor] = useState('');
+
+    // Slot Filters
+    const [slotFilterProgram, setSlotFilterProgram] = useState('');
+    const [slotFilterStatus, setSlotFilterStatus] = useState('');
+    const [slotSearch, setSlotSearch] = useState('');
 
     const [subjects, setSubjects] = useState([]);
     const [teachers, setTeachers] = useState([]);
@@ -49,7 +54,15 @@ const ExaminationSlots = () => {
     const fetchSlots = async () => {
         try {
             const res = await fetch(`${API_URL}/api/slots`);
-            if (res.ok) setSlots(await res.json());
+            if (res.ok) {
+                const freshSlots = await res.json();
+                setSlots(freshSlots);
+                // Keep selectedSlot in sync with fresh data
+                setSelectedSlot(prev => {
+                    if (!prev) return null;
+                    return freshSlots.find(s => s.id === prev.id) || prev;
+                });
+            }
         } catch (err) {
             console.error("Error fetching slots:", err);
         }
@@ -75,6 +88,7 @@ const ExaminationSlots = () => {
         if (selectedSlot) {
             fetchSlotExams(selectedSlot.id);
             setActiveTab('exams'); // Reset tab when entering a slot
+            setJumpToExamId('');
         }
     }, [selectedSlot]);
 
@@ -114,10 +128,11 @@ const ExaminationSlots = () => {
 
     // Filter Logic
     const filteredExams = slotExams.filter(exam => {
-        const matchSubject = filterSubject ? exam.subject_id === parseInt(filterSubject) : true;
+        // Compare as strings on both sides to avoid number/string type mismatch from API
+        const matchSubject = filterSubject ? String(exam.subject_id) === filterSubject : true;
         const matchGrade = filterGrade ? exam.grade === filterGrade : true;
         const matchStatus = filterStatus ? exam.status === filterStatus : true;
-        const matchSupervisor = filterSupervisor ? exam.supervisor_id === parseInt(filterSupervisor) : true;
+        const matchSupervisor = filterSupervisor ? String(exam.supervisor_id) === filterSupervisor : true;
         return matchSubject && matchGrade && matchStatus && matchSupervisor;
     });
 
@@ -125,6 +140,16 @@ const ExaminationSlots = () => {
     // Let's use 1-13 for now, or derive from subjects? 
     // Simpler: Just hardcode Grade 1-13 or use previously seen logic.
     const gradeOptions = Array.from({ length: 13 }, (_, i) => `Grade ${i + 1}`);
+
+    const filteredSlots = slots.filter(slot => {
+        const matchProgram = slotFilterProgram ? slot.program_name === slotFilterProgram : true;
+        const matchStatus = slotFilterStatus ? slot.status === slotFilterStatus : true;
+        const matchSearch = slotSearch ? slot.name?.toLowerCase().includes(slotSearch.toLowerCase()) : true;
+        return matchProgram && matchStatus && matchSearch;
+    });
+
+    const uniquePrograms = [...new Set(slots.map(s => s.program_name))].filter(Boolean);
+    const uniqueStatuses = [...new Set(slots.map(s => s.status))].filter(Boolean);
 
     // --- RENDER LIST OF SLOTS ---
     if (!selectedSlot) {
@@ -140,8 +165,56 @@ const ExaminationSlots = () => {
                     </button>
                 </div>
 
+                {/* Slot Filters */}
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-wrap gap-4 items-end animate-in fade-in slide-in-from-top-2">
+                    <div className="flex-1 min-w-[200px]">
+                        <label className="text-xs font-bold text-slate-500 mb-1 block">Search Slot Name</label>
+                        <input
+                            type="text"
+                            placeholder="e.g. 1st term..."
+                            value={slotSearch}
+                            onChange={(e) => setSlotSearch(e.target.value)}
+                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                        />
+                    </div>
+                    <div className="flex-1 min-w-[150px]">
+                        <label className="text-xs font-bold text-slate-500 mb-1 block">Program</label>
+                        <select
+                            value={slotFilterProgram}
+                            onChange={(e) => setSlotFilterProgram(e.target.value)}
+                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                        >
+                            <option value="">All Programs</option>
+                            {uniquePrograms.map(p => <option key={p} value={p}>{p}</option>)}
+                        </select>
+                    </div>
+                    <div className="flex-1 min-w-[150px]">
+                        <label className="text-xs font-bold text-slate-500 mb-1 block">Status</label>
+                        <select
+                            value={slotFilterStatus}
+                            onChange={(e) => setSlotFilterStatus(e.target.value)}
+                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+                        >
+                            <option value="">All Statuses</option>
+                            {uniqueStatuses.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                    </div>
+                    {(slotSearch || slotFilterProgram || slotFilterStatus) && (
+                        <button
+                            onClick={() => {
+                                setSlotSearch('');
+                                setSlotFilterProgram('');
+                                setSlotFilterStatus('');
+                            }}
+                            className="px-4 py-2 bg-slate-200 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-300 transition-colors"
+                        >
+                            Clear
+                        </button>
+                    )}
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                    {slots.map(slot => (
+                    {filteredSlots.map(slot => (
                         <div
                             key={slot.id}
                             onClick={() => setSelectedSlot(slot)}
@@ -174,17 +247,34 @@ const ExaminationSlots = () => {
                                     <Calendar size={14} />
                                     {new Date(slot.start_date).toLocaleDateString()} - {new Date(slot.end_date).toLocaleDateString()}
                                 </span>
-                                <ChevronRight size={16} className="text-slate-300 group-hover:text-green-600 transition-colors" />
+                                <div className="flex items-center gap-3">
+                                    <div className="flex gap-1.5">
+                                        <div
+                                            className={`w-2 h-2 rounded-full ${Number(slot.total_exams) > 0 && Number(slot.completed_exams) >= Number(slot.total_exams) ? 'bg-green-500' : 'bg-slate-200'}`}
+                                            title={`Exams Completed (${slot.completed_exams || 0}/${slot.total_exams || 0})`}
+                                        />
+                                        <div
+                                            className={`w-2 h-2 rounded-full ${Number(slot.total_exams) > 0 && Number(slot.attendance_exams) >= Number(slot.total_exams) ? 'bg-green-500' : 'bg-slate-200'}`}
+                                            title={`Attendance Taken (${slot.attendance_exams || 0}/${slot.total_exams || 0})`}
+                                        />
+                                        <div
+                                            className={`w-2 h-2 rounded-full ${Number(slot.total_exams) > 0 && Number(slot.results_exams) >= Number(slot.total_exams) ? 'bg-green-500' : 'bg-slate-200'}`}
+                                            title={`Results Submitted (${slot.results_exams || 0}/${slot.total_exams || 0})`}
+                                        />
+                                    </div>
+                                    <ChevronRight size={16} className="text-slate-300 group-hover:text-green-600 transition-colors" />
+                                </div>
                             </div>
                         </div>
                     ))}
-                    {slots.length === 0 && (
+                    {filteredSlots.length === 0 && (
                         <div className="col-span-full text-center py-10 text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-300">
-                            No examination slots found. Create one to get started.
+                            {slots.length === 0 ? "No examination slots found. Create one to get started." : "No examination slots match your filters."}
                         </div>
                     )}
                 </div>
 
+                {/* Modal must be rendered here too so it works from the list view */}
                 <CreateSlotModal
                     isOpen={isSlotModalOpen}
                     onClose={() => { setIsSlotModalOpen(false); setEditingSlot(null); }}
@@ -226,7 +316,7 @@ const ExaminationSlots = () => {
                 {['exams', 'results', 'attendance'].map((tab) => (
                     <button
                         key={tab}
-                        onClick={() => setActiveTab(tab)}
+                        onClick={() => { setActiveTab(tab); setJumpToExamId(''); }}
                         className={`flex items-center gap-2 px-4 py-3 text-sm font-bold border-b-2 transition-all ${activeTab === tab
                             ? "border-green-600 text-green-700"
                             : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
@@ -350,6 +440,21 @@ const ExaminationSlots = () => {
                                             {/* Action Buttons */}
                                             <div className="flex items-center gap-1 pl-2 border-l border-slate-200 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <button
+                                                    onClick={() => { setJumpToExamId(exam.id); setActiveTab('attendance'); }}
+                                                    className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors flex items-center gap-1 text-xs font-bold"
+                                                    title="Take Attendance"
+                                                >
+                                                    <UserCheck size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={() => { setJumpToExamId(exam.id); setActiveTab('results'); }}
+                                                    className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors flex items-center gap-1 text-xs font-bold"
+                                                    title="Add Results"
+                                                >
+                                                    <GraduationCap size={16} />
+                                                </button>
+                                                <div className="w-px h-4 bg-slate-200 mx-1"></div>
+                                                <button
                                                     onClick={() => handleEditExam(exam)}
                                                     className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                                     title="Edit Exam"
@@ -399,19 +504,36 @@ const ExaminationSlots = () => {
             )}
 
             {activeTab === 'results' && (
-                <ResultsLog slotId={selectedSlot.id} exams={slotExams} />
+                <ResultsLog slotId={selectedSlot.id} exams={slotExams} initialExamId={jumpToExamId} />
             )}
 
             {activeTab === 'attendance' && (
-                <ExaminationAttendance slotId={selectedSlot.id} exams={slotExams} />
+                <ExaminationAttendance slotId={selectedSlot.id} exams={slotExams} initialExamId={jumpToExamId} />
             )}
 
             <CreateExamModal
                 isOpen={isExamModalOpen}
                 onClose={() => { setIsExamModalOpen(false); setEditingExam(null); }}
-                onSave={() => fetchSlotExams(selectedSlot.id)}
+                onSave={(savedData, wasEdit) => {
+                    if (wasEdit && savedData?.exam) {
+                        // Immediately update the edited exam card for instant UI feedback
+                        setSlotExams(prev => prev.map(e =>
+                            e.id === savedData.exam.id ? { ...e, ...savedData.exam } : e
+                        ));
+                    }
+                    // Always re-fetch for fully accurate data
+                    fetchSlotExams(selectedSlot.id);
+                }}
                 slot={selectedSlot} // Pass the slot context!
                 examToEdit={editingExam}
+            />
+
+            {/* Slot Modal — rendered always so it works from both list and detail view */}
+            <CreateSlotModal
+                isOpen={isSlotModalOpen}
+                onClose={() => { setIsSlotModalOpen(false); setEditingSlot(null); }}
+                onSave={fetchSlots}
+                slot={editingSlot}
             />
         </div>
     );

@@ -1,11 +1,11 @@
 // src/exams/ExaminationAttendance.jsx
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Calendar, UserCheck, XCircle, CheckCircle, Clock } from 'lucide-react';
 import { API_URL } from '../config';
 
-const ExaminationAttendance = ({ exams: propExams }) => {
+const ExaminationAttendance = ({ slotId, exams: propExams, initialExamId }) => {
     // --- State ---
-    const [selectedExamId, setSelectedExamId] = useState("");
+    const [selectedExamId, setSelectedExamId] = useState(initialExamId || "");
     const [searchQuery, setSearchQuery] = useState("");
     const [attendance, setAttendance] = useState({}); // { studentId: 'Present' | 'Absent' | 'Late' }
     const [exams, setExams] = useState([]);
@@ -31,6 +31,13 @@ const ExaminationAttendance = ({ exams: propExams }) => {
         fetchExams();
     }, [propExams]);
 
+    // Automatically select initial if passed subsequently
+    useEffect(() => {
+        if (initialExamId) {
+            setSelectedExamId(initialExamId);
+        }
+    }, [initialExamId]);
+
     useEffect(() => {
         if (!selectedExamId) {
             setStudents([]);
@@ -40,34 +47,27 @@ const ExaminationAttendance = ({ exams: propExams }) => {
 
         const fetchDetails = async () => {
             try {
-                // 1. Get Exam Details to know Program
-                const exam = exams.find(e => String(e.id) === String(selectedExamId));
-                if (!exam) return;
+                // Fetch accurately assigned students and their attendance status
+                const res = await fetch(`${API_URL}/api/exams/${selectedExamId}/results`);
+                if (res.ok) {
+                    const data = await res.json();
 
-                // 2. Fetch Students for that Program (Simplification: Fetch all and filter, or dedicated route)
-                // Better approach: Fetch students by program
-                const studentsRes = await fetch(`${API_URL}/api/students`); // Optimally: /api/students?programId=${exam.program_id}
-                let allStudents = [];
-                if (studentsRes.ok) allStudents = await studentsRes.json();
+                    const exam = exams.find(e => String(e.id) === String(selectedExamId));
 
-                // Filter by program and grade (if available in exam or inferred)
-                // Assuming exam has program_id. 
-                // Note: exam object keys depend on DB query (program_id)
-                const relevantStudents = allStudents.filter(s =>
-                    String(s.program_id) === String(exam.program_id)
-                    // && s.current_year === ... (if we enforced year/grade in exam)
-                );
-                setStudents(relevantStudents);
+                    const mappedStudents = data.map(r => ({
+                        id: r.student_id,
+                        name: r.student_name,
+                        program_name: exam?.program_name || '-'
+                    }));
 
-                // 3. Fetch Existing Attendance
-                const attRes = await fetch(`${API_URL}/api/exams/${selectedExamId}/attendance`);
-                if (attRes.ok) {
-                    const data = await attRes.json();
-                    const map = {};
-                    data.forEach(r => map[r.student_id] = r.status);
-                    setAttendance(map);
+                    setStudents(mappedStudents);
+
+                    const attMap = {};
+                    data.forEach(r => {
+                        attMap[r.student_id] = r.status; // Real status, can be null
+                    });
+                    setAttendance(attMap);
                 }
-
             } catch (err) {
                 console.error("Error fetching details:", err);
             }
@@ -78,42 +78,56 @@ const ExaminationAttendance = ({ exams: propExams }) => {
 
 
     // --- Helpers ---
-    const handleMark = async (studentId, status) => {
-        // Optimistic UI Update
+    const handleMark = (studentId, status) => {
+        // UI Update
         setAttendance(prev => ({ ...prev, [studentId]: status }));
+    };
 
-        // API Call
+    const handleMarkAll = (status) => {
+        const updates = {};
+        students.forEach(s => updates[s.id] = status);
+        setAttendance(prev => ({ ...prev, ...updates }));
+    };
+
+    const handleSaveAttendance = async () => {
+        if (!selectedExamId) return;
+        setSaving(true);
         try {
-            await fetch(`${API_URL}/api/exams/attendance`, {
+            // Only send attendance for students currently listed — avoids
+            // accidentally updating rows from a previously selected exam.
+            const filteredAttendance = {};
+            students.forEach(s => {
+                if (attendance[s.id] !== undefined) {
+                    filteredAttendance[s.id] = attendance[s.id];
+                }
+            });
+
+            const res = await fetch(`${API_URL}/api/exams/${selectedExamId}/attendance/bulk`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    examId: selectedExamId,
-                    studentId: studentId,
-                    status: status
+                    attendanceData: filteredAttendance
                 })
             });
+            if (res.ok) {
+                alert("Attendance saved successfully!");
+            } else {
+                alert("Failed to save attendance.");
+            }
         } catch (err) {
             console.error("Error saving attendance:", err);
-            alert("Failed to save status");
+            alert("Error saving attendance.");
+        } finally {
+            setSaving(false);
         }
-    };
-
-    const handleMarkAll = async (status) => {
-        const updates = {};
-        students.forEach(s => updates[s.id] = status);
-        setAttendance(updates);
-
-        // Batch save could be implemented, but iterating for now (or simple alert)
-        // In prod: add /bulk-attendance endpoint
-        // For now, simulate by looping in background or just local state if "Save Log" is main trigger
     };
 
     const getStats = () => {
         const total = students.length;
-        const present = Object.values(attendance).filter(s => s === 'Present').length;
-        const absent = Object.values(attendance).filter(s => s === 'Absent').length;
-        const late = Object.values(attendance).filter(s => s === 'Late').length;
+        // Count only against the currently displayed students to avoid stale map keys
+        const present = students.filter(s => attendance[s.id] === 'Present').length;
+        const absent = students.filter(s => attendance[s.id] === 'Absent').length;
+        const late = students.filter(s => attendance[s.id] === 'Late').length;
         return { total, present, absent, late };
     };
 
@@ -185,7 +199,15 @@ const ExaminationAttendance = ({ exams: propExams }) => {
                             />
                         </div>
                         <div className="flex gap-2 w-full md:w-auto">
-                            {/* <button onClick={() => handleMarkAll('Present')} className="px-3 py-1.5 text-xs font-bold bg-green-100 text-green-700 rounded hover:bg-green-200 transition">Mark All Present</button> */}
+                            <button onClick={() => handleMarkAll('Present')} className="px-3 py-1.5 text-xs font-bold bg-green-100 text-green-700 rounded hover:bg-green-200 transition">Mark All Present</button>
+                            <button onClick={() => handleMarkAll('Absent')} className="px-3 py-1.5 text-xs font-bold bg-red-100 text-red-700 rounded hover:bg-red-200 transition">Mark All Absent</button>
+                            <button
+                                onClick={handleSaveAttendance}
+                                disabled={saving}
+                                className={`px-4 py-2 text-sm font-bold text-white rounded shadow-md transition ${saving ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'}`}
+                            >
+                                {saving ? 'Saving...' : 'Save Attendance'}
+                            </button>
                         </div>
                     </div>
 
@@ -249,7 +271,7 @@ const ExaminationAttendance = ({ exams: propExams }) => {
                         </table>
                         {filteredStudents.length === 0 && (
                             <div className="p-10 text-center text-slate-400">
-                                {exams.length === 0 ? "Loading Exams..." : "No students found for this exam's program."}
+                                {students.length === 0 ? "No students found for this exam." : "No students match your search."}
                             </div>
                         )}
                     </div>

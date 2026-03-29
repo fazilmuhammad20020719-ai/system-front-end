@@ -120,7 +120,7 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot, examToEdit = null }) =
                             supervisorId: ''
                         });
                         setParts([{ name: 'Main Exam', date: '', startTime: '', endTime: '', venue: '' }]);
-                        setPartCount(2);
+                        setPartCount(1);
                         setSelectedStudentIds([]);
                         setSelectedAllStudents(false);
                     }
@@ -153,10 +153,40 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot, examToEdit = null }) =
     });
 
     // 3. Filtered Students
+    const selectedGradeNum = formData.grade ? formData.grade.replace('Grade ', '').trim() : null;
     const availableStudents = students.filter(s => {
-        const gradeMatch = formData.grade && (s.currentYear === formData.grade || s.currentYear === formData.grade.replace('Grade ', ''));
-        const programMatch = slot?.program_id ? String(s.program_id) === String(slot.program_id) : true;
-        return gradeMatch && programMatch;
+        if (!selectedGradeNum) return false;
+
+        // If slot has a specific program, check if the student is enrolled in that program
+        // AND their year in that program matches the selected grade
+        if (slot?.program_id) {
+            const slotProgramId = String(slot.program_id);
+            // Check enrollments_summary for a match on both program_id and year
+            const enrollments = s.enrollments_summary || [];
+            const matchedEnrollment = enrollments.find(e =>
+                String(e.program_id) === slotProgramId &&
+                (String(e.year) === selectedGradeNum || String(e.year) === `Grade ${selectedGradeNum}`)
+            );
+            if (matchedEnrollment) return true;
+
+            // Fallback: check primary program_id and currentYear
+            const programMatch = String(s.program_id) === slotProgramId ||
+                (Array.isArray(s.program_ids) && s.program_ids.some(pid => String(pid) === slotProgramId));
+            const gradeMatch = s.currentYear &&
+                (String(s.currentYear) === selectedGradeNum || String(s.currentYear) === `Grade ${selectedGradeNum}`);
+            return programMatch && gradeMatch;
+        }
+
+        // No slot program restriction — just match grade across any enrollment
+        const enrollments = s.enrollments_summary || [];
+        const anyGradeMatch = enrollments.some(e =>
+            String(e.year) === selectedGradeNum || String(e.year) === `Grade ${selectedGradeNum}`
+        );
+        if (anyGradeMatch) return true;
+
+        // Fallback to legacy currentYear field
+        return s.currentYear &&
+            (String(s.currentYear) === selectedGradeNum || String(s.currentYear) === `Grade ${selectedGradeNum}`);
     });
 
     // --- Handlers ---
@@ -206,7 +236,11 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot, examToEdit = null }) =
             } else if (count < prev.length) {
                 newParts.splice(count);
             }
-            return newParts.map((p, i) => ({ ...p, name: `Part ${i + 1}` }));
+            // Only auto-name newly added parts; preserve existing user-defined names
+            return newParts.map((p, i) => ({
+                ...p,
+                name: i < prev.length ? p.name : `Part ${i + 1}`
+            }));
         });
     };
 
@@ -281,8 +315,13 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot, examToEdit = null }) =
             // If strictly needed, we assume the backend handles null or we rely on subject linkage.
             const inferredProgramId = slot?.program_id ? parseInt(slot.program_id) : selectedSubject?.program_id;
 
+            // Guard: ensure auto-generated title never produces "undefined - ..."
+            const autoTitle = selectedSubject?.name
+                ? `${selectedSubject.name} - ${formData.grade} Exam`
+                : `${formData.grade} Exam`;
+
             const payload = {
-                title: formData.title || `${selectedSubject?.name} - ${formData.grade} Exam`,
+                title: formData.title || autoTitle,
                 grade: formData.grade,
                 subjectId: formData.subjectId,
                 programId: inferredProgramId,
@@ -304,8 +343,8 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot, examToEdit = null }) =
             });
 
             if (response.ok) {
-                const newExam = await response.json();
-                onSave(newExam);
+                const savedData = await response.json();
+                onSave(savedData, !!examToEdit);
                 onClose();
             } else {
                 alert("Failed to save exam");
@@ -366,7 +405,7 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot, examToEdit = null }) =
                             ))}
                         </div>
                         <button onClick={handleFinalSubmit} disabled={loading} className="w-full py-2.5 bg-green-600 text-white rounded-lg font-bold shadow hover:bg-green-700 transition-colors">
-                            {loading ? 'Scheduling...' : 'Confirm & Create'}
+                            {loading ? (examToEdit ? 'Updating...' : 'Scheduling...') : (examToEdit ? 'Confirm & Update' : 'Confirm & Create')}
                         </button>
                     </div>
                 </div>
@@ -382,8 +421,8 @@ const CreateExamModal = ({ isOpen, onClose, onSave, slot, examToEdit = null }) =
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                     <div>
-                        <h2 className="text-xl font-bold text-gray-800">Create New Exam</h2>
-                        <p className="text-xs text-gray-500 mt-0.5">Configure exam structure, assign students, and set schedule.</p>
+                        <h2 className="text-xl font-bold text-gray-800">{examToEdit ? 'Edit Exam' : 'Create New Exam'}</h2>
+                        <p className="text-xs text-gray-500 mt-0.5">{examToEdit ? 'Update exam details, schedule, and students.' : 'Configure exam structure, assign students, and set schedule.'}</p>
                     </div>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-full">
                         <X size={20} />

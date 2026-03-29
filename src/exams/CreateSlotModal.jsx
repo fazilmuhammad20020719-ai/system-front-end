@@ -1,5 +1,6 @@
 // src/exams/CreateSlotModal.jsx
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Save, Layers, Calendar, CheckCircle } from 'lucide-react';
 import { API_URL } from '../config';
 
@@ -78,8 +79,8 @@ const CreateSlotModal = ({ isOpen, onClose, onSave, slot = null }) => {
 
     if (!isOpen) return null;
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    return createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in duration-200">
                 <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                     <h2 className="text-xl font-bold text-gray-800">{slot ? 'Edit Examination Slot' : 'Add Examination Slot'}</h2>
@@ -145,7 +146,8 @@ const CreateSlotModal = ({ isOpen, onClose, onSave, slot = null }) => {
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

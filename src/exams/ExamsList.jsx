@@ -1,5 +1,6 @@
 // src/exams/ExamsList.jsx
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Plus, Search, Calendar, Clock, AlertCircle, Trash2, Edit2, User, Users, CheckCircle, XCircle } from 'lucide-react';
 import CreateExamModal from './CreateExamModal';
 import { API_URL } from '../config';
@@ -9,6 +10,7 @@ const ExamsList = () => {
     const [exams, setExams] = useState([]);
     const [editingExam, setEditingExam] = useState(null);
     const [detailsExam, setDetailsExam] = useState(null); // For Details View
+    const [searchQuery, setSearchQuery] = useState('');
 
     const fetchExams = async () => {
         try {
@@ -60,6 +62,28 @@ const ExamsList = () => {
         setIsModalOpen(true);
     };
 
+    const handleSave = (savedData, wasEdit) => {
+        if (wasEdit && savedData?.exam) {
+            // Immediately update the matching exam card for instant UI feedback
+            setExams(prev => prev.map(e =>
+                e.id === savedData.exam.id ? { ...e, ...savedData.exam } : e
+            ));
+        }
+        // Always re-fetch to get fully-accurate list with counts etc.
+        fetchExams();
+    };
+
+    // Filter exams by title, subject or program name
+    const filteredExams = exams.filter(exam => {
+        if (!searchQuery.trim()) return true;
+        const q = searchQuery.toLowerCase();
+        return (
+            exam.title?.toLowerCase().includes(q) ||
+            exam.subject_name?.toLowerCase().includes(q) ||
+            exam.program_name?.toLowerCase().includes(q)
+        );
+    });
+
     const StatusBadge = ({ status }) => {
         let colors = 'bg-slate-100 text-slate-600';
         if (status === 'Upcoming') colors = 'bg-blue-100 text-blue-700';
@@ -83,6 +107,8 @@ const ExamsList = () => {
                     <input
                         type="text"
                         placeholder="Search exams..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
                         className="pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 w-64 shadow-sm"
                     />
                 </div>
@@ -97,7 +123,7 @@ const ExamsList = () => {
 
             {/* Modern Card Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {exams.map((exam) => (
+                {filteredExams.map((exam) => (
                     <div key={exam.id} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow group flex flex-col h-full">
                         <div className="flex justify-between items-start mb-3">
                             <StatusBadge status={exam.status} />
@@ -160,13 +186,13 @@ const ExamsList = () => {
             <CreateExamModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                onSave={fetchExams}
+                onSave={handleSave}
                 examToEdit={editingExam}
             />
 
             {/* Details Modal */}
-            {detailsExam && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+            {detailsExam && createPortal(
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
                     <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
                         <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                             <h2 className="text-lg font-bold text-gray-800">Exam Details</h2>
@@ -224,7 +250,8 @@ const ExamsList = () => {
                             </div>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

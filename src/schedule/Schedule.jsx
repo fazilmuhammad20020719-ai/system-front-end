@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, MapPin, User, Plus, Edit2, ClipboardCheck, ChevronDown, ChevronLeft, ChevronRight, Calendar, Zap, Download, X } from 'lucide-react';
+import { Clock, MapPin, User, Plus, Edit2, ClipboardCheck, ChevronDown, ChevronLeft, ChevronRight, Calendar, Zap, Download, X, Trash2 } from 'lucide-react';
 import Sidebar from '../Sidebar';
 import ScheduleModal from './ScheduleModal';
 import FastScheduleModal from './FastScheduleModal';
@@ -35,8 +35,11 @@ const Schedule = () => {
     const [showExportModal, setShowExportModal] = useState(false);
     const [selectedProgramForExport, setSelectedProgramForExport] = useState(null);
     const [exportGradeSelection, setExportGradeSelection] = useState('All');
+    const [exportSubjectSelection, setExportSubjectSelection] = useState('All');
+    const [exportTeacherSelection, setExportTeacherSelection] = useState('All');
     const [selectedSlotForAttendance, setSelectedSlotForAttendance] = useState(null);
     const [editingSchedule, setEditingSchedule] = useState(null);
+    const [editingSlotDate, setEditingSlotDate] = useState(null); // Calendar date of the slot being edited
     const [selectedProgramForAdd, setSelectedProgramForAdd] = useState(null);
     const [selectedDayForAdd, setSelectedDayForAdd] = useState('Monday');
     const [isBreakMode, setIsBreakMode] = useState(false);
@@ -134,7 +137,7 @@ const Schedule = () => {
                     let hasChanges = false;
                     progData.forEach(p => {
                         if (!newFilters[p.name]) {
-                            newFilters[p.name] = { grade: 'All', subjectId: 'All' };
+                            newFilters[p.name] = { grade: 'All', subjectId: 'All', status: 'All' };
                             hasChanges = true;
                         }
                     });
@@ -208,19 +211,27 @@ const Schedule = () => {
     };
 
     // --- Handlers ---
-    const executeExport = (programName, selectedGrade) => {
+    const executeExport = (programName, selectedGrade, selectedSubject = 'All', selectedTeacher = 'All') => {
         const programSlots = schedules.filter(s => {
             const sSubId = parseInt(s.subject_id || s.subjectId);
             if (!sSubId && s.type === 'Break') {
                 const currentProgramObj = titlePrograms.find(p => p.name === programName);
                 if (selectedGrade !== 'All') return false;
+                if (selectedSubject !== 'All' || selectedTeacher !== 'All') return false;
                 return s.program_id === currentProgramObj?.id;
             }
             const subject = subjects.find(sub => sub.id === sSubId);
             if (subject?.program !== programName) return false;
 
-            if (selectedGrade !== 'All') {
-                return (subject?.year === selectedGrade);
+            if (selectedGrade !== 'All' && subject?.year !== selectedGrade) {
+                return false;
+            }
+            if (selectedSubject !== 'All' && sSubId.toString() !== selectedSubject.toString()) {
+                return false;
+            }
+            const tId = parseInt(s.teacher_id || s.teacherId);
+            if (selectedTeacher !== 'All' && tId.toString() !== selectedTeacher.toString()) {
+                return false;
             }
             return true;
         });
@@ -303,10 +314,11 @@ const Schedule = () => {
         setShowScheduleModal(true);
     };
 
-    const handleEditClick = (slot) => {
+    const handleEditClick = (slot, slotDate) => {
         const subject = subjects.find(s => s.id === parseInt(slot.subject_id || slot.subjectId));
         setSelectedProgramForAdd(subject ? subject.program : null);
         setIsBreakMode(slot.type === 'Break'); // Set break mode if editing a break
+        setEditingSlotDate(slotDate || null);
         setEditingSchedule({
             id: slot.id,
             day: slot.day_of_week || slot.day,
@@ -356,7 +368,32 @@ const Schedule = () => {
             });
 
             if (res.ok) {
-                // Refresh data using the robust fetch function
+                const responseData = await res.json();
+
+                // For versioned edits, the backend returns { oldId, newId, schedule }
+                // We need to update local state: replace the OLD slot with the NEW one
+                // so attendance/edit actions use the correct new schedule_id
+                if (editingSchedule && responseData.newId && responseData.oldId) {
+                    // Optimistic swap: replace old slot entry with new one in local state
+                    setSchedules(prev => prev.map(s =>
+                        s.id === responseData.oldId
+                            ? {
+                                ...s,
+                                id: responseData.newId,
+                                subject_id: responseData.schedule.subject_id,
+                                teacher_id: responseData.schedule.teacher_id,
+                                day_of_week: responseData.schedule.day_of_week,
+                                start_time: responseData.schedule.start_time,
+                                end_time: responseData.schedule.end_time,
+                                type: responseData.schedule.type,
+                                effective_from: responseData.schedule.effective_from,
+                                effective_to: null,
+                            }
+                            : s
+                    ));
+                }
+
+                // Full refresh to ensure complete sync
                 fetchData();
                 setShowScheduleModal(false);
             } else {
@@ -370,21 +407,70 @@ const Schedule = () => {
     };
 
     const handleDeleteSchedule = async (id) => {
-        if (window.confirm("Are you sure you want to delete this class slot?")) {
-            try {
-                // FIXED: URL changed from /api/schedule to /api/schedules
-                const res = await fetch(`${API_URL}/api/schedules/${id}`, {
-                    method: 'DELETE'
-                });
-                if (res.ok) {
-                    setSchedules(schedules.filter(s => s.id !== id));
-                    setShowScheduleModal(false);
-                } else {
-                    alert("Failed to delete");
-                }
-            } catch (err) {
-                console.error("Delete error", err);
+        // Soft-close: set effective_to = yesterday so historical attendance is preserved
+        try {
+            const res = await fetch(`${API_URL}/api/schedules/${id}`, {
+                method: 'DELETE'
+            });
+            if (res.ok) {
+                setSchedules(prev => prev.filter(s => s.id !== id));
+                setShowScheduleModal(false);
+            } else {
+                alert("Failed to delete");
             }
+        } catch (err) {
+            console.error("Delete error", err);
+        }
+    };
+
+    const handleSkipThisWeek = async (scheduleId, date) => {
+        if (!date) {
+            alert('Cannot determine the date for this slot. Please try again.');
+            return;
+        }
+        try {
+            const res = await fetch(`${API_URL}/api/attendance/session-status`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ scheduleId, date, status: 'Skipped' })
+            });
+            if (res.ok) {
+                setShowScheduleModal(false);
+                fetchData(); // Refresh — the skipped session will now hide this column's slot
+            } else {
+                alert('Failed to skip this week.');
+            }
+        } catch (err) {
+            console.error('Skip week error:', err);
+            alert('Connection error');
+        }
+    };
+
+    const handleClearAllSlots = async (programName) => {
+        const programObj = titlePrograms.find(p => p.name === programName);
+        if (!programObj) return;
+        const slotCount = schedules.filter(s => {
+            const sSubId = parseInt(s.subject_id || s.subjectId);
+            if (!sSubId && s.type === 'Break') return s.program_id === programObj.id;
+            const subject = subjects.find(sub => sub.id === sSubId);
+            return subject?.program === programName;
+        }).length;
+        if (slotCount === 0) {
+            alert(`No active slots to clear for ${programName}.`);
+            return;
+        }
+        if (!window.confirm(`Clear all ${slotCount} slot(s) for "${programName}"?\n\nThis closes every active slot for this program. Historical attendance records are preserved.`)) return;
+        try {
+            const res = await fetch(`${API_URL}/api/schedules/by-program/${programObj.id}`, { method: 'DELETE' });
+            if (res.ok) {
+                fetchData();
+            } else {
+                const err = await res.json();
+                alert(`Failed to clear slots: ${err.message || 'Unknown error'}`);
+            }
+        } catch (err) {
+            console.error('Clear all error:', err);
+            alert('Connection error');
         }
     };
 
@@ -486,7 +572,48 @@ const Schedule = () => {
                             </div>
                         )}
                         {programs.map(program => {
-                            const pFilters = programFilters[program] || { grade: 'All', subjectId: 'All' };
+                            const pFilters = programFilters[program] || { grade: 'All', subjectId: 'All', status: 'All' };
+
+                            // Calculate Stats for this program
+                            let programStats = { completed: 0, cancelled: 0, pending: 0 };
+                            schedules.forEach(s => {
+                                const sSubId = parseInt(s.subject_id || s.subjectId);
+                                let pMatch = false;
+                                if (!sSubId && s.type === 'Break') {
+                                    const currentProgramObj = titlePrograms.find(p => p.name === program);
+                                    pMatch = s.program_id === currentProgramObj?.id;
+                                } else {
+                                    const subject = subjects.find(sub => sub.id === sSubId);
+                                    pMatch = subject?.program === program;
+                                }
+                                if (!pMatch) return;
+
+                                // Ignore breaks for stats
+                                if (!sSubId && s.type === 'Break') return;
+
+                                const dayList = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                                const slotDay = s.day_of_week || s.day;
+                                const dIndex = dayList.indexOf(slotDay);
+                                if (dIndex === -1) return;
+
+                                const dDate = new Date(currentWeekStart);
+                                dDate.setDate(dDate.getDate() + dIndex);
+                                const colDateStr = dDate.toISOString().split('T')[0];
+
+                                const slotEffectiveFrom = s.effectiveFrom || s.effective_from;
+                                if (slotEffectiveFrom && colDateStr < slotEffectiveFrom) return;
+
+                                const sessionForThisSlot = attendanceData.find(a =>
+                                    parseInt(a.schedule_id) === parseInt(s.id) &&
+                                    a.date.split('T')[0] === colDateStr
+                                );
+                                if (sessionForThisSlot?.status?.toLowerCase() === 'skipped') return;
+
+                                const status = s.attendanceStatus || 'pending';
+                                if (status === 'completed') programStats.completed++;
+                                else if (status === 'cancelled') programStats.cancelled++;
+                                else programStats.pending++;
+                            });
 
                             // DYNAMIC GRADE GENERATION BASED ON DURATION
                             const currentProgramObj = titlePrograms.find(p => p.name === program);
@@ -504,71 +631,116 @@ const Schedule = () => {
                             return (
                                 <div key={program} className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                                     {/* Program Header & Filters */}
-                                    <div className="p-4 border-b border-gray-100 bg-gray-50/50 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
-                                        <div className="flex items-center gap-3 min-w-[200px]">
-                                            <div className="w-1.5 h-8 bg-[#ea8933] rounded-full"></div>
-                                            <h2 className="text-lg font-bold text-gray-800">{program}</h2>
+                                    <div className="p-4 border-b border-gray-100 bg-gray-50/50 flex flex-col gap-4">
+                                        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
+                                            <div className="flex items-center gap-3 min-w-[200px]">
+                                                <div className="w-1.5 h-8 bg-[#ea8933] rounded-full"></div>
+                                                <h2 className="text-lg font-bold text-gray-800">{program}</h2>
+                                            </div>
+
+                                            <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto">
+                                                {/* Grade Filter */}
+                                                <div className="relative group flex-1 xl:flex-none min-w-[140px]">
+                                                    <div className="flex items-center justify-between gap-2 bg-white border border-gray-200 px-3 py-1.5 rounded-lg text-xs font-bold text-gray-700 cursor-pointer hover:bg-gray-50 transition-colors">
+                                                        <span className="truncate">Grade: {pFilters.grade}</span>
+                                                        <ChevronDown size={14} className="text-gray-400 shrink-0" />
+                                                    </div>
+                                                    <select
+                                                        value={pFilters.grade}
+                                                        onChange={(e) => handleFilterChange(program, 'grade', e.target.value)}
+                                                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                                    >
+                                                        <option value="All">All Grades</option>
+                                                        {programUniqueGrades.map(grade => (
+                                                            <option key={grade} value={grade}>{grade}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+
+                                                {/* Subject Filter */}
+                                                <div className="relative group flex-1 xl:flex-none min-w-[160px]">
+                                                    <div className="flex items-center justify-between gap-2 bg-white border border-gray-200 px-3 py-1.5 rounded-lg text-xs font-bold text-gray-700 cursor-pointer hover:bg-gray-50 transition-colors">
+                                                        <span className="truncate">
+                                                            Subject: {pFilters.subjectId === 'All' ? 'All' : subjects.find(s => s.id === parseInt(pFilters.subjectId))?.name}
+                                                        </span>
+                                                        <ChevronDown size={14} className="text-gray-400 shrink-0" />
+                                                    </div>
+                                                    <select
+                                                        value={pFilters.subjectId}
+                                                        onChange={(e) => handleFilterChange(program, 'subjectId', e.target.value)}
+                                                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                                    >
+                                                        <option value="All">All Subjects</option>
+                                                        {subjects
+                                                            .filter(s => s.program === program && (pFilters.grade === 'All' || s.year === pFilters.grade))
+                                                            .map(subject => (
+                                                                <option key={subject.id} value={subject.id}>{subject.name}</option>
+                                                            ))}
+                                                    </select>
+                                                </div>
+
+                                                {/* Status Filter */}
+                                                <div className="relative group flex-1 xl:flex-none min-w-[140px]">
+                                                    <div className="flex items-center justify-between gap-2 bg-white border border-gray-200 px-3 py-1.5 rounded-lg text-xs font-bold text-gray-700 cursor-pointer hover:bg-gray-50 transition-colors">
+                                                        <span className="truncate">Status: {pFilters.status === 'All' ? 'All Statuses' : pFilters.status.charAt(0).toUpperCase() + pFilters.status.slice(1)}</span>
+                                                        <ChevronDown size={14} className="text-gray-400 shrink-0" />
+                                                    </div>
+                                                    <select
+                                                        value={pFilters.status}
+                                                        onChange={(e) => handleFilterChange(program, 'status', e.target.value)}
+                                                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                                    >
+                                                        <option value="All">All Statuses</option>
+                                                        <option value="pending">Pending</option>
+                                                        <option value="completed">Completed</option>
+                                                        <option value="cancelled">Cancelled</option>
+                                                    </select>
+                                                </div>
+
+                                                <div className="flex gap-2 ml-auto xl:ml-0">
+                                                    <button
+                                                        onClick={() => handleClearAllSlots(program)}
+                                                        className="px-3 py-1.5 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 border border-red-200 text-xs font-bold flex items-center gap-2 shadow-sm transition-all hover:shadow-md"
+                                                        title="Clear all slots for this program"
+                                                    >
+                                                        <Trash2 size={14} /> Clear All
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedProgramForExport(program);
+                                                            setExportGradeSelection('All');
+                                                            setExportSubjectSelection('All');
+                                                            setExportTeacherSelection('All');
+                                                            setShowExportModal(true);
+                                                        }}
+                                                        className="px-4 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 border border-gray-200 text-xs font-bold flex items-center gap-2 shadow-sm transition-all hover:shadow-md"
+                                                        title="Export Timetable as CSV"
+                                                    >
+                                                        <Download size={14} /> Export
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleAddClick(program)}
+                                                        className="px-4 py-1.5 bg-[#ea8933] text-white rounded-lg hover:bg-[#d97c2a] text-xs font-bold flex items-center gap-2 shadow-sm transition-all hover:shadow-md"
+                                                    >
+                                                        <Plus size={14} /> Add Slot
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
 
-                                        <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto">
-                                            {/* Grade Filter */}
-                                            <div className="relative group flex-1 xl:flex-none min-w-[140px]">
-                                                <div className="flex items-center justify-between gap-2 bg-white border border-gray-200 px-3 py-1.5 rounded-lg text-xs font-bold text-gray-700 cursor-pointer hover:bg-gray-50 transition-colors">
-                                                    <span className="truncate">Grade: {pFilters.grade}</span>
-                                                    <ChevronDown size={14} className="text-gray-400 shrink-0" />
-                                                </div>
-                                                <select
-                                                    value={pFilters.grade}
-                                                    onChange={(e) => handleFilterChange(program, 'grade', e.target.value)}
-                                                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                                                >
-                                                    <option value="All">All Grades</option>
-                                                    {programUniqueGrades.map(grade => (
-                                                        <option key={grade} value={grade}>{grade}</option>
-                                                    ))}
-                                                </select>
+                                        {/* Stats Boxes */}
+                                        <div className="grid grid-cols-3 gap-3">
+                                            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 flex items-center justify-between shadow-sm">
+                                                <div className="text-xs font-bold text-yellow-700 uppercase">Pending Classes</div>
+                                                <div className="text-lg font-black text-yellow-600">{programStats.pending}</div>
                                             </div>
-
-                                            {/* Subject Filter */}
-                                            <div className="relative group flex-1 xl:flex-none min-w-[160px]">
-                                                <div className="flex items-center justify-between gap-2 bg-white border border-gray-200 px-3 py-1.5 rounded-lg text-xs font-bold text-gray-700 cursor-pointer hover:bg-gray-50 transition-colors">
-                                                    <span className="truncate">
-                                                        Subject: {pFilters.subjectId === 'All' ? 'All' : subjects.find(s => s.id === parseInt(pFilters.subjectId))?.name}
-                                                    </span>
-                                                    <ChevronDown size={14} className="text-gray-400 shrink-0" />
-                                                </div>
-                                                <select
-                                                    value={pFilters.subjectId}
-                                                    onChange={(e) => handleFilterChange(program, 'subjectId', e.target.value)}
-                                                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                                                >
-                                                    <option value="All">All Subjects</option>
-                                                    {subjects
-                                                        .filter(s => s.program === program && (pFilters.grade === 'All' || s.year === pFilters.grade))
-                                                        .map(subject => (
-                                                            <option key={subject.id} value={subject.id}>{subject.name}</option>
-                                                        ))}
-                                                </select>
+                                            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-center justify-between shadow-sm">
+                                                <div className="text-xs font-bold text-emerald-700 uppercase">Completed Classes</div>
+                                                <div className="text-lg font-black text-emerald-600">{programStats.completed}</div>
                                             </div>
-
-                                            <div className="flex gap-2 ml-auto xl:ml-0">
-                                                <button
-                                                    onClick={() => {
-                                                        setSelectedProgramForExport(program);
-                                                        setExportGradeSelection('All');
-                                                        setShowExportModal(true);
-                                                    }}
-                                                    className="px-4 py-1.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 border border-gray-200 text-xs font-bold flex items-center gap-2 shadow-sm transition-all hover:shadow-md"
-                                                    title="Export Timetable as CSV"
-                                                >
-                                                    <Download size={14} /> Export
-                                                </button>
-                                                <button
-                                                    onClick={() => handleAddClick(program)}
-                                                    className="px-4 py-1.5 bg-[#ea8933] text-white rounded-lg hover:bg-[#d97c2a] text-xs font-bold flex items-center gap-2 shadow-sm transition-all hover:shadow-md"
-                                                >
-                                                    <Plus size={14} /> Add Slot
-                                                </button>
+                                            <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 flex items-center justify-between shadow-sm">
+                                                <div className="text-xs font-bold text-rose-700 uppercase">Cancelled Classes</div>
+                                                <div className="text-lg font-black text-rose-600">{programStats.cancelled}</div>
                                             </div>
                                         </div>
                                     </div>
@@ -581,6 +753,24 @@ const Schedule = () => {
 
                                                 const daySlots = schedules.filter(s => {
                                                     const sSubId = parseInt(s.subject_id || s.subjectId);
+
+                                                    // Compute once for both guards below
+                                                    const columnDateStr = currentDayDate.toISOString().split('T')[0];
+
+                                                    // Effective-date guard: only show the slot if its first occurrence
+                                                    // has already reached or passed the current column date.
+                                                    // This prevents a "Friday slot created on Monday" from appearing
+                                                    // in Monday/Tuesday/Wednesday/Thursday columns.
+                                                    const slotEffectiveFrom = s.effectiveFrom || s.effective_from;
+                                                    if (slotEffectiveFrom && columnDateStr < slotEffectiveFrom) return false;
+
+                                                    // Skip-this-week guard: hide if this occurrence is marked Skipped
+                                                    const sessionForThisSlot = attData.find(a =>
+                                                        parseInt(a.schedule_id) === parseInt(s.id) &&
+                                                        a.date.split('T')[0] === columnDateStr
+                                                    );
+                                                    if (sessionForThisSlot?.status?.toLowerCase() === 'skipped') return false;
+
                                                     if (!sSubId && s.type === 'Break') {
                                                         // Break Logic: Show breaks for this program/day
                                                         // Assuming breaks are program-wide or we might need grade filter?
@@ -598,8 +788,10 @@ const Schedule = () => {
                                                     const programMatch = subject?.program === program;
                                                     const gradeMatch = pFilters.grade === 'All' || subject?.year === pFilters.grade;
                                                     const subjectMatch = pFilters.subjectId === 'All' || sSubId === parseInt(pFilters.subjectId);
+                                                    const sStatus = s.attendanceStatus || 'pending';
+                                                    const statusMatch = pFilters.status === 'All' || sStatus === pFilters.status;
 
-                                                    return dayMatch && programMatch && gradeMatch && subjectMatch;
+                                                    return dayMatch && programMatch && gradeMatch && subjectMatch && (s.type === 'Break' ? true : statusMatch);
                                                 }).sort((a, b) => (a.start_time || a.startTime).localeCompare(b.start_time || b.startTime));
 
                                                 return (
@@ -672,7 +864,7 @@ const Schedule = () => {
                                                                     <div
                                                                         key={slot.id}
                                                                         className={`p-3 rounded-lg border shadow-sm transition-all group relative cursor-pointer ${colorClass} ${status === 'cancelled' ? 'opacity-60 grayscale' : ''}`}
-                                                                        onClick={() => handleEditClick(slot)}
+                                                                        onClick={() => handleEditClick(slot, currentDayDate.toISOString().split('T')[0])}
                                                                     >
                                                                         <div className="absolute top-1 right-1 flex gap-1 z-10">
                                                                             <button
@@ -747,6 +939,8 @@ const Schedule = () => {
                     existingSchedules={schedules}
                     onSave={handleSaveSchedule}
                     onDelete={handleDeleteSchedule}
+                    onDeleteWeek={handleSkipThisWeek}
+                    slotDate={editingSlotDate}
                     programGrades={programUniqueGrades}
                     defaultGrade={programFilters[selectedProgramForAdd]?.grade}
                     isBreak={isBreakMode}
@@ -774,22 +968,33 @@ const Schedule = () => {
                         <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-200">
                             <div className="p-5 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
                                 <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                                    <Download size={18} className="text-[#ea8933]" /> Export Timetable
+                                    <Download size={18} className="text-[#ea8933]" /> Export Options
                                 </h3>
                                 <button onClick={() => setShowExportModal(false)} className="text-gray-400 hover:text-gray-600 rounded-lg p-1 hover:bg-gray-100 transition-colors">
                                     <X size={20} />
                                 </button>
                             </div>
-                            <div className="p-5">
-                                <p className="text-sm text-gray-600 mb-4">
-                                    Export schedule for <strong className="text-[#ea8933]">{selectedProgramForExport}</strong>. Select which grade to export, or export all grades.
+                            <div className="p-5 space-y-4">
+                                <p className="text-sm text-gray-600 mb-2">
+                                    Export schedule for <strong className="text-[#ea8933]">{selectedProgramForExport}</strong>. Use filters to customize the exported CSV.
                                 </p>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-gray-700 block mb-1">Select Grade</label>
+
+                                {/* Grade Export Filter */}
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-gray-700 block">Select Grade</label>
                                     <select
                                         value={exportGradeSelection}
-                                        onChange={(e) => setExportGradeSelection(e.target.value)}
-                                        className="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#ea8933] focus:border-transparent transition-all shadow-sm"
+                                        onChange={(e) => {
+                                            setExportGradeSelection(e.target.value);
+                                            // Reset subject when grade changes to avoid mismatch
+                                            if (e.target.value !== 'All' && exportSubjectSelection !== 'All') {
+                                                const selSubj = subjects.find(s => s.id.toString() === exportSubjectSelection);
+                                                if (selSubj && selSubj.year !== e.target.value) {
+                                                    setExportSubjectSelection('All');
+                                                }
+                                            }
+                                        }}
+                                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#ea8933] focus:border-transparent transition-all shadow-sm"
                                     >
                                         <option value="All">All Grades</option>
                                         {getProgramGrades(selectedProgramForExport).map(grade => (
@@ -797,6 +1002,39 @@ const Schedule = () => {
                                         ))}
                                     </select>
                                 </div>
+
+                                {/* Subject Export Filter */}
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-gray-700 block">Select Subject</label>
+                                    <select
+                                        value={exportSubjectSelection}
+                                        onChange={(e) => setExportSubjectSelection(e.target.value)}
+                                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#ea8933] focus:border-transparent transition-all shadow-sm"
+                                    >
+                                        <option value="All">All Subjects</option>
+                                        {subjects
+                                            .filter(s => s.program === selectedProgramForExport && (exportGradeSelection === 'All' || s.year === exportGradeSelection))
+                                            .map(subject => (
+                                                <option key={subject.id} value={subject.id}>{subject.name}</option>
+                                            ))}
+                                    </select>
+                                </div>
+
+                                {/* Teacher Export Filter */}
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-gray-700 block">Assigned Teacher</label>
+                                    <select
+                                        value={exportTeacherSelection}
+                                        onChange={(e) => setExportTeacherSelection(e.target.value)}
+                                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#ea8933] focus:border-transparent transition-all shadow-sm"
+                                    >
+                                        <option value="All">All Teachers</option>
+                                        {teachers.map(teacher => (
+                                            <option key={teacher.id} value={teacher.id}>{teacher.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
                             </div>
                             <div className="p-5 bg-gray-50 border-t border-gray-100 flex gap-3">
                                 <button
@@ -806,7 +1044,10 @@ const Schedule = () => {
                                     Cancel
                                 </button>
                                 <button
-                                    onClick={() => executeExport(selectedProgramForExport, exportGradeSelection)}
+                                    onClick={() => {
+                                        executeExport(selectedProgramForExport, exportGradeSelection, exportSubjectSelection, exportTeacherSelection);
+                                        setShowExportModal(false);
+                                    }}
                                     className="flex-1 px-4 py-2.5 bg-[#ea8933] text-white rounded-xl text-sm font-bold hover:bg-[#d97c2a] transition-all shadow-sm shadow-orange-200 flex items-center justify-center gap-2"
                                 >
                                     <Download size={16} /> Download CSV

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { FileText, Download, Eye, Trash2, Plus, FilePenLine, MoreVertical } from 'lucide-react';
 import { API_URL } from '../config';
 import RenameModal from '../documents/RenameModal';
@@ -16,7 +16,12 @@ const TeacherDocuments = ({ documents = [], teacherId, refreshTeacher }) => {
     const [openDropdownId, setOpenDropdownId] = useState(null);
 
     // Close dropdown when clicking outside
-    useEffect(() => {
+    import('react').then(({ useEffect }) => {
+        // Handle useEffect in functional scope
+    });
+
+    const React = require('react');
+    React.useEffect(() => {
         const handleClickOutside = () => setOpenDropdownId(null);
         document.addEventListener('click', handleClickOutside);
         return () => document.removeEventListener('click', handleClickOutside);

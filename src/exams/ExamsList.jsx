@@ -1,6 +1,5 @@
 // src/exams/ExamsList.jsx
 import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { Plus, Search, Calendar, Clock, AlertCircle, Trash2, Edit2, User, Users, CheckCircle, XCircle } from 'lucide-react';
 import CreateExamModal from './CreateExamModal';
 import { API_URL } from '../config';
@@ -191,8 +190,8 @@ const ExamsList = () => {
             />
 
             {/* Details Modal */}
-            {detailsExam && createPortal(
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+            {detailsExam && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
                     <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
                         <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                             <h2 className="text-lg font-bold text-gray-800">Exam Details</h2>
@@ -250,8 +249,7 @@ const ExamsList = () => {
                             </div>
                         </div>
                     </div>
-                </div>,
-                document.body
+                </div>
             )}
         </div>
     );

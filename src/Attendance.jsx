@@ -7,7 +7,6 @@ import { API_URL } from './config';
 import AttendanceHeader from './attendance/AttendanceHeader';
 import AttendanceStats from './attendance/AttendanceStats';
 import PinModal from './attendance/PinModal';
-import SystemAlert from './hifz/SystemAlert';
 
 // STUDENT COMPONENTS
 import AttendanceFilters from './attendance/AttendanceFilters';
@@ -40,14 +39,6 @@ const Attendance = () => {
     const [isPinModalOpen, setIsPinModalOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false); // New Edit Mode State
-
-    // Alert State
-    const [alertConfig, setAlertConfig] = useState({
-        isOpen: false,
-        title: '',
-        message: '',
-        type: 'success'
-    });
 
     // ==========================================
     // DATA HOLDING FOR SAVING
@@ -307,12 +298,7 @@ const Attendance = () => {
 
     const handleBulkAction = (action) => {
         if (!isEditing) {
-            setAlertConfig({
-                isOpen: true,
-                title: 'LOCKED',
-                message: "Please enable Edit Mode first.",
-                type: 'warning'
-            });
+            alert("Please enable Edit Mode first.");
             return;
         }
         const statusMap = { 'all-present': 'Present', 'all-absent': 'Absent', 'all-holiday': 'Holiday' };
@@ -351,12 +337,7 @@ const Attendance = () => {
                 );
 
                 await Promise.all(promises);
-                setAlertConfig({
-                    isOpen: true,
-                    title: 'SUCCESS!',
-                    message: "Attendance saved successfully!",
-                    type: 'success'
-                });
+                alert("Attendance saved successfully!");
             } else {
                 const recordsToSave = teachersData.filter(t => t.attendanceStatus && t.attendanceStatus !== '');
                 const promises = recordsToSave.map(t =>
@@ -373,12 +354,7 @@ const Attendance = () => {
                 );
 
                 await Promise.all(promises);
-                setAlertConfig({
-                    isOpen: true,
-                    title: 'SUCCESS!',
-                    message: "Teacher attendance saved successfully!",
-                    type: 'success'
-                });
+                alert("Teacher attendance saved successfully!");
             }
 
             // Success Actions
@@ -387,12 +363,7 @@ const Attendance = () => {
 
         } catch (err) {
             console.error("Error saving attendance:", err);
-            setAlertConfig({
-                isOpen: true,
-                title: 'ERROR!',
-                message: "Failed to save attendance.",
-                type: 'error'
-            });
+            alert("Failed to save attendance.");
         }
     };
 
@@ -481,14 +452,6 @@ const Attendance = () => {
                 isOpen={isPinModalOpen}
                 onClose={() => setIsPinModalOpen(false)}
                 onSuccess={handlePinSuccess}
-            />
-
-            <SystemAlert
-                isOpen={alertConfig.isOpen}
-                title={alertConfig.title}
-                message={alertConfig.message}
-                type={alertConfig.type}
-                onConfirm={() => setAlertConfig({ ...alertConfig, isOpen: false })}
             />
         </div>
     );

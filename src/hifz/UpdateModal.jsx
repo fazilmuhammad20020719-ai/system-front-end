@@ -1,5 +1,3 @@
-import React from 'react';
-import { X, Edit2, History, BookOpen, Check, Save, Calendar } from 'lucide-react';
 // Helpers
 import { formatJuzDate } from './hifzHelpers';
 
@@ -56,7 +54,7 @@ const UpdateModal = ({
                                 <div className="mb-5 bg-gray-50 p-3 rounded-lg border border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-semibold text-gray-600 uppercase">
                                     <div className="flex flex-wrap gap-4">
                                         <span className="flex items-center gap-1.5"><div className="w-3.5 h-3.5 rounded bg-green-500"></div> COMPLETED</span>
-                                        <span className="flex items-center gap-1.5"><div className="w-3.5 h-3.5 rounded border border-yellow-400 bg-white"></div> RUNNING</span>
+                                        <span className="flex items-center gap-1.5"><div className="w-3.5 h-3.5 rounded bg-yellow-400"></div> RUNNING</span>
                                         <span className="flex items-center gap-1.5"><div className="w-3.5 h-3.5 rounded border border-gray-300 bg-white"></div> NOT STARTED</span>
                                     </div>
                                     {isEditingCompleted && <span className="text-green-600 animate-pulse bg-green-50 px-2 py-1 rounded">SELECT COMPLETED BOXES</span>}
@@ -66,13 +64,13 @@ const UpdateModal = ({
                                     {Array.from({ length: 30 }, (_, i) => i + 1).map(num => {
                                         const finishObj = updateData.completed_juzs.find(j => j.num === num);
                                         const runningObj = updateData.running_juzs.find(j => j.num === num);
-
+                                        
                                         const isFinished = !!finishObj;
                                         const isRunning = !!runningObj;
 
                                         let boxColorClass = "border-gray-200 bg-white text-gray-600 hover:border-blue-300 hover:bg-blue-50";
                                         if (isFinished) boxColorClass = "border-green-600 bg-green-500 text-white shadow-sm";
-                                        else if (isRunning) boxColorClass = "border-yellow-500 bg-white text-yellow-700 shadow-sm transform scale-105 ring-2 ring-yellow-200";
+                                        else if (isRunning) boxColorClass = "border-yellow-500 bg-yellow-400 text-yellow-900 shadow-sm transform scale-105 ring-2 ring-yellow-200";
 
                                         if (isEditingCompleted) boxColorClass += " hover:scale-105 cursor-pointer border-dashed";
 
@@ -112,7 +110,7 @@ const UpdateModal = ({
                                 studentLogs.map((log, idx) => {
                                     const logDate = new Date(log.log_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
                                     const logRunningJuzs = getRunningJuzs(log.sabaq_juz);
-                                    const displayRunning = logRunningJuzs.length > 0 ? logRunningJuzs.map(j => j.num).join(', ') : 'None';
+                                    const displayRunning = logRunningJuzs.length > 0 ? logRunningJuzs.join(', ') : 'None';
 
                                     return (
                                         <div key={idx} className="bg-white border-l-4 border-green-500 rounded-lg p-4 shadow-sm flex justify-between items-center uppercase">

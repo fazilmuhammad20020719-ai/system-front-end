@@ -202,7 +202,7 @@ const ResultsLog = ({ slotId, exams: propExams, initialExamId }) => {
 
     return (
         <div className="flex flex-col h-[calc(100vh-140px)] gap-6">
-
+            
             {/* TOP BAR: Exam Selector & Stats */}
             <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-6 justify-between items-center">
                 <div className="w-full md:w-1/2">
@@ -247,7 +247,7 @@ const ResultsLog = ({ slotId, exams: propExams, initialExamId }) => {
             {/* MAIN CONTENT Area */}
             {selectedExamId ? (
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col flex-1 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
-
+                    
                     {/* Toolbar */}
                     <div className="p-4 border-b border-slate-200 bg-slate-50 flex flex-col md:flex-row justify-between items-center gap-4">
                         <div className="relative w-full md:w-64">
@@ -332,15 +332,15 @@ const ResultsLog = ({ slotId, exams: propExams, initialExamId }) => {
                                                     </span>
                                                 ) : row.paper_url ? (
                                                     <div className="flex items-center gap-2">
-                                                        <a
-                                                            href={`${API_URL}/${row.paper_url}`}
-                                                            target="_blank"
+                                                        <a 
+                                                            href={`${API_URL}/${row.paper_url}`} 
+                                                            target="_blank" 
                                                             rel="noreferrer"
                                                             className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold shadow-sm bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 transition"
                                                         >
                                                             <Download size={14} /> Download
                                                         </a>
-                                                        <button
+                                                        <button 
                                                             onClick={() => handleDeletePaper(row.student_id)}
                                                             className="p-1.5 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded transition"
                                                             title="Remove Paper"
@@ -350,8 +350,8 @@ const ResultsLog = ({ slotId, exams: propExams, initialExamId }) => {
                                                     </div>
                                                 ) : (
                                                     <div className="relative">
-                                                        <input
-                                                            type="file"
+                                                        <input 
+                                                            type="file" 
                                                             id={`upload-${row.student_id}`}
                                                             className="hidden"
                                                             accept=".pdf,image/*,.doc,.docx"
@@ -362,7 +362,7 @@ const ResultsLog = ({ slotId, exams: propExams, initialExamId }) => {
                                                                 e.target.value = null; // reset input
                                                             }}
                                                         />
-                                                        <label
+                                                        <label 
                                                             htmlFor={`upload-${row.student_id}`}
                                                             className="inline-flex cursor-pointer items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold shadow-sm bg-slate-50 hover:bg-blue-50 text-slate-600 hover:text-blue-700 border border-slate-200 hover:border-blue-200 transition"
                                                         >

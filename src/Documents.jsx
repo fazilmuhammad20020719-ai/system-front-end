@@ -60,13 +60,13 @@ const Documents = () => {
             const res = await fetch(`${API_URL}/api/documents/folders/all`);
             if (res.ok) {
                 const data = await res.json();
-
+                
                 let baseTree = {
                     id: 'root',
                     name: 'All Documents',
                     subfolders: []
                 };
-
+                
                 const buildTree = (parentId) => {
                     return data
                         .filter(f => f.parent_id === parentId)
@@ -78,7 +78,7 @@ const Documents = () => {
                 };
 
                 baseTree.subfolders = buildTree('root');
-
+                
                 setFolderTree([baseTree]);
             }
         } catch (err) {
@@ -93,19 +93,19 @@ const Documents = () => {
             const res = await fetch(`${API_URL}/api/documents`);
             if (res.ok) {
                 const data = await res.json();
-
+                
                 // Map the exact columns from your database to the UI
                 const mapped = data.map(d => ({
                     id: d.id,
-                    folderId: d.category || 'root',
+                    folderId: d.category || 'root', 
                     name: d.name,
                     file_url: d.file_url,
                     type: d.type || 'unknown',
                     size: d.size || 'Unknown', // Pulled from your new DB column
                     date: d.upload_date ? new Date(d.upload_date).toISOString().split('T')[0] : '2024-01-01',
-                    starred: d.starred || false,
-                    pinned: d.pinned || false,
-                    trashed: d.trashed || false
+                    starred: d.starred || false, 
+                    pinned: d.pinned || false,   
+                    trashed: d.trashed || false  
                 }));
                 setAllFiles(mapped);
             }
@@ -213,12 +213,12 @@ const Documents = () => {
 
         // Optimistic update — show folder immediately in sidebar
         setFolderTree(prev => addNode(prev, actualParentId, newFolder));
-
+        
         // Expand the parent so the new folder is visible
         if (actualParentId !== 'root' && !expandedFolders.includes(actualParentId)) {
             setExpandedFolders(prev => [...prev, actualParentId]);
         }
-
+        
         setNewFolderName("");
         setShowCreateFolderModal(false);
 
@@ -375,7 +375,7 @@ const Documents = () => {
 
     const handleSaveRename = async () => {
         if (!fileToRename) return;
-
+        
         try {
             // Send dynamic rename to Backend Database
             const res = await fetch(`${API_URL}/api/documents/${fileToRename.id}`, {

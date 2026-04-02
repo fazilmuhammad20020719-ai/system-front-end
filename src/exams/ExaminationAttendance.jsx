@@ -51,15 +51,15 @@ const ExaminationAttendance = ({ slotId, exams: propExams, initialExamId }) => {
                 const res = await fetch(`${API_URL}/api/exams/${selectedExamId}/results`);
                 if (res.ok) {
                     const data = await res.json();
-
+                    
                     const exam = exams.find(e => String(e.id) === String(selectedExamId));
-
+                    
                     const mappedStudents = data.map(r => ({
                         id: r.student_id,
                         name: r.student_name,
                         program_name: exam?.program_name || '-'
                     }));
-
+                    
                     setStudents(mappedStudents);
 
                     const attMap = {};
@@ -88,7 +88,7 @@ const ExaminationAttendance = ({ slotId, exams: propExams, initialExamId }) => {
     const handleMarkAll = (status) => {
         const updates = {};
         students.forEach(s => updates[s.id] = status);
-        setAttendance(prev => ({ ...prev, ...updates }));
+        setAttendance(prev => ({...prev, ...updates}));
     };
 
     const handleSaveAttendance = async () => {
@@ -128,8 +128,8 @@ const ExaminationAttendance = ({ slotId, exams: propExams, initialExamId }) => {
         const total = students.length;
         // Count only against the currently displayed students to avoid stale map keys
         const present = students.filter(s => attendance[s.id] === 'Present').length;
-        const absent = students.filter(s => attendance[s.id] === 'Absent').length;
-        const late = students.filter(s => attendance[s.id] === 'Late').length;
+        const absent  = students.filter(s => attendance[s.id] === 'Absent').length;
+        const late    = students.filter(s => attendance[s.id] === 'Late').length;
         return { total, present, absent, late };
     };
 
@@ -203,8 +203,8 @@ const ExaminationAttendance = ({ slotId, exams: propExams, initialExamId }) => {
                         <div className="flex gap-2 w-full md:w-auto">
                             <button onClick={() => handleMarkAll('Present')} className="px-3 py-1.5 text-xs font-bold bg-green-100 text-green-700 rounded hover:bg-green-200 transition">Mark All Present</button>
                             <button onClick={() => handleMarkAll('Absent')} className="px-3 py-1.5 text-xs font-bold bg-red-100 text-red-700 rounded hover:bg-red-200 transition">Mark All Absent</button>
-                            <button
-                                onClick={handleSaveAttendance}
+                            <button 
+                                onClick={handleSaveAttendance} 
                                 disabled={saving}
                                 className={`px-4 py-2 text-sm font-bold text-white rounded shadow-md transition ${saving ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'}`}
                             >

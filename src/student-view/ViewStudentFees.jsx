@@ -12,7 +12,6 @@ const ViewStudentFees = ({ studentId, admissionDate, monthlyFee: initialMonthlyF
     // Modals
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [showRateModal, setShowRateModal] = useState(false);
-    const [showPasswordModal, setShowPasswordModal] = useState(false);
 
     // Form & Filters
     const [filterStatus, setFilterStatus] = useState('All');
@@ -21,12 +20,7 @@ const ViewStudentFees = ({ studentId, admissionDate, monthlyFee: initialMonthlyF
     const [modalMode, setModalMode] = useState('add'); // 'add' (pay), 'edit'
 
     // Temp Data
-    const [tempPaymentData, setTempPaymentData] = useState(null);
     const [tempRate, setTempRate] = useState(monthlyFeeRate);
-    const [passwordInput, setPasswordInput] = useState('');
-    const [passwordError, setPasswordError] = useState('');
-    const [passwordAction, setPasswordAction] = useState(null); // 'save_payment', 'delete_payment', 'update_rate'
-    const [deleteId, setDeleteId] = useState(null);
     const [openDropdownId, setOpenDropdownId] = useState(null);
 
     useEffect(() => {
@@ -133,6 +127,13 @@ const ViewStudentFees = ({ studentId, admissionDate, monthlyFee: initialMonthlyF
                 }
                 cumulativePaid += totalPaidAmount;
 
+                // Historical arrears calculation
+                // Arrears is simply what was cumulatively owed before this month:
+                const prevCumulativeDue = cumulativeDue - (isFutureMonth ? 0 : currentRate);
+                const prevCumulativePaid = cumulativePaid - totalPaidAmount;
+                const historicalArrears = Math.max(0, prevCumulativeDue - prevCumulativePaid);
+                const historicalCredit = Math.max(0, prevCumulativePaid - prevCumulativeDue);
+
                 // Add past credit to this month's payments
                 const availableFunds = totalPaidAmount + carryOverCredit;
 
@@ -169,6 +170,8 @@ const ViewStudentFees = ({ studentId, admissionDate, monthlyFee: initialMonthlyF
                     paidAmount: totalPaidAmount,
                     balance: balance,
                     carryOver: newCarryOver, // Credit moving to next month
+                    historicalArrears: historicalArrears,
+                    historicalCredit: historicalCredit,
                     status: status,
 
                     // Display Info
@@ -259,91 +262,29 @@ const ViewStudentFees = ({ studentId, admissionDate, monthlyFee: initialMonthlyF
         setShowPaymentModal(true);
     };
 
-    // 3. Delete Handler (Initiate)
-    const handleDeleteClick = (id) => {
-        setDeleteId(id);
-        setPasswordAction('delete_payment');
-        setShowPasswordModal(true);
-        setPasswordInput('');
-        setPasswordError('');
+    // 3. Delete Handler
+    const handleDeleteClick = async (id) => {
+        if (window.confirm("Are you sure you want to cancel this payment?")) {
+            try {
+                const response = await fetch(`${API_URL}/api/students/${studentId}/fees/${id}`, {
+                    method: 'DELETE'
+                });
+                if (response.ok) fetchFees();
+                else alert("Failed to delete.");
+            } catch (error) {
+                console.error(error);
+            }
+        }
     };
 
-    // 4. Rate Update Handler (Initiate)
+    // 4. Rate Update Handler
     const handleUpdateRateClick = () => {
         setTempRate(monthlyFeeRate);
         setShowRateModal(true);
     };
 
-    const confirmUpdateRate = () => {
-        setPasswordAction('update_rate');
+    const confirmUpdateRate = async () => {
         setShowRateModal(false);
-        setShowPasswordModal(true);
-        setPasswordInput('');
-        setPasswordError('');
-    };
-
-    // 5. Form Submit (Initiate Password)
-    const handlePaymentFormSubmit = (e) => {
-        e.preventDefault();
-        if (!formData.amount) {
-            alert("Amount is required.");
-            return;
-        }
-        setTempPaymentData(formData);
-        setShowPaymentModal(false);
-        setPasswordAction('save_payment');
-        setShowPasswordModal(true);
-        setPasswordInput('');
-        setPasswordError('');
-    };
-
-    // --- Execute Actions (After Password) ---
-
-    // Execute Delete
-    const executeDelete = async () => {
-        try {
-            const response = await fetch(`${API_URL}/api/students/${studentId}/fees/${deleteId}`, {
-                method: 'DELETE'
-            });
-            if (response.ok) fetchFees();
-            else alert("Failed to delete.");
-        } catch (error) {
-            console.error(error);
-        }
-    };
-
-    // Execute Save Payment
-    const executeSavePayment = async () => {
-        const submitData = new FormData();
-        submitData.append('month', tempPaymentData.month);
-        submitData.append('year', tempPaymentData.year);
-        submitData.append('amount', tempPaymentData.amount);
-        submitData.append('status', tempPaymentData.status);
-        if (tempPaymentData.date) submitData.append('date', tempPaymentData.date);
-        if (tempPaymentData.receipt) submitData.append('document', tempPaymentData.receipt);
-
-        try {
-            let url = `${API_URL}/api/students/${studentId}/fees`;
-            let method = 'POST';
-
-            if (modalMode === 'edit') {
-                url = `${API_URL}/api/students/${studentId}/fees/${tempPaymentData.id}`;
-                method = 'PUT';
-            }
-
-            const response = await fetch(url, { method, body: submitData });
-            if (response.ok) {
-                fetchFees();
-            } else {
-                alert("Failed to save.");
-            }
-        } catch (error) {
-            console.error(error);
-        }
-    };
-
-    // Execute Update Rate
-    const executeUpdateRate = async () => {
         try {
             const response = await fetch(`${API_URL}/api/students/${studentId}/monthly-fee`, {
                 method: 'PUT',
@@ -361,14 +302,40 @@ const ViewStudentFees = ({ studentId, admissionDate, monthlyFee: initialMonthlyF
         }
     };
 
-    const verifyPassword = () => {
-        if (passwordInput === 'admin123') {
-            setShowPasswordModal(false);
-            if (passwordAction === 'delete_payment') executeDelete();
-            if (passwordAction === 'save_payment') executeSavePayment();
-            if (passwordAction === 'update_rate') executeUpdateRate();
-        } else {
-            setPasswordError("Incorrect Password!");
+    // 5. Form Submit Payment
+    const handlePaymentFormSubmit = async (e) => {
+        e.preventDefault();
+        if (!formData.amount) {
+            alert("Amount is required.");
+            return;
+        }
+        setShowPaymentModal(false);
+
+        const submitData = new FormData();
+        submitData.append('month', formData.month);
+        submitData.append('year', formData.year);
+        submitData.append('amount', formData.amount);
+        submitData.append('status', formData.status);
+        if (formData.date) submitData.append('date', formData.date);
+        if (formData.receipt) submitData.append('document', formData.receipt);
+
+        try {
+            let url = `${API_URL}/api/students/${studentId}/fees`;
+            let method = 'POST';
+
+            if (modalMode === 'edit') {
+                url = `${API_URL}/api/students/${studentId}/fees/${formData.id}`;
+                method = 'PUT';
+            }
+
+            const response = await fetch(url, { method, body: submitData });
+            if (response.ok) {
+                fetchFees();
+            } else {
+                alert("Failed to save.");
+            }
+        } catch (error) {
+            console.error(error);
         }
     };
 
@@ -517,7 +484,7 @@ const ViewStudentFees = ({ studentId, admissionDate, monthlyFee: initialMonthlyF
                                                                         </button>
                                                                     )}
                                                                     <button
-                                                                        onClick={() => { generateFeeBill(row, monthlyFeeRate, studentInfo); setOpenDropdownId(null); }}
+                                                                        onClick={() => { generateFeeBill(row, monthlyFeeRate, studentInfo, feeData.globalStanding); setOpenDropdownId(null); }}
                                                                         className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
                                                                     >
                                                                         <Download size={16} className="text-green-600" /> Download Fee Bill
@@ -621,42 +588,7 @@ const ViewStudentFees = ({ studentId, admissionDate, monthlyFee: initialMonthlyF
                 </div>
             )}
 
-            {/* Password Modal - Dynamic Title */}
-            {showPasswordModal && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-xl w-full max-w-sm shadow-2xl p-6 text-center animate-in zoom-in duration-200">
-                        <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Lock className="text-green-600" size={24} />
-                        </div>
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">
-                            {passwordAction === 'delete_payment' ? 'Cancel Payment' : 'Admin Verification'}
-                        </h3>
-                        <p className="text-sm text-gray-500 mb-6">
-                            {passwordAction === 'delete_payment'
-                                ? 'Are you sure you want to cancel this payment? Enter password to confirm.'
-                                : 'Enter password to confirm action.'}
-                        </p>
 
-                        <input
-                            type="password"
-                            placeholder="Enter Password"
-                            className="w-full border border-gray-300 rounded-lg px-4 py-3 text-center text-lg font-bold tracking-widest outline-none focus:border-[#EB8A33] mb-2"
-                            value={passwordInput}
-                            onChange={(e) => setPasswordInput(e.target.value)}
-                            autoFocus
-                        />
-
-                        {passwordError && <p className="text-red-500 text-xs font-bold mb-3">{passwordError}</p>}
-
-                        <div className="flex gap-3 mt-4">
-                            <button onClick={() => setShowPasswordModal(false)} className="flex-1 py-2.5 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-gray-50">Back</button>
-                            <button onClick={verifyPassword} className={`flex-1 py-1 rounded-lg font-bold text-white ${passwordAction === 'delete_payment' ? 'bg-red-500 hover:bg-red-600' : 'bg-[#EB8A33] hover:bg-[#d97d2a]'}`}>
-                                {passwordAction === 'delete_payment' ? 'Cancel Payment' : 'Confirm'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

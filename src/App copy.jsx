@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Loader from './components/Loader';
 import { LoaderProvider } from './context/LoaderContext';
 import { NotificationProvider } from './context/NotificationContext';
-import SystemPausedOverlay from './components/SystemPausedOverlay';
 
 // Lazy Load Components
 const Login = lazy(() => import('./login'));
@@ -11,7 +10,7 @@ const ForgotPassword = lazy(() => import('./ForgotPassword'));
 const Dashboard = lazy(() => import('./Dashboard'));
 const Calendar = lazy(() => import('./Calendar'));
 const Schedule = lazy(() => import('./schedule/Schedule'));
-
+const SlotAttendance = lazy(() => import('./schedule/SlotAttendance'));
 
 // Student Routes
 const Students = lazy(() => import('./Students'));
@@ -41,19 +40,10 @@ const Attendance = lazy(() => import('./Attendance'));
 const Documents = lazy(() => import('./Documents'));
 const Subscription = lazy(() => import('./Subscription'));
 const Activity = lazy(() => import('./Activity'));
-const AdminProfile = lazy(() => import('./AdminProfile'));
-const HifzTracker = lazy(() => import('./HifzTracker'));
-const Notebook = lazy(() => import('./Notebook'));
-
-// Developer Controller
-const ControllerLogin = lazy(() => import('./controller/ControllerLogin'));
-const ControllerDashboard = lazy(() => import('./controller/ControllerDashboard'));
-const ControllerLogs = lazy(() => import('./controller/ControllerLogs'));
 
 function App() {
   return (
     <BrowserRouter>
-      <SystemPausedOverlay />
       <LoaderProvider>
         <NotificationProvider>
           <Suspense fallback={<Loader />}>
@@ -70,7 +60,8 @@ function App() {
               <Route path="/edit-student/:id" element={<EditStudent />} />
               <Route path="/view-student/:id" element={<ViewStudent />} />
 
-
+              {/* Schedule & Attendance */}
+              <Route path="/schedule/attendance/:scheduleId/:date" element={<SlotAttendance />} />
 
               {/* Teacher Routes */}
               <Route path="/teachers" element={<Teachers />} />
@@ -85,7 +76,6 @@ function App() {
               <Route path="/programs" element={<Programs />} />
               <Route path="/programs/:id" element={<ProgramDetails />} />
               <Route path="/view-program/:id" element={<ViewProgram />} />
-              <Route path="/hifz-tracker" element={<HifzTracker />} />
 
               {/* Exams Routes */}
               <Route path="/exams" element={<ExamsLayout />} />
@@ -97,13 +87,6 @@ function App() {
               <Route path="/documents" element={<Documents />} />
               <Route path="/subscription" element={<Subscription />} />
               <Route path="/activity" element={<Activity />} />
-              <Route path="/admin-profile" element={<AdminProfile />} />
-              <Route path="/notebook" element={<Notebook />} />
-
-              {/* Developer Controller */}
-              <Route path="/controller" element={<ControllerLogin />} />
-              <Route path="/controller/dashboard" element={<ControllerDashboard />} />
-              <Route path="/controller/logs" element={<ControllerLogs />} />
 
               {/* Catch-all */}
               <Route path="*" element={<Navigate to="/dashboard" replace />} />

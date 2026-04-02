@@ -29,152 +29,152 @@ const ViewStudent = () => {
     const fetchStudentData = async () => {
         setLoading(true);
         try {
-            // Fetch basic student info
-            const sRes = await fetch(`${API_URL}/api/students/${id}?t=${Date.now()}`);
+                // Fetch basic student info
+                const sRes = await fetch(`${API_URL}/api/students/${id}?t=${Date.now()}`);
 
-            if (!sRes.ok) {
-                console.error("Student not found");
+                if (!sRes.ok) {
+                    console.error("Student not found");
+                    setLoading(false);
+                    return;
+                }
+
+                const sData = await sRes.json();
+
+
+                // Fetch Attendance for stats
+                const attRes = await fetch(`${API_URL}/api/students/${id}/attendance`);
+                const attData = attRes.ok ? await attRes.json() : [];
+
+                // Calculate Attendance Stats
+                const present = attData.filter(a => a.status === 'Present').length;
+                const absent = attData.filter(a => a.status === 'Absent').length;
+                const total = attData.length;
+
+                // Helper to check and add document
+                const docs = [];
+                const uploadedDate = sData.created_at
+                    ? new Date(sData.created_at).toLocaleDateString()
+                    : 'N/A';
+                const addDoc = (filePath, title, sizeKey, dbColumn) => {
+                    if (filePath) {
+                        docs.push({
+                            id: dbColumn,
+                            name: title,
+                            path: `${API_URL}${filePath}`,
+                            date: uploadedDate,
+                            size: sData[sizeKey] || 'N/A'
+                        });
+                    }
+                };
+
+                addDoc(sData.nic_front, 'NIC Front', 'nic_front_size', 'nic_front');
+                addDoc(sData.nic_back, 'NIC Back', 'nic_back_size', 'nic_back');
+                addDoc(sData.student_signature, 'Student Signature', 'student_signature_size', 'student_signature');
+                addDoc(sData.birth_certificate, 'Birth Certificate', 'birth_certificate_size', 'birth_certificate');
+                addDoc(sData.medical_report, 'Medical Report', 'medical_report_size', 'medical_report');
+                addDoc(sData.guardian_nic, 'Guardian NIC', 'guardian_nic_size', 'guardian_nic');
+                addDoc(sData.guardian_photo, 'Guardian Photo', 'guardian_photo_size', 'guardian_photo');
+                addDoc(sData.leaving_certificate, 'Leaving Certificate', 'leaving_certificate_size', 'leaving_certificate');
+
+                // Merging Data
+                const fullProfile = {
+                    id: sData.id,
+                    // Personal - Map fields from DB columns
+                    firstName: sData.name ? sData.name.split(' ')[0] : '',
+                    lastName: sData.name ? sData.name.split(' ').slice(1).join(' ') : '',
+                    name: sData.name || '', // Add name explicitly
+                    fatherName: sData.father_name || '',
+                    image: sData.photo_url
+                        ? `${API_URL}${sData.photo_url}`
+                        : null,
+                    dob: sData.dob ? sData.dob.split('T')[0] : 'N/A',
+                    gender: sData.gender || 'Male',
+                    nic: sData.nic || 'N/A',
+                    email: sData.email || 'N/A',
+                    email: sData.email || 'N/A',
+                    phone: sData.contact_number || sData.phone || 'N/A',
+                    whatsapp: sData.whatsapp || sData.contact_number || 'N/A', // Add whatsapp explicit mapping, fallback to phone
+
+                    // Location
+                    city: sData.city || '', // Add city explicitly
+                    province: sData.province || 'N/A',
+                    district: sData.district || 'N/A',
+                    dsDivision: sData.ds_division || 'N/A',
+                    gnDivision: sData.gn_division || 'N/A',
+                    address: sData.address || 'Address not set',
+                    googleMapLink: sData.google_map_link || '',
+                    latitude: sData.latitude || '',
+                    longitude: sData.longitude || '',
+
+                    // Guardian
+                    guardianName: sData.guardian_name || 'N/A',
+                    guardianRelation: sData.guardian_relation || 'N/A',
+                    guardianPhone: sData.guardian_phone || 'N/A',
+                    guardianEmail: sData.guardian_email || 'N/A',
+                    guardianOccupation: sData.guardian_occupation || 'N/A',
+                    guardianPhoto: sData.guardian_photo ? `${API_URL}${sData.guardian_photo}` : null,
+
+                    // Enrollments
+                    enrollments: sData.enrollments && sData.enrollments.length > 0 ? sData.enrollments.map(e => ({
+                        program: e.program,
+                        year: e.year,
+                        session: e.session,
+                        status: e.status,
+                        admissionDate: e.admission_date ? e.admission_date.split('T')[0] : 'N/A'
+                    })) : [{
+                        // Fallback logic if array empty (but with migration it shouldn't be)
+                        program: sData.program_name || sData.program,
+                        year: sData.current_year,
+                        session: sData.session_year,
+                        status: sData.status || 'Active',
+                        admissionDate: sData.admission_date ? sData.admission_date.split('T')[0] : 'N/A'
+                    }],
+
+                    // Academic
+                    // FIX: Use the latest enrollment (first in list) as the primary program info
+                    program: (sData.enrollments && sData.enrollments.length > 0) ? sData.enrollments[0].program : (sData.program_name || sData.program),
+                    year: (sData.enrollments && sData.enrollments.length > 0) ? sData.enrollments[0].year : sData.current_year,
+                    session: (sData.enrollments && sData.enrollments.length > 0) ? sData.enrollments[0].session : sData.session_year,
+                    admissionDate: (sData.enrollments && sData.enrollments.length > 0 && sData.enrollments[0].admission_date)
+                        ? sData.enrollments[0].admission_date.split('T')[0]
+                        : (sData.admission_date ? sData.admission_date.split('T')[0] : 'N/A'),
+                    status: (sData.enrollments && sData.enrollments.length > 0) ? sData.enrollments[0].status : (sData.status || 'Active'),
+
+                    // Extra Data
+                    previousSchool: sData.previous_school || 'N/A',
+                    previousSchoolLocation: sData.previous_school_location || '',
+                    lastStudiedGrade: sData.last_studied_grade || '',
+                    reasonForLeaving: sData.reason_for_leaving || '',
+                    previousCollegeName: sData.previous_college || '',
+                    previousCollegeLocation: sData.previous_college_location || '',
+                    reasonForLeavingMadrasa: sData.reason_for_leaving_madrasa || '',
+                    mediumOfStudy: sData.medium_of_study || 'N/A',
+                    monthlyFee: sData.monthly_fee || '0',
+
+                    documents: docs,
+                    attendanceStats: { present, absent, late: 0, total },
+                    results: [],
+                    fees: {
+                        pending: 'Rs. 0', paid: 'Rs. 0', history: []
+                    }
+                };
+
+                // Fetch Hifz Tracker data for this student
+                const hifzRes = await fetch(`${API_URL}/api/hifz/students`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+                if (hifzRes.ok) {
+                    const hifzList = await hifzRes.json();
+                    const studentHifz = hifzList.find(h => String(h.student_id) === String(id));
+                    setHifzData(studentHifz || null);
+                }
+
+                setStudent(fullProfile);
+
+            } catch (err) {
+                console.error("Error fetching student profile:", err);
+            } finally {
                 setLoading(false);
-                return;
             }
-
-            const sData = await sRes.json();
-
-
-            // Fetch Attendance for stats
-            const attRes = await fetch(`${API_URL}/api/students/${id}/attendance`);
-            const attData = attRes.ok ? await attRes.json() : [];
-
-            // Calculate Attendance Stats
-            const present = attData.filter(a => a.status === 'Present').length;
-            const absent = attData.filter(a => a.status === 'Absent').length;
-            const total = attData.length;
-
-            // Helper to check and add document
-            const docs = [];
-            const uploadedDate = sData.created_at
-                ? new Date(sData.created_at).toLocaleDateString()
-                : 'N/A';
-            const addDoc = (filePath, title, sizeKey, dbColumn) => {
-                if (filePath) {
-                    docs.push({
-                        id: dbColumn,
-                        name: title,
-                        path: `${API_URL}${filePath}`,
-                        date: uploadedDate,
-                        size: sData[sizeKey] || 'N/A'
-                    });
-                }
-            };
-
-            addDoc(sData.nic_front, 'NIC Front', 'nic_front_size', 'nic_front');
-            addDoc(sData.nic_back, 'NIC Back', 'nic_back_size', 'nic_back');
-            addDoc(sData.student_signature, 'Student Signature', 'student_signature_size', 'student_signature');
-            addDoc(sData.birth_certificate, 'Birth Certificate', 'birth_certificate_size', 'birth_certificate');
-            addDoc(sData.medical_report, 'Medical Report', 'medical_report_size', 'medical_report');
-            addDoc(sData.guardian_nic, 'Guardian NIC', 'guardian_nic_size', 'guardian_nic');
-            addDoc(sData.guardian_photo, 'Guardian Photo', 'guardian_photo_size', 'guardian_photo');
-            addDoc(sData.leaving_certificate, 'Leaving Certificate', 'leaving_certificate_size', 'leaving_certificate');
-
-            // Merging Data
-            const fullProfile = {
-                id: sData.id,
-                // Personal - Map fields from DB columns
-                firstName: sData.name ? sData.name.split(' ')[0] : '',
-                lastName: sData.name ? sData.name.split(' ').slice(1).join(' ') : '',
-                name: sData.name || '', // Add name explicitly
-                fatherName: sData.father_name || '',
-                image: sData.photo_url
-                    ? `${API_URL}${sData.photo_url}`
-                    : null,
-                dob: sData.dob ? sData.dob.split('T')[0] : 'N/A',
-                gender: sData.gender || 'Male',
-                nic: sData.nic || 'N/A',
-                email: sData.email || 'N/A',
-                email: sData.email || 'N/A',
-                phone: sData.contact_number || sData.phone || 'N/A',
-                whatsapp: sData.whatsapp || sData.contact_number || 'N/A', // Add whatsapp explicit mapping, fallback to phone
-
-                // Location
-                city: sData.city || '', // Add city explicitly
-                province: sData.province || 'N/A',
-                district: sData.district || 'N/A',
-                dsDivision: sData.ds_division || 'N/A',
-                gnDivision: sData.gn_division || 'N/A',
-                address: sData.address || 'Address not set',
-                googleMapLink: sData.google_map_link || '',
-                latitude: sData.latitude || '',
-                longitude: sData.longitude || '',
-
-                // Guardian
-                guardianName: sData.guardian_name || 'N/A',
-                guardianRelation: sData.guardian_relation || 'N/A',
-                guardianPhone: sData.guardian_phone || 'N/A',
-                guardianEmail: sData.guardian_email || 'N/A',
-                guardianOccupation: sData.guardian_occupation || 'N/A',
-                guardianPhoto: sData.guardian_photo ? `${API_URL}${sData.guardian_photo}` : null,
-
-                // Enrollments
-                enrollments: sData.enrollments && sData.enrollments.length > 0 ? sData.enrollments.map(e => ({
-                    program: e.program,
-                    year: e.year,
-                    session: e.session,
-                    status: e.status,
-                    admissionDate: e.admission_date ? e.admission_date.split('T')[0] : 'N/A'
-                })) : [{
-                    // Fallback logic if array empty (but with migration it shouldn't be)
-                    program: sData.program_name || sData.program,
-                    year: sData.current_year,
-                    session: sData.session_year,
-                    status: sData.status || 'Active',
-                    admissionDate: sData.admission_date ? sData.admission_date.split('T')[0] : 'N/A'
-                }],
-
-                // Academic
-                // FIX: Use the latest enrollment (first in list) as the primary program info
-                program: (sData.enrollments && sData.enrollments.length > 0) ? sData.enrollments[0].program : (sData.program_name || sData.program),
-                year: (sData.enrollments && sData.enrollments.length > 0) ? sData.enrollments[0].year : sData.current_year,
-                session: (sData.enrollments && sData.enrollments.length > 0) ? sData.enrollments[0].session : sData.session_year,
-                admissionDate: (sData.enrollments && sData.enrollments.length > 0 && sData.enrollments[0].admission_date)
-                    ? sData.enrollments[0].admission_date.split('T')[0]
-                    : (sData.admission_date ? sData.admission_date.split('T')[0] : 'N/A'),
-                status: (sData.enrollments && sData.enrollments.length > 0) ? sData.enrollments[0].status : (sData.status || 'Active'),
-
-                // Extra Data
-                previousSchool: sData.previous_school || 'N/A',
-                previousSchoolLocation: sData.previous_school_location || '',
-                lastStudiedGrade: sData.last_studied_grade || '',
-                reasonForLeaving: sData.reason_for_leaving || '',
-                previousCollegeName: sData.previous_college || '',
-                previousCollegeLocation: sData.previous_college_location || '',
-                reasonForLeavingMadrasa: sData.reason_for_leaving_madrasa || '',
-                mediumOfStudy: sData.medium_of_study || 'N/A',
-                monthlyFee: sData.monthly_fee || '0',
-
-                documents: docs,
-                attendanceStats: { present, absent, late: 0, total },
-                results: [],
-                fees: {
-                    pending: 'Rs. 0', paid: 'Rs. 0', history: []
-                }
-            };
-
-            // Fetch Hifz Tracker data for this student
-            const hifzRes = await fetch(`${API_URL}/api/hifz/students`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
-            if (hifzRes.ok) {
-                const hifzList = await hifzRes.json();
-                const studentHifz = hifzList.find(h => String(h.student_id) === String(id));
-                setHifzData(studentHifz || null);
-            }
-
-            setStudent(fullProfile);
-
-        } catch (err) {
-            console.error("Error fetching student profile:", err);
-        } finally {
-            setLoading(false);
-        }
-    };
+        };
 
     useEffect(() => {
         if (id) fetchStudentData();

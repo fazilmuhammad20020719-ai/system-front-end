@@ -1,24 +1,14 @@
 import React from 'react';
-import { Edit2, Trash2, Calendar, Search } from 'lucide-react';
+import { Edit2, Trash2, Calendar } from 'lucide-react';
 import ProgressRing from './ProgressRing';
 import { formatJuzDate } from './hifzHelpers';
 
-const StudentTable = ({ filteredTable, tableSearch, setTableSearch, openUpdateModal, handleDeleteStudent, getCompletedJuzs, getRunningJuzs }) => {
+const StudentTable = ({ filteredTable, openUpdateModal, handleDeleteStudent, getCompletedJuzs, getRunningJuzs }) => {
     return (
         <main className="flex-1 min-w-0">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="p-5 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div className="p-5 border-b border-gray-100 flex justify-between">
                     <h2 className="text-lg font-bold text-gray-800 uppercase">Tracked Students</h2>
-                    <div className="relative w-full sm:w-64">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                        <input
-                            type="text"
-                            placeholder="SEARCH TRACKED LIST..."
-                            value={tableSearch}
-                            onChange={(e) => setTableSearch(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all uppercase"
-                        />
-                    </div>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-100">

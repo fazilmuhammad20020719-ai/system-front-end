@@ -76,7 +76,7 @@ const ViewProgram = () => {
             // 3. Filter Teachers for this Program
             // A teacher belongs to the program if they have the program_id OR if they teach any subject in this program
             const subjectTeacherIds = new Set(programSubjects.map(s => s.teacher_id).filter(id => id != null));
-            const programTeachers = allTeachers.filter(t =>
+            const programTeachers = allTeachers.filter(t => 
                 t.program_id === parseInt(id) || subjectTeacherIds.has(t.id)
             );
             setTeachers(programTeachers);
@@ -391,45 +391,44 @@ const ViewProgram = () => {
                                             {currentSubjects.map((sub, idx) => {
                                                 const assignedTeacher = allTeachers.find(t => t.id === sub.teacher_id);
                                                 return (
-                                                    <div key={sub.id} className="flex items-center justify-between gap-4 p-4 bg-white border border-gray-100 rounded-xl shadow-sm hover:border-blue-200 transition-colors group">
-                                                        <div className="flex items-center gap-4">
-                                                            <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                                                                {idx + 1}
-                                                            </div>
-                                                            <div>
-                                                                <h4 className="font-bold text-gray-800">{sub.name}</h4>
-                                                                <p className="text-xs text-gray-500">{selectedYear} - Core Module</p>
-                                                                {assignedTeacher && (
-                                                                    <p className="text-xs font-medium text-blue-600 mt-0.5 flex items-center gap-1">
-                                                                        <User size={12} /> {assignedTeacher.name}
-                                                                    </p>
-                                                                )}
-                                                            </div>
+                                                <div key={sub.id} className="flex items-center justify-between gap-4 p-4 bg-white border border-gray-100 rounded-xl shadow-sm hover:border-blue-200 transition-colors group">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                                            {idx + 1}
                                                         </div>
-
-                                                        {/* EDIT & DELETE ACTIONS (Now Functional) */}
-                                                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <button
-                                                                onClick={() => {
-                                                                    setEditingSubject(sub);
-                                                                    setShowSubjectModal(true);
-                                                                }}
-                                                                className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                                title="Edit Subject"
-                                                            >
-                                                                <Edit2 size={16} />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => setDeleteModal({ isOpen: true, subjectId: sub.id, subjectName: sub.name })}
-                                                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                                title="Delete Subject"
-                                                            >
-                                                                <Trash2 size={16} />
-                                                            </button>
+                                                        <div>
+                                                            <h4 className="font-bold text-gray-800">{sub.name}</h4>
+                                                            <p className="text-xs text-gray-500">{selectedYear} - Core Module</p>
+                                                            {assignedTeacher && (
+                                                                <p className="text-xs font-medium text-blue-600 mt-0.5 flex items-center gap-1">
+                                                                    <User size={12} /> {assignedTeacher.name}
+                                                                </p>
+                                                            )}
                                                         </div>
                                                     </div>
-                                                )
-                                            })}
+
+                                                    {/* EDIT & DELETE ACTIONS (Now Functional) */}
+                                                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <button
+                                                            onClick={() => {
+                                                                setEditingSubject(sub);
+                                                                setShowSubjectModal(true);
+                                                            }}
+                                                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                            title="Edit Subject"
+                                                        >
+                                                            <Edit2 size={16} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setDeleteModal({ isOpen: true, subjectId: sub.id, subjectName: sub.name })}
+                                                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                            title="Delete Subject"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )})}
                                         </div>
                                     ) : (
                                         <div className="text-center py-12 text-gray-400">

@@ -15,8 +15,10 @@ import {
     ClipboardList,
     Crown,
     Activity,
+    UserCog,
     Wifi,
-    BookOpen
+    BookOpen,
+    Book
 } from 'lucide-react';
 
 // ── Network speed hook ──────────────────────────────────────────
@@ -151,6 +153,13 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                                 isOpen={isOpen}
                             />
                             <SidebarItem
+                                icon={Book}
+                                text="Note Book"
+                                to="/notebook"
+                                active={isActive('/notebook')}
+                                isOpen={isOpen}
+                            />
+                            <SidebarItem
                                 icon={Calendar}
                                 text="Calendar"
                                 to="/calendar"
@@ -243,13 +252,7 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
                                 active={isActive('/documents')}
                                 isOpen={isOpen}
                             />
-                            <SidebarItem
-                                icon={Crown}
-                                text="Subscription"
-                                to="/subscription"
-                                active={isActive('/subscription')}
-                                isOpen={isOpen}
-                            />
+
                             <SidebarItem
                                 icon={Activity}
                                 text="Activity Log"

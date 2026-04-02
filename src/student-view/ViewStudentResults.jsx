@@ -4,10 +4,10 @@ import { Award, Download, BookOpen, AlertCircle, Loader2, FileText, FolderOpen, 
 import { API_URL } from '../config';
 
 const statusConfig = {
-    Pass: { bg: 'bg-green-100', text: 'text-green-700', dot: 'bg-green-500' },
-    Fail: { bg: 'bg-red-100', text: 'text-red-700', dot: 'bg-red-500' },
-    Absent: { bg: 'bg-slate-100', text: 'text-slate-600', dot: 'bg-slate-400' },
-    Present: { bg: 'bg-blue-100', text: 'text-blue-700', dot: 'bg-blue-400' },
+    Pass:    { bg: 'bg-green-100',  text: 'text-green-700',  dot: 'bg-green-500'  },
+    Fail:    { bg: 'bg-red-100',    text: 'text-red-700',    dot: 'bg-red-500'    },
+    Absent:  { bg: 'bg-slate-100',  text: 'text-slate-600',  dot: 'bg-slate-400'  },
+    Present: { bg: 'bg-blue-100',   text: 'text-blue-700',   dot: 'bg-blue-400'   },
 };
 
 const gradeColor = (grade) => {
@@ -23,10 +23,10 @@ const gradeColor = (grade) => {
 const SlotSection = ({ slotName, rows }) => {
     const [collapsed, setCollapsed] = useState(false);
 
-    const passed = rows.filter(r => r.status === 'Pass').length;
-    const failed = rows.filter(r => r.status === 'Fail').length;
-    const graded = rows.filter(r => r.marks_obtained !== null && r.marks_obtained !== '').length;
-    const avg = graded
+    const passed  = rows.filter(r => r.status === 'Pass').length;
+    const failed  = rows.filter(r => r.status === 'Fail').length;
+    const graded  = rows.filter(r => r.marks_obtained !== null && r.marks_obtained !== '').length;
+    const avg     = graded
         ? rows.reduce((s, r) => s + (parseFloat(r.marks_obtained) || 0), 0) / graded
         : null;
 
@@ -55,7 +55,7 @@ const SlotSection = ({ slotName, rows }) => {
                     </div>
                     {collapsed
                         ? <ChevronDown size={16} className="text-slate-400" />
-                        : <ChevronUp size={16} className="text-slate-400" />
+                        : <ChevronUp   size={16} className="text-slate-400" />
                     }
                 </div>
             </button>
@@ -88,7 +88,7 @@ const SlotSection = ({ slotName, rows }) => {
                                         ? <span className="font-bold text-slate-800">
                                             {res.marks_obtained}
                                             <span className="text-slate-400 font-normal text-xs">/{res.total_marks || 100}</span>
-                                        </span>
+                                          </span>
                                         : <span className="text-slate-300">—</span>;
 
                                 return (
@@ -108,7 +108,7 @@ const SlotSection = ({ slotName, rows }) => {
                                                 ? <div className="flex items-center gap-1.5 text-slate-600">
                                                     <BookOpen size={13} className="text-slate-400" />
                                                     {res.subject_name}
-                                                </div>
+                                                  </div>
                                                 : <span className="text-slate-300">—</span>
                                             }
                                             {res.program_name && (
@@ -169,9 +169,9 @@ const SlotSection = ({ slotName, rows }) => {
 
 // ── Main component ───────────────────────────────────────────────────────────
 const ViewStudentResults = ({ studentId }) => {
-    const [results, setResults] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [results, setResults]   = useState([]);
+    const [loading, setLoading]   = useState(true);
+    const [error,   setError]     = useState(null);
 
     // Filters
     const [filterSlot, setFilterSlot] = useState('');
@@ -265,7 +265,7 @@ const ViewStudentResults = ({ studentId }) => {
     const slotMap = new Map(); // slotKey → { name, rows[] }
 
     filteredResults.forEach(r => {
-        const key = r.slot_id != null ? String(r.slot_id) : 'no-slot';
+        const key  = r.slot_id != null ? String(r.slot_id) : 'no-slot';
         const name = r.slot_name || 'Unassigned Exams';
         if (!slotMap.has(key)) slotMap.set(key, { name, rows: [] });
         slotMap.get(key).rows.push(r);
@@ -274,7 +274,7 @@ const ViewStudentResults = ({ studentId }) => {
     const slots = Array.from(slotMap.values());
 
     // Global summary
-    const total = filteredResults.length;
+    const total  = filteredResults.length;
     const passed = filteredResults.filter(r => r.status === 'Pass').length;
     const failed = filteredResults.filter(r => r.status === 'Fail').length;
     const gradedAll = filteredResults.filter(r => r.marks_obtained !== null && r.marks_obtained !== '');

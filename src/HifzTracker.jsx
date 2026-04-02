@@ -71,8 +71,7 @@ const HifzTracker = () => {
         try {
             showLoader();
             const res = await fetch(`${API_URL}/api/hifz/students`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
-            const data = await res.json();
-            setAssignedStudents(Array.isArray(data) ? data : (data.students || []));
+            setAssignedStudents(await res.json());
         } catch { notify('error', 'FAILED TO LOAD HIFZ TRACKER LIST'); } finally { hideLoader(); }
     };
 
@@ -185,9 +184,9 @@ const HifzTracker = () => {
     const confirmStartJuz = () => {
         setUpdateData(prev => ({
             ...prev,
-            running_juzs: [...prev.running_juzs, {
-                num: confirmDialog.num,
-                start: new Date().toISOString()
+            running_juzs: [...prev.running_juzs, { 
+                num: confirmDialog.num, 
+                start: new Date().toISOString() 
             }]
         }));
         setConfirmDialog({ isOpen: false, num: null, name: '' });
@@ -268,8 +267,6 @@ const HifzTracker = () => {
 
                     <StudentTable
                         filteredTable={filteredTable}
-                        tableSearch={tableSearch}
-                        setTableSearch={setTableSearch}
                         openUpdateModal={openUpdateModal}
                         handleDeleteStudent={handleDeleteStudent}
                         getCompletedJuzs={getCompletedJuzs}
@@ -300,7 +297,7 @@ const HifzTracker = () => {
                     onCancel={cancelStartJuz}
                 />
 
-                <SystemConfirm
+                <SystemConfirm 
                     isOpen={deleteConfirm.isOpen}
                     title="DELETE STUDENT?"
                     message={`ARE YOU SURE YOU WANT TO DELETE "${deleteConfirm.studentName}"? THIS CANNOT BE UNDONE.`}

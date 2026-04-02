@@ -129,9 +129,9 @@ const ExaminationSlots = () => {
     // Filter Logic
     const filteredExams = slotExams.filter(exam => {
         // Compare as strings on both sides to avoid number/string type mismatch from API
-        const matchSubject = filterSubject ? String(exam.subject_id) === filterSubject : true;
-        const matchGrade = filterGrade ? exam.grade === filterGrade : true;
-        const matchStatus = filterStatus ? exam.status === filterStatus : true;
+        const matchSubject  = filterSubject    ? String(exam.subject_id)    === filterSubject    : true;
+        const matchGrade    = filterGrade      ? exam.grade                 === filterGrade      : true;
+        const matchStatus   = filterStatus     ? exam.status                === filterStatus     : true;
         const matchSupervisor = filterSupervisor ? String(exam.supervisor_id) === filterSupervisor : true;
         return matchSubject && matchGrade && matchStatus && matchSupervisor;
     });
@@ -249,17 +249,17 @@ const ExaminationSlots = () => {
                                 </span>
                                 <div className="flex items-center gap-3">
                                     <div className="flex gap-1.5">
-                                        <div
-                                            className={`w-2 h-2 rounded-full ${Number(slot.total_exams) > 0 && Number(slot.completed_exams) >= Number(slot.total_exams) ? 'bg-green-500' : 'bg-slate-200'}`}
-                                            title={`Exams Completed (${slot.completed_exams || 0}/${slot.total_exams || 0})`}
+                                        <div 
+                                            className={`w-2 h-2 rounded-full ${Number(slot.total_exams) > 0 && Number(slot.completed_exams) >= Number(slot.total_exams) ? 'bg-green-500' : 'bg-slate-200'}`} 
+                                            title={`Exams Completed (${slot.completed_exams || 0}/${slot.total_exams || 0})`} 
                                         />
-                                        <div
-                                            className={`w-2 h-2 rounded-full ${Number(slot.total_exams) > 0 && Number(slot.attendance_exams) >= Number(slot.total_exams) ? 'bg-green-500' : 'bg-slate-200'}`}
-                                            title={`Attendance Taken (${slot.attendance_exams || 0}/${slot.total_exams || 0})`}
+                                        <div 
+                                            className={`w-2 h-2 rounded-full ${Number(slot.total_exams) > 0 && Number(slot.attendance_exams) >= Number(slot.total_exams) ? 'bg-green-500' : 'bg-slate-200'}`} 
+                                            title={`Attendance Taken (${slot.attendance_exams || 0}/${slot.total_exams || 0})`} 
                                         />
-                                        <div
-                                            className={`w-2 h-2 rounded-full ${Number(slot.total_exams) > 0 && Number(slot.results_exams) >= Number(slot.total_exams) ? 'bg-green-500' : 'bg-slate-200'}`}
-                                            title={`Results Submitted (${slot.results_exams || 0}/${slot.total_exams || 0})`}
+                                        <div 
+                                            className={`w-2 h-2 rounded-full ${Number(slot.total_exams) > 0 && Number(slot.results_exams) >= Number(slot.total_exams) ? 'bg-green-500' : 'bg-slate-200'}`} 
+                                            title={`Results Submitted (${slot.results_exams || 0}/${slot.total_exams || 0})`} 
                                         />
                                     </div>
                                     <ChevronRight size={16} className="text-slate-300 group-hover:text-green-600 transition-colors" />
@@ -444,14 +444,14 @@ const ExaminationSlots = () => {
                                                     className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors flex items-center gap-1 text-xs font-bold"
                                                     title="Take Attendance"
                                                 >
-                                                    <UserCheck size={16} />
+                                                    <UserCheck size={16} /> 
                                                 </button>
                                                 <button
                                                     onClick={() => { setJumpToExamId(exam.id); setActiveTab('results'); }}
                                                     className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors flex items-center gap-1 text-xs font-bold"
                                                     title="Add Results"
                                                 >
-                                                    <GraduationCap size={16} />
+                                                    <GraduationCap size={16} /> 
                                                 </button>
                                                 <div className="w-px h-4 bg-slate-200 mx-1"></div>
                                                 <button

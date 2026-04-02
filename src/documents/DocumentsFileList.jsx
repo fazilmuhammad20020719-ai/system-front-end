@@ -61,6 +61,7 @@ const DocumentsFileList = ({
                                             <button onClick={() => onMoveCopyOpen(file, 'move')} title="Move" className="p-1.5 rounded hover:bg-blue-50 text-gray-400 hover:text-blue-600"><FolderInput size={14} /></button>
                                             <button onClick={() => onMoveCopyOpen(file, 'copy')} title="Copy" className="p-1.5 rounded hover:bg-purple-50 text-gray-400 hover:text-purple-600"><Copy size={14} /></button>
                                             <button onClick={() => openRenameModal(file)} title="Rename" className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700"><FilePenLine size={14} /></button>
+                                            <button onClick={() => handleFileAction(file.id, 'pin')} title={file.pinned ? 'Unpin' : 'Pin'} className={`p-1.5 rounded transition-colors ${file.pinned ? 'text-purple-500 bg-purple-50 hover:bg-purple-100' : 'text-gray-400 hover:bg-purple-50 hover:text-purple-500'}`}><Pin size={14} fill={file.pinned ? 'currentColor' : 'none'} /></button>
                                             <div className="w-px bg-gray-200 h-4 my-auto mx-1"></div>
                                             <button onClick={() => handleFileAction(file.id, 'trash')} title="Delete" className="p-1.5 rounded hover:bg-red-50 text-gray-400 hover:text-red-500"><Trash2 size={14} /></button>
                                         </>
@@ -107,6 +108,7 @@ const DocumentsFileList = ({
                                                         <button onClick={() => onMoveCopyOpen(file, 'move')} title="Move" className="p-1.5 text-gray-400 hover:text-blue-600 rounded"><FolderInput size={16} /></button>
                                                         <button onClick={() => onMoveCopyOpen(file, 'copy')} title="Copy" className="p-1.5 text-gray-400 hover:text-purple-600 rounded"><Copy size={16} /></button>
                                                         <button onClick={() => openRenameModal(file)} title="Rename" className="p-1.5 text-gray-400 hover:text-gray-700 rounded"><FilePenLine size={16} /></button>
+                                                        <button onClick={() => handleFileAction(file.id, 'pin')} title={file.pinned ? 'Unpin' : 'Pin'} className={`p-1.5 rounded transition-colors ${file.pinned ? 'text-purple-500 hover:text-purple-600' : 'text-gray-400 hover:text-purple-500'}`}><Pin size={16} fill={file.pinned ? 'currentColor' : 'none'} /></button>
                                                         <div className="w-px bg-gray-200 h-4 my-auto mx-1"></div>
                                                         <button onClick={() => handleFileAction(file.id, 'trash')} className="p-1.5 text-gray-300 hover:text-red-500 rounded"><Trash2 size={16} /></button>
                                                     </>

@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Book } from 'lucide-react';
 import { API_URL } from './config';
 import DashboardHeader from './dashboard/DashboardHeader';
 import DashboardStats from './dashboard/DashboardStats';
@@ -10,6 +12,7 @@ import Sidebar from './Sidebar';
 import Loader from './components/Loader';
 
 const Dashboard = () => {
+    const navigate = useNavigate();
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isAlertOpen, setIsAlertOpen] = useState(false);
 
@@ -81,6 +84,15 @@ const Dashboard = () => {
             {isAlertOpen && (
                 <AlertsModal onClose={() => setIsAlertOpen(false)} alerts={dashboardData.alerts} />
             )}
+
+            {/* FLOATING NOTE BOOK ICON */}
+            <button
+                onClick={() => navigate('/notebook')}
+                className="fixed bottom-8 right-8 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 z-50 flex items-center justify-center group"
+                title="Open Note Book"
+            >
+                <Book size={28} className="group-hover:scale-110 transition-transform" />
+            </button>
         </div>
     );
 };

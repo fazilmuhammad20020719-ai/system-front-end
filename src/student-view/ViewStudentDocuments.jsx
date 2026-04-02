@@ -140,7 +140,7 @@ const ViewStudentDocuments = ({ documents: staticDocs = [], studentId, onRefresh
             const endpoint = isStatic
                 ? `${API_URL}/api/students/${studentId}/static-documents/${docId}`
                 : `${API_URL}/api/students/${studentId}/documents/${docId}`;
-
+                
             const response = await fetch(endpoint, {
                 method: 'DELETE',
             });

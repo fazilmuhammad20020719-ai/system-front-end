@@ -80,6 +80,7 @@ const ViewTeacher = () => {
                         // Professional
                         employeeId: data.emp_id,
                         department: data.department,
+                        program: data.assigned_programs || data.program_name || data.program || data.department,
                         designation: data.designation,
                         qualification: data.qualification,
                         experience: data.previous_experience,
@@ -88,7 +89,6 @@ const ViewTeacher = () => {
 
                         // Financial
                         salary: data.basic_salary,
-                        basic_salary: data.basic_salary,
 
                         // Arrays & Objects
                         documents: allDocuments,
@@ -141,7 +141,7 @@ const ViewTeacher = () => {
                     {/* 3. Tab Content Render */}
                     <div className="space-y-6">
                         {activeTab === 'overview' && <TeacherOverview teacher={teacher} stats={teacher.stats} />}
-                        {activeTab === 'schedule' && <TeacherSchedule schedule={teacher.schedule} />}
+                        {activeTab === 'schedule' && <TeacherSchedule teacher={teacher} />}
                         {activeTab === 'attendance' && <TeacherAttendanceView stats={teacher.attendanceStats} teacherId={teacher.id} />}
                         {activeTab === 'payroll' && <TeacherPayroll teacher={teacher} />}
                         {activeTab === 'documents' && <TeacherDocuments documents={teacher.documents} teacherId={teacher.id} refreshTeacher={() => navigate(0)} />}

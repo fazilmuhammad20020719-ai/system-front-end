@@ -73,7 +73,7 @@ const TeacherOverview = ({ teacher }) => {
                     <div className="space-y-0.5">
                         <DetailRow label="Employee ID" value={teacher.employeeId} highlight />
                         <DetailRow label="Designation" value={teacher.designation} />
-                        <DetailRow label="Department" value={teacher.department} />
+                        <DetailRow label="Program" value={teacher.program || teacher.department} />
                         <DetailRow label="Qualification" value={teacher.qualification} />
                         <DetailRow label="Experience" value={teacher.experience} />
                         <DetailRow label="Joining Date" value={formatDate(teacher.joiningDate)} />

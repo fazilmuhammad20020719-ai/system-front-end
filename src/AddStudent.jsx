@@ -9,7 +9,7 @@ import StudentPersonalInfo from './add-student/StudentPersonalInfo';
 import StudentLocationInfo from './add-student/StudentLocationInfo';
 import StudentGuardianInfo from './add-student/StudentGuardianInfo';
 import StudentAcademicInfo from './add-student/StudentAcademicInfo';
-import StudentUploads from './add-student/StudentUploads';
+
 
 const AddStudent = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
@@ -142,7 +142,7 @@ const AddStudent = () => {
                     </div>
 
                     <div className="flex gap-1 mb-6 border-b border-gray-200 overflow-x-auto">
-                        {['details', 'guardian', 'academic', 'documents'].map(tab => (
+                        {['details', 'guardian', 'academic'].map(tab => (
                             <button key={tab} onClick={() => setActiveTab(tab)} className={`px-5 py-2.5 text-sm font-bold rounded-t-lg transition-colors capitalize ${activeTab === tab ? 'bg-white text-green-600 border-t border-x border-gray-200' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}>{tab}</button>
                         ))}
                     </div>
@@ -158,7 +158,7 @@ const AddStudent = () => {
                         {activeTab === 'academic' && (
                             <StudentAcademicInfo formData={formData} handleChange={handleChange} handleEnrollmentChange={handleEnrollmentChange} programs={programOptions} setFormData={setFormData} />
                         )}
-                        {activeTab === 'documents' && <StudentUploads formData={formData} handleChange={handleChange} />}
+
                     </div>
                 </main>
             </div>

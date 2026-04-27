@@ -853,11 +853,11 @@ const Schedule = () => {
                                                                 let statusIconColor = "bg-yellow-100 text-yellow-600 hover:bg-yellow-200";
                                                                 
                                                                 if (status === 'completed') {
-                                                                    colorClass = "bg-emerald-50 border-emerald-200 text-emerald-800";
-                                                                    statusIconColor = "bg-emerald-100 text-emerald-600 hover:bg-emerald-200 ring-2 ring-emerald-500/20";
+                                                                    colorClass = "bg-green-50 border-green-300 text-green-800";
+                                                                    statusIconColor = "bg-green-100 text-green-600 hover:bg-green-200 ring-2 ring-green-500/20";
                                                                 } else if (status === 'cancelled') {
-                                                                    colorClass = "bg-rose-50 border-rose-200 text-rose-800";
-                                                                    statusIconColor = "bg-rose-100 text-rose-600 hover:bg-rose-200 ring-2 ring-rose-500/20";
+                                                                    colorClass = "bg-red-50 border-red-300 text-red-800";
+                                                                    statusIconColor = "bg-red-100 text-red-600 hover:bg-red-200 ring-2 ring-red-500/20";
                                                                 }
 
                                                                 const startTime = (slot.start_time || slot.startTime || "00:00").substring(0, 5);
@@ -889,7 +889,7 @@ const Schedule = () => {
                                                                             </span>
                                                                         </div>
 
-                                                                        <div className={`font-bold text-gray-800 text-xs mb-0.5 line-clamp-2 ${status === 'cancelled' ? 'line-through decoration-rose-500 decoration-2' : ''}`} title={subject?.name}>
+                                                                        <div className={`font-bold text-gray-800 text-xs mb-0.5 line-clamp-2 ${status === 'cancelled' ? 'line-through decoration-red-500 decoration-2' : ''}`} title={subject?.name}>
                                                                             {subject?.name}
                                                                         </div>
 

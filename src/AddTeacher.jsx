@@ -9,7 +9,6 @@ import { useNotification } from './context/NotificationContext';
 import TeacherPersonalInfo from './add-teacher/TeacherPersonalInfo';
 import TeacherProfessionalInfo from './add-teacher/TeacherProfessionalInfo';
 import TeacherFinancialInfo from './add-teacher/TeacherFinancialInfo';
-import TeacherUploads from './add-teacher/TeacherUploads';
 
 const AddTeacher = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
@@ -175,8 +174,7 @@ const AddTeacher = () => {
                         {[
                             { id: 'personal', label: 'Personal Info' },
                             { id: 'professional', label: 'Education & Job' },
-                            { id: 'financial', label: 'Financial' },
-                            { id: 'documents', label: 'Documents' }
+                            { id: 'financial', label: 'Financial' }
                         ].map(tab => (
                             <button
                                 key={tab.id}
@@ -193,7 +191,6 @@ const AddTeacher = () => {
                         {activeTab === 'personal' && <TeacherPersonalInfo formData={formData} handleChange={handleChange} />}
                         {activeTab === 'professional' && <TeacherProfessionalInfo formData={formData} handleChange={handleChange} programs={programs} />}
                         {activeTab === 'financial' && <TeacherFinancialInfo formData={formData} handleChange={handleChange} />}
-                        {activeTab === 'documents' && <TeacherUploads formData={formData} handleChange={handleChange} />}
                     </div>
 
                 </main>

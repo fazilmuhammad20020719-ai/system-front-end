@@ -107,6 +107,7 @@ const TeacherProfessionalInfo = ({ formData, handleChange, programs = [], subjec
                     <InputField label="Employee ID" name="employeeId" placeholder="EMP-001" value={formData.employeeId} onChange={handleChange} />
                     <InputField label="Designation" name="designation" value={formData.designation} onChange={handleChange} />
                     <InputField label="Department" name="department" value={formData.department} onChange={handleChange} />
+
                     <InputField label="Joining Date" name="joiningDate" type="date" value={formData.joiningDate} onChange={handleChange} />
 
                     {/* Status Dropdown */}

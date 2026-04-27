@@ -42,6 +42,7 @@ const AddTeacher = () => {
         employeeId: '',
         designation: 'Lecturer',
         department: '', // Can be kept or derived
+        admissionDate: '',
         joiningDate: '',
 
         // --- Financial (New Idea) ---
@@ -109,6 +110,7 @@ const AddTeacher = () => {
             data.append('dob', formData.dob);
             data.append('gender', formData.gender);
             data.append('maritalStatus', formData.maritalStatus);
+            data.append('admissionDate', formData.admissionDate);
             data.append('joiningDate', formData.joiningDate);
             data.append('qualification', formData.eduQualification);
             data.append('degreeInstitute', formData.degreeInstitute);

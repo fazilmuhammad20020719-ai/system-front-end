@@ -47,6 +47,7 @@ const EditTeacher = () => {
         program: '',
         assignedPrograms: [], // Added for multi-select support
         subject: '',
+        admissionDate: '',
         joiningDate: '',
         status: 'Active',
 
@@ -108,6 +109,7 @@ const EditTeacher = () => {
                         program: data.program_name || '',
                         assignedPrograms: data.assigned_programs ? data.assigned_programs.split(', ') : [], // Parse string to array
                         subject: data.subject || '',
+                        admissionDate: data.admission_date ? data.admission_date.split('T')[0] : '',
                         joiningDate: data.joining_date ? data.joining_date.split('T')[0] : '',
                         status: data.status || 'Active',
 
@@ -160,6 +162,7 @@ const EditTeacher = () => {
             data.append('dob', formData.dob);
             data.append('gender', formData.gender);
             data.append('maritalStatus', formData.maritalStatus);
+            data.append('admissionDate', formData.admissionDate);
             data.append('joiningDate', formData.joiningDate);
             data.append('qualification', formData.eduQualification);
             data.append('degreeInstitute', formData.degreeInstitute);

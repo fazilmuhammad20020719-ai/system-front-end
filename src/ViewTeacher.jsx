@@ -88,6 +88,7 @@ const ViewTeacher = () => {
 
                         // Financial
                         salary: data.basic_salary,
+                        basic_salary: data.basic_salary,
 
                         // Arrays & Objects
                         documents: allDocuments,

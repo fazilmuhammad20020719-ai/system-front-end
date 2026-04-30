@@ -216,13 +216,13 @@ const Schedule = () => {
             const sSubId = parseInt(s.subject_id || s.subjectId);
             if (!sSubId && s.type === 'Break') {
                 const currentProgramObj = titlePrograms.find(p => p.name === programName);
-                if (selectedGrade !== 'All') return false; 
-                if (selectedSubject !== 'All' || selectedTeacher !== 'All') return false; 
+                if (selectedGrade !== 'All') return false;
+                if (selectedSubject !== 'All' || selectedTeacher !== 'All') return false;
                 return s.program_id === currentProgramObj?.id;
             }
             const subject = subjects.find(sub => sub.id === sSubId);
             if (subject?.program !== programName) return false;
-            
+
             if (selectedGrade !== 'All' && subject?.year !== selectedGrade) {
                 return false;
             }
@@ -245,7 +245,7 @@ const Schedule = () => {
         csvRows.push(['Day', 'Start Time', 'End Time', 'Type', 'Subject', 'Grade', 'Teacher', 'Room', 'Status'].join(','));
 
         const dayOrder = { 'Sunday': 1, 'Monday': 2, 'Tuesday': 3, 'Wednesday': 4, 'Thursday': 5, 'Friday': 6, 'Saturday': 7 };
-        
+
         programSlots.sort((a, b) => {
             const dayA = a.day_of_week || a.day;
             const dayB = b.day_of_week || b.day;
@@ -274,7 +274,7 @@ const Schedule = () => {
                 const subject = subjects.find(sub => sub.id === sSubId);
                 subjectName = subject?.name || '';
                 grade = subject?.year || 'General';
-                
+
                 const tId = parseInt(slot.teacher_id || slot.teacherId);
                 const teacher = teachers.find(t => t.id === tId);
                 teacherName = teacher?.name || '';
@@ -595,7 +595,7 @@ const Schedule = () => {
                                 const slotDay = s.day_of_week || s.day;
                                 const dIndex = dayList.indexOf(slotDay);
                                 if (dIndex === -1) return;
-                                
+
                                 const dDate = new Date(currentWeekStart);
                                 dDate.setDate(dDate.getDate() + dIndex);
                                 const colDateStr = dDate.toISOString().split('T')[0];
@@ -848,10 +848,10 @@ const Schedule = () => {
 
                                                                 const subject = subjects.find(s => s.id === parseInt(slot.subject_id || slot.subjectId));
                                                                 const status = slot.attendanceStatus || 'pending';
-                                                                
+
                                                                 let colorClass = "bg-yellow-50 border-yellow-200 text-yellow-800";
                                                                 let statusIconColor = "bg-yellow-100 text-yellow-600 hover:bg-yellow-200";
-                                                                
+
                                                                 if (status === 'completed') {
                                                                     colorClass = "bg-green-50 border-green-300 text-green-800";
                                                                     statusIconColor = "bg-green-100 text-green-600 hover:bg-green-200 ring-2 ring-green-500/20";
@@ -982,7 +982,7 @@ const Schedule = () => {
                                 <p className="text-sm text-gray-600 mb-2">
                                     Export schedule for <strong className="text-[#ea8933]">{selectedProgramForExport}</strong>. Use filters to customize the exported CSV.
                                 </p>
-                                
+
                                 {/* Grade Export Filter */}
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold text-gray-700 block">Select Grade</label>

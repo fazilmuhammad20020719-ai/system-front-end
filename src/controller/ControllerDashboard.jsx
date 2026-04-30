@@ -24,6 +24,9 @@ const ControllerDashboard = () => {
     // Per-row delete state: { rowIndex: 'confirming' | 'deleting' | 'done' | 'error' }
     const [rowDeleteState, setRowDeleteState] = useState({});
 
+    // Per-table "Delete All" state: { tableName: 'confirming' | 'deleting' | 'done' | 'error' }
+    const [tableDeleteState, setTableDeleteState] = useState({});
+
     useEffect(() => {
         if (!token) { navigate('/controller'); return; }
         fetchTables();
@@ -132,6 +135,42 @@ const ControllerDashboard = () => {
             console.error(err);
             setRowDeleteState(prev => ({ ...prev, [rowIndex]: 'error' }));
             setTimeout(() => cancelRowDelete(rowIndex), 2000);
+        }
+    };
+
+    // --- Delete ALL rows in a table (TRUNCATE) ---
+    const startTableDelete = (tableName) =>
+        setTableDeleteState(prev => ({ ...prev, [tableName]: 'confirming' }));
+
+    const cancelTableDelete = (tableName) =>
+        setTableDeleteState(prev => { const n = { ...prev }; delete n[tableName]; return n; });
+
+    const confirmTableDelete = async (tableName) => {
+        setTableDeleteState(prev => ({ ...prev, [tableName]: 'deleting' }));
+        try {
+            const res = await fetch(
+                `${API_URL}/api/controller/table/${tableName}/data`,
+                { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } }
+            );
+            if (res.ok) {
+                // Zero out local row count and clear any open preview for this table
+                setTables(prev => prev.map(t =>
+                    t.name === tableName ? { ...t, rowCount: 0 } : t
+                ));
+                if (previewTable?.name === tableName) {
+                    setPreviewTable(prev => ({ ...prev, rows: [] }));
+                }
+                setTableDeleteState(prev => { const n = { ...prev }; delete n[tableName]; return n; });
+            } else {
+                const err = await res.json();
+                console.error('Table truncate failed:', err.message);
+                setTableDeleteState(prev => ({ ...prev, [tableName]: 'error' }));
+                setTimeout(() => cancelTableDelete(tableName), 2500);
+            }
+        } catch (err) {
+            console.error(err);
+            setTableDeleteState(prev => ({ ...prev, [tableName]: 'error' }));
+            setTimeout(() => cancelTableDelete(tableName), 2500);
         }
     };
 
@@ -309,6 +348,48 @@ const ControllerDashboard = () => {
                                                             : 'border-gray-700 text-gray-500 hover:border-blue-500/30 hover:text-blue-400'}`}>
                                                     <Eye size={12} /> Data
                                                 </button>
+
+                                                {/* Delete All Data button */}
+                                                {(() => {
+                                                    const ds = tableDeleteState[table.name];
+                                                    if (!ds) return (
+                                                        <button
+                                                            onClick={() => startTableDelete(table.name)}
+                                                            disabled={table.rowCount === 0}
+                                                            title={table.rowCount === 0 ? 'Table is already empty' : 'Delete all rows in this table'}
+                                                            className="flex items-center gap-1.5 text-xs font-mono px-3 py-1.5 rounded-lg border border-red-500/20 text-red-500/60 hover:bg-red-500/10 hover:border-red-500/40 hover:text-red-400 disabled:opacity-25 disabled:cursor-not-allowed transition-all">
+                                                            <Trash2 size={12} /> Clear
+                                                        </button>
+                                                    );
+                                                    if (ds === 'confirming') return (
+                                                        <div className="flex items-center gap-1.5">
+                                                            <span className="text-[10px] font-mono text-red-400 whitespace-nowrap">Delete all?</span>
+                                                            <button
+                                                                onClick={() => confirmTableDelete(table.name)}
+                                                                title="Yes, delete all rows"
+                                                                className="flex items-center gap-1 text-[10px] font-mono px-2 py-1 rounded-md bg-red-500/20 border border-red-500/40 text-red-400 hover:bg-red-500/30 transition-all">
+                                                                <CheckCircle size={11} /> Yes
+                                                            </button>
+                                                            <button
+                                                                onClick={() => cancelTableDelete(table.name)}
+                                                                title="Cancel"
+                                                                className="flex items-center gap-1 text-[10px] font-mono px-2 py-1 rounded-md bg-gray-800 border border-gray-700 text-gray-400 hover:bg-gray-700 transition-all">
+                                                                <X size={11} /> No
+                                                            </button>
+                                                        </div>
+                                                    );
+                                                    if (ds === 'deleting') return (
+                                                        <span className="flex items-center gap-1.5 text-[10px] font-mono text-red-400">
+                                                            <RefreshCw size={11} className="animate-spin" /> Clearing…
+                                                        </span>
+                                                    );
+                                                    if (ds === 'error') return (
+                                                        <span className="flex items-center gap-1.5 text-[10px] font-mono text-red-400">
+                                                            <AlertCircle size={11} /> Failed
+                                                        </span>
+                                                    );
+                                                    return null;
+                                                })()}
                                             </div>
                                         </div>
 

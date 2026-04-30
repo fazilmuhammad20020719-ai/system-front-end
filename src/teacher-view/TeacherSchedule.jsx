@@ -202,9 +202,9 @@ const TeacherSchedule = ({ teacher }) => {
                                     .filter(s => {
                                         const slotDay = s.day_of_week || s.day;
                                         if (slotDay !== day) return false;
-                                        // Effective date guard
-                                        const effectiveFrom = s.effectiveFrom || s.effective_from;
-                                        if (effectiveFrom && colDateStr < effectiveFrom) return false;
+                                        // Effective-to guard: hide soft-deleted (closed) slots
+                                        const effectiveTo = s.effective_to;
+                                        if (effectiveTo && colDateStr > effectiveTo.split('T')[0]) return false;
                                         // Skip guard
                                         const session = attendanceData.find(a =>
                                             parseInt(a.schedule_id) === parseInt(s.id) &&
@@ -302,6 +302,14 @@ const TeacherSchedule = ({ teacher }) => {
                         </thead>
                         <tbody className="divide-y divide-gray-100 text-sm">
                             {[...schedules]
+                                .filter(slot => {
+                                    // Exclude soft-deleted slots from the list view too
+                                    const effectiveTo = slot.effective_to;
+                                    if (!effectiveTo) return true;
+                                    // Use today's date as reference for the list table
+                                    const today = new Date().toISOString().split('T')[0];
+                                    return today <= effectiveTo.split('T')[0];
+                                })
                                 .sort((a, b) => {
                                     const dayOrder = { Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6 };
                                     const dayDiff = dayOrder[a.day_of_week || a.day] - dayOrder[b.day_of_week || b.day];

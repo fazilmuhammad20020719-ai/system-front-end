@@ -1,7 +1,7 @@
 import { Menu, Download, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const StudentHeader = ({ toggleSidebar, isSidebarOpen }) => {
+const StudentHeader = ({ toggleSidebar, isSidebarOpen, onExport }) => {
     const navigate = useNavigate();
 
     return (
@@ -19,7 +19,10 @@ const StudentHeader = ({ toggleSidebar, isSidebarOpen }) => {
                 </div>
             </div>
             <div className="flex gap-3">
-                <button className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center gap-2 shadow-sm">
+                <button
+                    onClick={onExport}
+                    className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 flex items-center gap-2 shadow-sm transition-colors"
+                >
                     <Download size={16} /> <span className="hidden sm:inline">Export</span>
                 </button>
                 <button

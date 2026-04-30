@@ -89,6 +89,7 @@ const ViewTeacher = () => {
 
                         // Financial
                         salary: data.basic_salary,
+                        basic_salary: data.basic_salary,  // TeacherPayroll reads this field
 
                         // Arrays & Objects
                         documents: allDocuments,
@@ -143,7 +144,7 @@ const ViewTeacher = () => {
                         {activeTab === 'overview' && <TeacherOverview teacher={teacher} stats={teacher.stats} />}
                         {activeTab === 'schedule' && <TeacherSchedule teacher={teacher} />}
                         {activeTab === 'attendance' && <TeacherAttendanceView stats={teacher.attendanceStats} teacherId={teacher.id} />}
-                        {activeTab === 'payroll' && <TeacherPayroll teacher={teacher} />}
+                        {activeTab === 'payroll' && <TeacherPayroll teacher={teacher} onSalaryUpdate={() => navigate(0)} />}
                         {activeTab === 'documents' && <TeacherDocuments documents={teacher.documents} teacherId={teacher.id} refreshTeacher={() => navigate(0)} />}
                     </div>
                 </main>

@@ -59,14 +59,18 @@ const ViewStudentAttendance = () => {
                     const res = await fetch(`${API_URL}/api/students/${id}/class-attendance?startDate=${startDate}&endDate=${endDate}`);
                     if (res.ok) {
                         const data = await res.json();
-                        setClassRecords(data); // keep flat array for the list view
-                        // also build map for calendar dots
+                        setClassRecords(data);
+                        // build date map — always use only YYYY-MM-DD (first 10 chars)
+                        // to avoid UTC→local timezone shift turning May 2 → May 1
                         const dataMap = {};
                         data.forEach(r => {
-                            if (!dataMap[r.date]) dataMap[r.date] = [];
-                            dataMap[r.date].push(r);
+                            const dateKey = (r.date || '').substring(0, 10);
+                            if (!dataMap[dateKey]) dataMap[dateKey] = [];
+                            dataMap[dateKey].push({ ...r, date: dateKey });
                         });
                         setAttendanceData(dataMap);
+                        // Also normalise the classRecords array
+                        setClassRecords(data.map(r => ({ ...r, date: (r.date || '').substring(0, 10) })));
                     }
                 }
             } catch (err) {

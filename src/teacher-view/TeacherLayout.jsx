@@ -3,44 +3,34 @@ import { Outlet, NavLink, useParams, useNavigate } from 'react-router-dom';
 import {
     User, Calendar, DollarSign, FileText, ArrowLeft, Printer, Download, Layout
 } from 'lucide-react';
-import Sidebar from '../Sidebar'; // Adjust path if needed
+import Sidebar from '../Sidebar';
 import Loader from '../components/Loader';
+import { API_URL } from '../config';
 
 const TeacherLayout = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [teacher, setTeacher] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-    // -- MOCK DATA (Ideally fetched from API) --
     useEffect(() => {
-        // Simulating data fetch
-        setTeacher({
-            id: id,
-            fullName: "Dr. Sarah Wilson",
-            empid: "EMP-001",
-            email: "sarah@college.edu",
-            phone: "+94 77 123 4567",
-            address: "Colombo 03, LK",
-            dept: "Islamic Studies",
-            role: "Head of Dept",
-            status: "Active",
-            joinDate: "2020-01-12",
-            salary: "125,000",
-            schedule: [
-                { day: "Monday", time: "08:00 - 09:00", subject: "Quranic Tafseer", grade: "Year 3" },
-                { day: "Monday", time: "10:00 - 11:00", subject: "Hadith Studies", grade: "Year 5" },
-                { day: "Wednesday", time: "09:00 - 10:30", subject: "Fiqh", grade: "Year 4" },
-            ],
-            payroll: [
-                { month: "October 2025", basic: "125,000", bonus: "5,000", status: "Paid" },
-                { month: "September 2025", basic: "125,000", bonus: "0", status: "Paid" },
-            ],
-            docs: [
-                { name: "Contract_Agreement.pdf", size: "2.4 MB", date: "Jan 10, 2024" },
-                { name: "PhD_Certificate.jpg", size: "1.5 MB", date: "Feb 15, 2020" },
-            ]
-        });
+        const fetchTeacher = async () => {
+            try {
+                const res = await fetch(`${API_URL}/api/teachers/${id}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setTeacher(data);
+                } else {
+                    console.error('Failed to fetch teacher');
+                }
+            } catch (err) {
+                console.error('Error fetching teacher:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchTeacher();
     }, [id]);
 
     if (!teacher) return <Loader />;
@@ -57,8 +47,8 @@ const TeacherLayout = () => {
                         <div className="flex items-center gap-4">
                             <button onClick={() => navigate('/teachers')} className="p-2 hover:bg-gray-100 rounded-full text-gray-500"><ArrowLeft size={20} /></button>
                             <div>
-                                <h1 className="text-xl font-bold text-gray-800">{teacher.fullName}</h1>
-                                <p className="text-xs text-gray-500 font-medium">{teacher.empid} &bull; {teacher.dept}</p>
+                                <h1 className="text-xl font-bold text-gray-800">{teacher.name}</h1>
+                                <p className="text-xs text-gray-500 font-medium">{teacher.emp_id} &bull; {teacher.department}</p>
                             </div>
                         </div>
                         <div className="flex gap-2">

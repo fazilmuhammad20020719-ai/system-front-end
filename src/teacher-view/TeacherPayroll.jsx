@@ -7,7 +7,7 @@ const academicMonths = [
     "July", "August", "September", "October", "November", "December"
 ];
 
-const TeacherPayroll = ({ teacher }) => {
+const TeacherPayroll = ({ teacher, onSalaryUpdate }) => {
     const teacherId = teacher?.id;
 
     const [payroll, setPayroll] = useState([]);
@@ -20,6 +20,40 @@ const TeacherPayroll = ({ teacher }) => {
     const [passwordError, setPasswordError] = useState('');
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
     const [saving, setSaving] = useState(false);
+
+    // ─── Edit Basic Salary ────────────────────────────────────────────────────
+    const [showSalaryModal, setShowSalaryModal] = useState(false);
+    const [salaryInput, setSalaryInput] = useState('');
+    const [salaryLoading, setSalaryLoading] = useState(false);
+
+    const openSalaryEdit = () => {
+        setSalaryInput(teacher?.basic_salary || '');
+        setShowSalaryModal(true);
+    };
+
+    const saveSalary = async () => {
+        if (!salaryInput && salaryInput !== 0) return;
+        setSalaryLoading(true);
+        try {
+            const fd = new FormData();
+            fd.append('basicSalary', String(salaryInput).replace(/,/g, ''));
+            const res = await fetch(`${API_URL}/api/teachers/${teacherId}`, {
+                method: 'PUT',
+                body: fd
+            });
+            if (res.ok) {
+                setShowSalaryModal(false);
+                if (onSalaryUpdate) onSalaryUpdate(); // trigger parent refresh
+            } else {
+                alert('Failed to update salary.');
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Network error.');
+        } finally {
+            setSalaryLoading(false);
+        }
+    };
 
     const currentYear = new Date().getFullYear();
 
@@ -221,7 +255,13 @@ const TeacherPayroll = ({ teacher }) => {
                             LKR {Number(teacher?.basic_salary || 0).toLocaleString()}
                         </h3>
                     </div>
-                    <div className="bg-orange-50 p-2.5 rounded-full"><Settings size={22} className="text-[#EB8A33]" /></div>
+                    <button
+                        onClick={openSalaryEdit}
+                        title="Edit Basic Salary"
+                        className="bg-orange-50 hover:bg-orange-100 p-2.5 rounded-full transition-colors"
+                    >
+                        <Settings size={22} className="text-[#EB8A33]" />
+                    </button>
                 </div>
             </div>
 
@@ -289,8 +329,8 @@ const TeacherPayroll = ({ teacher }) => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${status === 'Paid' ? 'bg-green-100 text-green-700' :
-                                                    status === 'Coming' ? 'bg-gray-100 text-gray-500' :
-                                                        'bg-red-100 text-red-700'
+                                                status === 'Coming' ? 'bg-gray-100 text-gray-500' :
+                                                    'bg-red-100 text-red-700'
                                                 }`}>
                                                 {status}
                                             </span>
@@ -407,7 +447,7 @@ const TeacherPayroll = ({ teacher }) => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Upload Receipt (Optional)</label>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Upload the signed receipt</label>
                                 <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer relative bg-gray-50/50">
                                     <input type="file" accept="image/*,application/pdf" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={e => setFormData({ ...formData, receipt: e.target.files[0] })} />
                                     <div className="flex flex-col items-center justify-center text-gray-400 gap-2">
@@ -472,6 +512,62 @@ const TeacherPayroll = ({ teacher }) => {
                             >
                                 {saving ? <><span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" /> Saving...</> : 'Confirm'}
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* EDIT SALARY MODAL */}
+            {showSalaryModal && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl overflow-hidden">
+                        <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                            <div className="flex items-center gap-2">
+                                <div className="bg-orange-100 p-1.5 rounded-lg">
+                                    <Settings size={16} className="text-[#EB8A33]" />
+                                </div>
+                                <h3 className="font-bold text-gray-800">Edit Basic Salary</h3>
+                            </div>
+                            <button onClick={() => setShowSalaryModal(false)} className="text-gray-400 hover:text-red-500 transition-colors">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Salary Basic Rate / Month (LKR)</label>
+                                <div className="relative">
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">LKR</span>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        className="w-full border border-gray-200 rounded-lg pl-12 pr-3 py-3 text-lg font-bold outline-none focus:border-[#EB8A33] focus:ring-1 focus:ring-orange-200"
+                                        value={salaryInput}
+                                        onChange={e => setSalaryInput(e.target.value)}
+                                        onKeyDown={e => e.key === 'Enter' && saveSalary()}
+                                        autoFocus
+                                        placeholder="0"
+                                    />
+                                </div>
+                                <p className="text-xs text-gray-400 mt-1">This will update the teacher's basic monthly salary.</p>
+                            </div>
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    onClick={() => setShowSalaryModal(false)}
+                                    disabled={salaryLoading}
+                                    className="flex-1 py-2.5 border border-gray-200 rounded-lg text-gray-600 font-medium hover:bg-gray-50 disabled:opacity-50"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={saveSalary}
+                                    disabled={salaryLoading}
+                                    className="flex-1 py-2.5 bg-[#EB8A33] text-white rounded-lg font-bold hover:bg-[#d97d2a] disabled:opacity-60 flex items-center justify-center gap-2 transition-colors"
+                                >
+                                    {salaryLoading
+                                        ? <><span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" /> Saving...</>
+                                        : 'Update Salary'
+                                    }
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -151,6 +151,69 @@ const Students = () => {
         }
     };
 
+    // EXPORT FUNCTION — sorted orderly: Program → Grade (numeric) → Index
+    const handleExport = () => {
+        // Helper: extract grade number for proper numeric sort (e.g. "Grade 3" → 3)
+        const gradeNum = (gradeStr) => {
+            const match = String(gradeStr || '').match(/\d+/);
+            return match ? parseInt(match[0]) : 999;
+        };
+
+        // Resolve primary enrollment fields for each student
+        const withFields = students.map(student => {
+            const primaryEnrollment = student.enrollments_summary && student.enrollments_summary.length > 0
+                ? student.enrollments_summary[0]
+                : null;
+            return {
+                id: student.id,
+                name: student.name,
+                program: primaryEnrollment?.program || student.program || '',
+                grade: primaryEnrollment?.year || student.currentYear || '',
+                session: primaryEnrollment?.session || student.session || '',
+                status: primaryEnrollment?.status || student.status || '',
+                guardian: student.guardian,
+                contact: student.contact,
+            };
+        });
+
+        // Sort: Program A→Z, then Grade 1→6 (numeric), then Index ascending
+        const sorted = withFields.sort((a, b) => {
+            const progCmp = a.program.localeCompare(b.program);
+            if (progCmp !== 0) return progCmp;
+            const gradeCmp = gradeNum(a.grade) - gradeNum(b.grade);
+            if (gradeCmp !== 0) return gradeCmp;
+            return Number(a.id) - Number(b.id);
+        });
+
+        // CSV escape + UPPERCASE all text values
+        const esc = (v) => `"${String(v ?? '').toUpperCase().replace(/"/g, '""')}"`;
+
+        const headers = ['INDEX', 'STUDENT NAME', 'PROGRAM', 'GRADE', 'SESSION/BATCH', 'STATUS', 'GUARDIAN', 'CONTACT'];
+
+        const rows = sorted.map(s => [
+            s.id,
+            esc(s.name),
+            esc(s.program),
+            esc(s.grade),
+            esc(s.session),
+            esc(s.status),
+            esc(s.guardian),
+            esc(s.contact),
+        ].join(','));
+
+        const csvContent = [headers.join(','), ...rows].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `students_directory_${new Date().toISOString().slice(0, 10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        notify('success', `Exported ${sorted.length} students successfully`, 'Export Complete');
+    };
+
     if (loading) return <Loader />;
 
     return (
@@ -179,6 +242,7 @@ const Students = () => {
                 <StudentHeader
                     toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
                     isSidebarOpen={isSidebarOpen}
+                    onExport={handleExport}
                 />
 
                 <main className="p-4 md:p-8">

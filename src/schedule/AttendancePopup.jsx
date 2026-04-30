@@ -227,8 +227,13 @@ const AttendancePopup = ({ isOpen, onClose, slot, subjects, onSave, onCancel }) 
                             <span>{subject?.year}</span>
                             <span>•</span>
                             <span className="flex items-center gap-1 bg-gray-100 px-1.5 py-0.5 rounded text-xs">
-                                <Clock size={10} /> {(slot.startTime || "00:00").substring(0, 5)} - {(slot.endTime || "00:00").substring(0, 5)}
+                                <Clock size={10} /> {(slot.startTime || slot.start_time || "00:00").substring(0, 5)} - {(slot.endTime || slot.end_time || "00:00").substring(0, 5)}
                             </span>
+                            {slot.date && (
+                                <span className="flex items-center gap-1 bg-blue-50 border border-blue-100 text-blue-600 px-1.5 py-0.5 rounded text-xs font-bold">
+                                    📅 {new Date(slot.date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
+                                </span>
+                            )}
                         </p>
                     </div>
                     <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
